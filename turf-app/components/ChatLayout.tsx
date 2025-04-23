@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { HomeIcon, UserIcon, CogIcon, ChatIcon, ArrowRightOnRectangleIcon, PlusIcon, HashtagIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, UserIcon, CogIcon, ChatBubbleLeftIcon, ArrowRightOnRectangleIcon, PlusIcon, HashtagIcon } from '@heroicons/react/24/outline';
 import { Circle } from '../lib/supabase/client';
 import NotificationCenter from './NotificationCenter';
 
@@ -369,7 +369,7 @@ export default function ChatLayout({
           onClick={() => setIsMobileMenuOpen(true)}
           className="flex flex-col items-center justify-center text-text-muted hover:text-text-primary"
         >
-          <ChatIcon className="w-6 h-6" />
+          <ChatBubbleLeftIcon className="w-6 h-6" />
           <span className="text-xs mt-1">Circles</span>
         </button>
         

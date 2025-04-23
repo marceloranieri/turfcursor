@@ -94,7 +94,7 @@ export default function Topic() {
         content: message.content,
         author: {
           name: message.profiles?.username || 'Anonymous',
-          avatar: message.profiles?.avatar_url
+          avatar: message.profiles?.avatar_url || '/default-avatar.svg'
         },
         timestamp: new Date(message.created_at),
         isPinned: message.is_pinned || false,
