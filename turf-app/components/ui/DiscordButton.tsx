@@ -1,30 +1,44 @@
 import React from 'react';
 
-interface DiscordButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface DiscordButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
-  children: React.ReactNode;
+  fullWidth?: boolean;
+  isLoading?: boolean;
 }
 
 export const DiscordButton: React.FC<DiscordButtonProps> = ({
-  variant = 'primary',
   children,
+  variant = 'primary',
+  fullWidth = false,
+  isLoading = false,
   className = '',
+  disabled,
   ...props
 }) => {
-  const baseStyles = 'px-4 py-2 rounded font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
-  const variantStyles = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+  const baseClasses = 'px-4 py-2 rounded font-medium transition-colors duration-200';
+  const variantClasses = {
+    primary: 'bg-discord-blue hover:bg-discord-blue-dark text-white',
+    secondary: 'bg-discord-gray hover:bg-discord-gray-dark text-white',
+    danger: 'bg-discord-red hover:bg-discord-red-dark text-white'
   };
+  const widthClass = fullWidth ? 'w-full' : '';
+  const loadingClass = isLoading ? 'opacity-75 cursor-not-allowed' : '';
+  const disabledClass = disabled ? 'opacity-50 cursor-not-allowed' : '';
 
   return (
     <button
-      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${widthClass} ${loadingClass} ${disabledClass} ${className}`}
+      disabled={disabled || isLoading}
       {...props}
     >
-      {children}
+      {isLoading ? (
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+          {children}
+        </div>
+      ) : (
+        children
+      )}
     </button>
   );
 };

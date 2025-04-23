@@ -1,14 +1,15 @@
 import React from 'react';
 import '@/app/styles/discord-theme.css';
 
-interface DiscordLayoutProps {
+export interface Topic {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface DiscordLayoutProps {
   children: React.ReactNode;
-  topics: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    isActive?: boolean;
-  }>;
+  topics?: Topic[];
   currentUser?: {
     name: string;
     avatar?: string;
@@ -19,7 +20,7 @@ interface DiscordLayoutProps {
 
 const DiscordLayout: React.FC<DiscordLayoutProps> = ({
   children,
-  topics,
+  topics = [],
   currentUser,
   onTopicSelect
 }) => {
@@ -58,7 +59,7 @@ const DiscordLayout: React.FC<DiscordLayoutProps> = ({
                   onClick={() => onTopicSelect?.(topic.id)}
                 >
                   <div className="channel-icon">#</div>
-                  <div>{topic.title}</div>
+                  <div>{topic.name}</div>
                 </div>
               ))}
             </div>
