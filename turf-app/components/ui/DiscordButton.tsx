@@ -2,47 +2,29 @@ import React from 'react';
 
 interface DiscordButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
-  fullWidth?: boolean;
-  isLoading?: boolean;
+  children: React.ReactNode;
 }
 
-const DiscordButton: React.FC<DiscordButtonProps> = ({
-  children,
+export const DiscordButton: React.FC<DiscordButtonProps> = ({
   variant = 'primary',
-  fullWidth = false,
-  isLoading = false,
+  children,
   className = '',
-  disabled,
   ...props
 }) => {
-  const baseStyles = 'px-4 py-2 rounded font-medium transition-colors duration-200';
-  const widthStyles = fullWidth ? 'w-full' : '';
+  const baseStyles = 'px-4 py-2 rounded font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
   
   const variantStyles = {
-    primary: 'bg-[var(--primary-blue)] hover:brightness-110 text-white',
-    secondary: 'bg-[var(--input-bg)] hover:brightness-110 text-[var(--text-normal)]',
-    danger: 'bg-[var(--red)] hover:brightness-110 text-white'
+    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
+    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
   };
 
   return (
     <button
+      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
       {...props}
-      disabled={isLoading || disabled}
-      className={`
-        ${baseStyles}
-        ${widthStyles}
-        ${variantStyles[variant]}
-        ${isLoading || disabled ? 'opacity-50 cursor-not-allowed' : ''}
-        ${className}
-      `}
     >
-      {isLoading ? (
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </button>
   );
 };
