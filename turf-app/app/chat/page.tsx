@@ -65,7 +65,7 @@ export default function Chat() {
     };
     
     loadInitialData();
-  }, []);
+  }, [activeCircleId]);
   
   // Load messages and reactions when active circle changes
   useEffect(() => {

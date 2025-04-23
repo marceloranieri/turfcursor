@@ -151,7 +151,7 @@ export default function NotificationCenter({
                     
                     {notification.wizNote && (
                       <p className="text-xs text-text-secondary mt-1 italic">
-                        "{notification.wizNote}"
+                        &quot;{notification.wizNote}&quot;
                       </p>
                     )}
                     

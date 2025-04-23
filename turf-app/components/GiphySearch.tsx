@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SearchIcon, XIcon } from '@heroicons/react/outline';
+import Image from 'next/image';
 
 interface GiphySearchProps {
   onSelect: (gifUrl: string) => void;
@@ -177,9 +178,11 @@ export default function GiphySearch({ onSelect, onClose }: GiphySearchProps) {
               className="cursor-pointer rounded-md overflow-hidden hover:ring-2 hover:ring-accent-primary"
               onClick={() => onSelect(gif.images.original.url)}
             >
-              <img 
+              <Image 
                 src={gif.images.fixed_height.url} 
                 alt={gif.title} 
+                width={200}
+                height={96}
                 className="w-full h-24 object-cover"
               />
             </div>

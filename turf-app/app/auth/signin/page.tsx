@@ -85,7 +85,7 @@ export default function SignIn() {
         </form>
         
         <div className="mt-6">
-          <p className="text-text-secondary text-center">Don't have an account?</p>
+          <p className="text-text-secondary text-center">Don&apos;t have an account?</p>
           <Link 
             href="/auth/signup"
             className="block text-center mt-2 text-accent-primary hover:underline"

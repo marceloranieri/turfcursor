@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Database } from './database.types';
 
 // Initialize the Supabase client with environment variables
 // These should be set in your deployment environment (Vercel, Netlify, etc.)
@@ -7,17 +8,26 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
+if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
   console.error('Missing Supabase environment variables. Please check your .env file.');
 }
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+export const supabase: SupabaseClient<Database> = createClient<Database>(
+  supabaseUrl, 
+  supabaseAnonKey, 
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    global: {
+      headers: {
+        'x-application-name': 'turf-app',
+      },
+    },
+  }
+);
 
 // Types for database tables
 export type User = {

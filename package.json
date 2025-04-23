@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy:function": "mkdir -p supabase/functions/refreshTopics && cp lib/supabase/edge-functions/refreshTopics.ts supabase/functions/refreshTopics/index.ts && npx supabase functions deploy refreshTopics --no-verify-jwt",
+    "deploy:function:local": "mkdir -p supabase/functions/refreshTopics && cp lib/supabase/edge-functions/refreshTopics.ts supabase/functions/refreshTopics/index.ts && npx supabase functions serve",
+    "refresh:topics": "curl -X POST $SUPABASE_URL/functions/v1/refreshTopics -H \"Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY\" -H \"Content-Type: application/json\""
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -25,6 +28,7 @@
     "eslint": "^8.55.0",
     "eslint-config-next": "^14.2.28",
     "postcss": "^8.4.32",
+    "supabase": "^1.148.6",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.3.0"
   },

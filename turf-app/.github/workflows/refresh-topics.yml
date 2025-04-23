@@ -1,0 +1,32 @@
+name: Daily Topic Refresh
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run at midnight UTC daily
+  workflow_dispatch:  # Allow manual triggering through GitHub UI
+
+jobs:
+  refresh_topics:
+    name: Refresh Daily Topics
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+    
+    steps:
+      - name: Trigger topic refresh
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            $SUPABASE_URL/functions/v1/refreshTopics
+            
+      - name: Verify success
+        if: ${{ success() }}
+        run: echo "Daily topics refreshed successfully"
+        
+      - name: Report failure
+        if: ${{ failure() }}
+        run: |
+          echo "Failed to refresh daily topics"
+          exit 1 

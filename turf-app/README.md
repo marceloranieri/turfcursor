@@ -7,6 +7,7 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 ## Features
 
 - Real-time chat with channels ("Circles") for different debate topics
+- Automated daily topic rotation system (5 new topics every 24 hours)
 - User authentication and profiles
 - Message reactions with emoji picker
 - Reply threading and conversation flows
@@ -14,13 +15,16 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 - Genius Awards to recognize valuable contributions
 - Pinned messages for highly engaging content
 - Mobile-responsive design
+- Admin panel for topic management
 
 ## Tech Stack
 
 - **Frontend**: Next.js 13+ with App Router
 - **Styling**: Tailwind CSS
 - **Database & Auth**: Supabase
+- **Edge Functions**: Supabase Functions
 - **Deployment**: Vercel/Netlify
+- **Automation**: GitHub Actions
 
 ## Getting Started
 
@@ -35,6 +39,7 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 1. Create a new Supabase project at [supabase.com](https://supabase.com)
 2. In your Supabase project, go to the SQL Editor and run the contents of `lib/database/supabaseRpc.sql` 
 3. Then run the contents of `supabase_schema.sql` to set up the database schema
+4. Finally, run the contents of `lib/database/migrations/daily_topics_schema.sql` to set up the daily topics system
 
 ### Installation
 
@@ -72,27 +77,61 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 ```
 turf-app/
 ├── app/                    # Next.js App Router
+│   ├── admin/              # Admin panels
+│   │   └── topics/         # Topic administration
 │   ├── auth/               # Authentication pages
 │   ├── chat/               # Chat interface
 │   ├── profile/            # User profile
 │   ├── settings/           # User settings
 │   └── page.tsx            # Landing page
 ├── components/             # React components
+│   ├── admin/              # Admin components
+│   │   └── TopicAdmin.tsx  # Topic admin interface
 │   ├── AuthModal.tsx       # Authentication modal
 │   ├── ChatInput.tsx       # Message input
 │   ├── ChatLayout.tsx      # Chat layout
+│   ├── DailyTopics.tsx     # Daily topics display
 │   ├── Message.tsx         # Message component
 │   ├── NotificationCenter.tsx # Notifications
 │   └── ReactionPicker.tsx  # Emoji reactions
 ├── lib/                    # Utility functions
 │   ├── auth/               # Authentication utilities
 │   ├── database/           # Database helpers
-│   └── supabase/           # Supabase client
+│   │   └── migrations/     # Database migrations
+│   ├── supabase/           # Supabase client
+│   │   └── edge-functions/ # Supabase Edge Functions
+│   └── topics/             # Topic management utilities
+├── .github/                # GitHub Actions workflows
 ├── pages/                  # Next.js Pages
 │   └── api/                # API routes
 ├── public/                 # Static assets
 └── styles/                 # Global styles
 ```
+
+## Daily Topics System
+
+The Turf app features an automated system that rotates 5 unique debate topics every 24 hours:
+
+- No topic repeats until all topics in the pool have been used
+- Topics automatically expire after 24 hours
+- Admin panel allows for managing topics and manually refreshing them
+- Detailed documentation available in `docs/DAILY_TOPICS_SYSTEM.md`
+
+### Deploying the Daily Topics System
+
+1. Deploy the Edge Function for topic rotation:
+   ```bash
+   npx supabase functions deploy refreshTopics --no-verify-jwt
+   ```
+
+2. Set up a scheduled job to trigger the function daily (using GitHub Actions or a cron service)
+   - Detailed setup instructions in `docs/EDGE_FUNCTION_DEPLOYMENT.md`
+
+3. Add GitHub repository secrets for automated deployments:
+   - `SUPABASE_ACCESS_TOKEN`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `SUPABASE_PROJECT_REF`
+   - `SUPABASE_URL`
 
 ## Deployment
 

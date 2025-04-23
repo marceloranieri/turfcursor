@@ -53,7 +53,7 @@ export default function OnboardingWelcome() {
       <div className="max-w-md w-full bg-background-tertiary rounded-lg p-8 shadow-lg">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-accent-primary mb-2">Welcome to Turf</h1>
-          <p className="text-text-secondary">Let's get you introduced to the platform</p>
+          <p className="text-text-secondary">Let&apos;s get you introduced to the platform</p>
         </div>
         
         <div className="text-center py-8">
