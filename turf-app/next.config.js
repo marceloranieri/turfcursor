@@ -17,6 +17,10 @@ const nextConfig = {
     // During deployment, we'll handle linting in the build process
     ignoreDuringBuilds: process.env.NODE_ENV === 'production',
   },
+  // Ensure we're using the App Router
+  experimental: {
+    appDir: true,
+  },
 };
 
 module.exports = nextConfig; 
