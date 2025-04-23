@@ -5,18 +5,12 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DiscordButton } from '@/components/ui/DiscordButton';
-import { Metadata } from 'next'
 
 interface Settings {
   notifications_enabled: boolean;
   email_notifications: boolean;
   dark_mode: boolean;
   sound_enabled: boolean;
-}
-
-export const metadata: Metadata = {
-  title: 'Settings | Turf',
-  description: 'Manage your Turf application settings',
 }
 
 export default function SettingsPage() {

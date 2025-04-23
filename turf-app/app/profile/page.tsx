@@ -7,12 +7,6 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { DiscordInput } from '@/components/ui/DiscordInput';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import { Profile } from '@/lib/types';
-import { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'Profile | Turf',
-  description: 'Manage your Turf profile and preferences',
-}
 
 export default function ProfilePage() {
   const { user } = useAuth();
