@@ -2,11 +2,15 @@
   "name": "turf-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.5.0"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "cd turf-app && next dev",
+    "build": "cd turf-app && next build",
+    "start": "cd turf-app && next start",
+    "lint": "cd turf-app && next lint",
     "deploy:function": "mkdir -p supabase/functions/refreshTopics && cp lib/supabase/edge-functions/refreshTopics.ts supabase/functions/refreshTopics/index.ts && npx supabase functions deploy refreshTopics --no-verify-jwt",
     "deploy:function:local": "mkdir -p supabase/functions/refreshTopics && cp lib/supabase/edge-functions/refreshTopics.ts supabase/functions/refreshTopics/index.ts && npx supabase functions serve",
     "refresh:topics": "curl -X POST $SUPABASE_URL/functions/v1/refreshTopics -H \"Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY\" -H \"Content-Type: application/json\""

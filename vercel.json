@@ -1,9 +1,4 @@
 {
-  "buildCommand": "cd turf-app && npm install --legacy-peer-deps && npm run build",
-  "outputDirectory": "turf-app/out",
   "framework": "nextjs",
-  "installCommand": "echo 'Skipping install command'",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ]
+  "outputDirectory": "turf-app/.next"
 } 
