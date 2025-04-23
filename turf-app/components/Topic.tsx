@@ -12,9 +12,9 @@ interface TopicMessage {
   content: string;
   author: {
     name: string;
-    avatar?: string;
+    avatar: string;
   };
-  timestamp: Date;
+  timestamp: string;
   reactions?: Array<{
     emoji: string;
     count: number;
@@ -96,7 +96,7 @@ export default function Topic() {
           name: message.profiles?.username || 'Anonymous',
           avatar: message.profiles?.avatar_url || '/default-avatar.svg'
         },
-        timestamp: new Date(message.created_at),
+        timestamp: new Date(message.created_at).toISOString(),
         isPinned: message.is_pinned || false,
         reactions: message.reactions || []
       })) || [];
