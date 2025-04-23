@@ -1,4 +1,4 @@
 {
   "framework": "nextjs",
-  "outputDirectory": "turf-app/.next"
+  "rootDirectory": "turf-app"
 } 
