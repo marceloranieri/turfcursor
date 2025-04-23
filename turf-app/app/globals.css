@@ -254,3 +254,55 @@ input:focus, textarea:focus {
   color: var(--color-text-secondary);
   margin-bottom: 2rem;
 }
+
+/* Loading indicators */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: var(--color-text-primary);
+  font-size: 1.2rem;
+  background-color: var(--color-background-primary);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: var(--color-accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-left: 1rem;
+}
+
+/* Skeleton loading */
+.skeleton {
+  animation: skeleton-loading 1.5s infinite;
+  background: linear-gradient(
+    90deg,
+    var(--color-background-tertiary) 25%,
+    var(--color-background-secondary) 50%,
+    var(--color-background-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

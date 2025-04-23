@@ -1,12 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize the Supabase client
-// In a production environment, you would use environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://csfdshydwdzexxosevml.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZmRzaHlkd2R6ZXh4b3Nldm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNjY1MTUsImV4cCI6MjA2MDk0MjUxNX0.psZNkXCiyhIgHetnjF1NxwY40jYSZb3qlor78T-FPcg';
+// Initialize the Supabase client with environment variables
+// These should be set in your deployment environment (Vercel, Netlify, etc.)
+// For local development, use .env.local file
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Please check your .env file.');
+}
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 // Types for database tables
 export type User = {
