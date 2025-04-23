@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
-import { supabase } from '../supabase/client';
+import { supabase } from '../supabaseClient';
 import { toast } from 'react-hot-toast';
 
 type AuthState = {
@@ -33,11 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
 
   useEffect(() => {
+    let mounted = true;
+
     const initialize = async () => {
       try {
-        // Get initial session
         const { data, error } = await supabase.auth.getSession();
         
+        if (!mounted) return;
+
         if (error) {
           console.error('Error getting auth session:', error.message);
           setState({
@@ -55,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isInitialized: true,
         });
       } catch (error) {
+        if (!mounted) return;
         console.error('Unexpected error during auth initialization:', error);
         setState({
           ...initialState,
@@ -66,9 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initialize();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!mounted) return;
         setState(prevState => ({
           ...prevState,
           session,
@@ -79,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -103,42 +108,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, username: string) => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
-      // First create the auth user
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
+      const { data, error } = await supabase.auth.signUp({
+        email,
         password,
         options: {
           data: {
             username,
-          }
-        }
+          },
+        },
       });
 
       if (error) {
         toast.error(error.message);
         return { error, user: null };
-      }
-
-      // If successful, create the user profile in the users table
-      if (data.user) {
-        const { error: profileError } = await supabase.from('users').insert({
-          id: data.user.id,
-          username,
-          email,
-          created_at: new Date().toISOString(),
-          harmony_points: 0,
-          genius_awards_received: 0,
-          genius_awards_remaining: 5,
-          is_debate_maestro: false
-        });
-
-        if (profileError) {
-          toast.error(`Profile creation failed: ${profileError.message}`);
-          return { error: new AuthError('Profile creation failed'), user: data.user };
-        }
-
-        toast.success('Account created successfully!');
-        return { error: null, user: data.user };
       }
 
       return { error: null, user: data.user };
@@ -154,11 +136,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
-      await supabase.auth.signOut();
-      toast.success('Signed out successfully');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error(error.message);
+      }
     } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Failed to sign out');
+      console.error('Unexpected error during sign out:', error);
+      toast.error('An unexpected error occurred during sign out');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -170,18 +154,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       });
-      
+
       if (error) {
         toast.error(error.message);
       } else {
         toast.success('Password reset email sent');
       }
-      
+
       return { error };
     } catch (error) {
-      console.error('Error resetting password:', error);
-      toast.error('Failed to send password reset email');
-      return { error: new AuthError('Failed to send password reset email') };
+      console.error('Unexpected error during password reset:', error);
+      toast.error('An unexpected error occurred during password reset');
+      return { error: new AuthError('An unexpected error occurred') };
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
@@ -190,25 +174,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = async (data: {username?: string, avatar_url?: string}) => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
-      if (!state.user) {
-        throw new Error('User not authenticated');
-      }
-
       const { error } = await supabase
-        .from('users')
-        .update(data)
-        .eq('id', state.user.id);
+        .from('profiles')
+        .upsert({
+          id: state.user?.id,
+          ...data,
+          updated_at: new Date().toISOString(),
+        });
 
       if (error) {
-        throw error;
+        toast.error(error.message);
+        return { error };
       }
 
       toast.success('Profile updated successfully');
       return { error: null };
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      toast.error(error.message || 'Failed to update profile');
-      return { error };
+    } catch (error) {
+      console.error('Unexpected error during profile update:', error);
+      toast.error('An unexpected error occurred during profile update');
+      return { error: error as Error };
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
     }
