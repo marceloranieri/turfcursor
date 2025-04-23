@@ -1,17 +1,14 @@
 [build]
-  base = "turf-app"
-  command = "npm run build"
-  publish = ".next"
+  base = "turf-app/"
+  publish = "out"
+  command = "npm install --legacy-peer-deps && npm run build"
 
 [build.environment]
-  NODE_VERSION = "18.19.0"
+  NODE_VERSION = "16.14.0"
   NPM_VERSION = "8.5.0"
-  NEXT_TELEMETRY_DISABLED = "1"
-
+  NPM_CONFIG_LEGACY_PEER_DEPS = "true"
+  
 [dev]
   command = "npm run dev"
   port = 3000
-  publish = "out"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs" 
+  publish = "out" 
