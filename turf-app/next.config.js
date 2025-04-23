@@ -9,12 +9,12 @@ const nextConfig = {
       },
     ],
   },
-  // Simplify the configuration for Vercel deployment
+  // Enable TypeScript and ESLint checks during build
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   experimental: {
     serverActions: true,
