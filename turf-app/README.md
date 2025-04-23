@@ -23,7 +23,7 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 - **Styling**: Tailwind CSS
 - **Database & Auth**: Supabase
 - **Edge Functions**: Supabase Functions
-- **Deployment**: Vercel/Netlify
+- **Deployment**: Vercel
 - **Automation**: GitHub Actions
 
 ## Getting Started
@@ -135,21 +135,18 @@ The Turf app features an automated system that rotates 5 unique debate topics ev
 
 ## Deployment
 
+The application is configured for deployment on Vercel.
+
 ### Deploying to Vercel
 
 1. Connect your GitHub repository to Vercel
-2. Add the following environment variables in your Vercel project settings:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_APP_URL`
-3. Deploy the project
+2. Add the environment variables in your Vercel project settings
+3. Deploy! Vercel will automatically detect the Next.js configuration and deploy appropriately
 
-### Deploying to Netlify
-
-1. Connect your GitHub repository to Netlify
-2. Add the environment variables in your Netlify project settings
-3. Set the build command to `npm run build` and publish directory to `out`
-4. Deploy the project
+Required environment variables:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_GIPHY_API_KEY`
 
 ## Contributing
 

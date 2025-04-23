@@ -1,8 +1,12 @@
-README.md
 .git
+.env*.local
+node_modules
+.next
+README.md
+.gitignore
+.DS_Store
 .env
 .env.*
-.gitignore
 .vscode
 docs
 supabase

@@ -1,7 +1,0 @@
-{
-  "name": "turf-monorepo",
-  "private": true,
-  "workspaces": [
-    "turf-app"
-  ]
-} 

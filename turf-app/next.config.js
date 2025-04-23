@@ -18,10 +18,7 @@ const nextConfig = {
   },
   // Configure output for optimal Vercel deployment
   output: 'standalone',
-  experimental: {
-    // Enable server actions (stable feature in Next.js 14)
-    serverActions: true,
-  },
+  distDir: '.next',
   // Add Vercel Speed Insights configuration
   webpack: (config) => {
     config.resolve.fallback = {

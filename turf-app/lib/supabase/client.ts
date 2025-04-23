@@ -2,7 +2,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
 
 // Initialize the Supabase client with environment variables
-// These should be set in your deployment environment (Vercel, Netlify, etc.)
+// These should be set in your Vercel deployment environment
 // For local development, use .env.local file
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
