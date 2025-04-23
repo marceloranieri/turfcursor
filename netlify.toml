@@ -1,13 +1,11 @@
 [build]
-  base = "turf-app/"
-  publish = "out"
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npm run build"
+  publish = ".next"
 
 [build.environment]
-  NODE_VERSION = "16.14.0"
+  NODE_VERSION = "18"
   NPM_VERSION = "8.5.0"
-  NPM_CONFIG_LEGACY_PEER_DEPS = "true"
-  
+
 [dev]
   command = "npm run dev"
   port = 3000
