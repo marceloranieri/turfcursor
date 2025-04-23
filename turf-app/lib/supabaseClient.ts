@@ -26,7 +26,13 @@ const createMockClient = () => {
 // Create the client with a try-catch to handle any initialization errors
 let supabase;
 try {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // Check if we're in a browser environment
+  if (typeof window !== 'undefined') {
+    supabase = createClient(supabaseUrl, supabaseAnonKey);
+  } else {
+    // In server-side rendering, use the mock client
+    supabase = createMockClient();
+  }
 } catch (error) {
   console.error('Error initializing Supabase client:', error);
   supabase = createMockClient();

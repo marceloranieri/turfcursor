@@ -12,26 +12,14 @@ const publicRoutes = [
 ];
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  
-  // Allow access to public routes
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-  
-  // For all other routes, proceed normally
+  // For now, just pass through all requests
   return NextResponse.next();
 }
 
+// Only run middleware on specific paths
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // Skip all internal paths (_next, api, etc)
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }; 
