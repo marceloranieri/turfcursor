@@ -1,6 +1,7 @@
 [build]
-  command = "npm run build"
-  publish = ".next"
+  base = "turf-app"
+  command = "npm install && npm run build"
+  publish = "turf-app/.next"
 
 [build.environment]
   NODE_VERSION = "18"
