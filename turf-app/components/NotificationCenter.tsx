@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { BellIcon, XIcon, CheckIcon } from '@heroicons/react/outline';
+import { BellIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { format, isToday, isYesterday } from 'date-fns';
 
 interface Notification {
@@ -144,7 +144,7 @@ export default function NotificationCenter({
                           className="flex-shrink-0 text-text-secondary hover:text-text-primary focus:outline-none"
                           aria-label="Mark as read"
                         >
-                          <CheckIcon className="w-4 h-4" />
+                          <CheckCircleIcon className="w-4 h-4" />
                         </button>
                       )}
                     </div>

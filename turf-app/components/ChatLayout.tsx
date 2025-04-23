@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { HomeIcon, UserIcon, CogIcon, ChatIcon, LogoutIcon, PlusIcon, HashtagIcon } from '@heroicons/react/outline';
+import { HomeIcon, UserIcon, CogIcon, ChatIcon, ArrowRightOnRectangleIcon, PlusIcon, HashtagIcon } from '@heroicons/react/24/outline';
 import { Circle } from '../lib/supabase/client';
 import NotificationCenter from './NotificationCenter';
 
@@ -129,7 +129,7 @@ export default function ChatLayout({
             onClick={handleLogout}
             className="p-2 rounded-full hover:bg-background-secondary text-text-secondary hover:text-white transition-colors duration-200 focus:outline-none"
           >
-            <LogoutIcon className="w-6 h-6" />
+            <ArrowRightOnRectangleIcon className="w-6 h-6" />
           </button>
         )}
       </div>
@@ -328,7 +328,7 @@ export default function ChatLayout({
                       onClick={handleLogout}
                       className="w-full flex items-center p-3 rounded-md hover:bg-background-tertiary text-text-primary"
                     >
-                      <LogoutIcon className="w-5 h-5 mr-3" />
+                      <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
                       Logout
                     </button>
                   ) : (
@@ -339,7 +339,7 @@ export default function ChatLayout({
                       }}
                       className="w-full flex items-center p-3 rounded-md bg-accent-primary text-white"
                     >
-                      <LogoutIcon className="w-5 h-5 mr-3" />
+                      <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
                       Sign In
                     </button>
                   )}

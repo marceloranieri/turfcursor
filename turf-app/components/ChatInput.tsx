@@ -1,5 +1,5 @@
 import React, { useState, FormEvent, useRef } from 'react';
-import { EmojiHappyIcon, PhotographIcon, PaperClipIcon } from '@heroicons/react/outline';
+import { FaceSmileIcon, PhotoIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import GiphySearch from './GiphySearch';
 
 interface ChatInputProps {
@@ -76,7 +76,7 @@ export default function ChatInput({
           className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-background-tertiary"
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
         >
-          <EmojiHappyIcon className="h-5 w-5" />
+          <FaceSmileIcon className="h-5 w-5" />
         </button>
         
         {/* GIF button */}
@@ -85,7 +85,7 @@ export default function ChatInput({
           className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-background-tertiary"
           onClick={() => setShowGifSearch(!showGifSearch)}
         >
-          <PhotographIcon className="h-5 w-5" />
+          <PhotoIcon className="h-5 w-5" />
         </button>
         
         {/* Attachment button */}

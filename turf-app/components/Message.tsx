@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { User, Reaction, Message as MessageType } from '../lib/supabase/client';
-import { ReplyIcon, ThumbUpIcon, ThumbDownIcon, GiftIcon, EmojiHappyIcon } from '@heroicons/react/outline';
+import { ArrowUturnLeftIcon, HandThumbUpIcon, HandThumbDownIcon, GiftIcon, FaceSmileIcon } from '@heroicons/react/24/outline';
 import ReactionPicker from './ReactionPicker';
 
 interface MessageProps {
@@ -62,7 +62,7 @@ export default function Message({
       {/* Reply reference */}
       {replyTo && (
         <div className="flex items-center text-xs text-text-muted ml-12 mb-1">
-          <ReplyIcon className="w-3 h-3 mr-1" />
+          <ArrowUturnLeftIcon className="w-3 h-3 mr-1" />
           <span>Replying to message</span>
         </div>
       )}
@@ -127,7 +127,7 @@ export default function Message({
               onClick={() => onReply(message.id)}
               className="flex items-center text-xs hover:text-accent-primary transition-colors"
             >
-              <ReplyIcon className="w-4 h-4 mr-1" />
+              <ArrowUturnLeftIcon className="w-4 h-4 mr-1" />
               Reply
             </button>
             
@@ -137,7 +137,7 @@ export default function Message({
                 message.upvotes > 0 ? 'text-accent-primary' : ''
               }`}
             >
-              <ThumbUpIcon className="w-4 h-4 mr-1" />
+              <HandThumbUpIcon className="w-4 h-4 mr-1" />
               {message.upvotes > 0 ? message.upvotes : ''}
             </button>
             
@@ -147,7 +147,7 @@ export default function Message({
                 message.downvotes > 0 ? 'text-danger' : ''
               }`}
             >
-              <ThumbDownIcon className="w-4 h-4 mr-1" />
+              <HandThumbDownIcon className="w-4 h-4 mr-1" />
               {message.downvotes > 0 ? message.downvotes : ''}
             </button>
             
@@ -155,7 +155,7 @@ export default function Message({
               onClick={handleReactionClick}
               className="flex items-center text-xs hover:text-accent-primary transition-colors"
             >
-              <EmojiHappyIcon className="w-4 h-4 mr-1" />
+              <FaceSmileIcon className="w-4 h-4 mr-1" />
               React
             </button>
             

@@ -5,7 +5,7 @@ import ChatLayout from '../../components/ChatLayout';
 import Message from '../../components/Message';
 import ChatInput from '../../components/ChatInput';
 import { Message as MessageType, User, Reaction as ReactionType, Circle } from '../../lib/supabase/client';
-import { BellIcon } from '@heroicons/react/outline';
+import { BellIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { 

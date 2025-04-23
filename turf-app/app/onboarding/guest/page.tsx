@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { EyeIcon, UserAddIcon } from '@heroicons/react/outline';
+import { EyeIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 
 export default function GuestMode() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function GuestMode() {
           
           <div className="flex items-start">
             <div className="bg-accent-secondary bg-opacity-20 p-2 rounded-full mr-3">
-              <UserAddIcon className="h-6 w-6 text-accent-secondary" />
+              <UserPlusIcon className="h-6 w-6 text-accent-secondary" />
             </div>
             <div>
               <h3 className="font-semibold mb-1">Create an account to:</h3>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SearchIcon, XIcon } from '@heroicons/react/outline';
+import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
 interface GiphySearchProps {
@@ -144,14 +144,14 @@ export default function GiphySearch({ onSelect, onClose }: GiphySearchProps) {
           className="p-1 rounded-full hover:bg-background-secondary text-text-muted hover:text-text-primary"
           onClick={onClose}
         >
-          <XIcon className="h-5 w-5" />
+          <XMarkIcon className="h-5 w-5" />
         </button>
       </div>
       
       <form onSubmit={handleSearch} className="flex mb-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <SearchIcon className="h-5 w-5 text-text-muted" />
+            <MagnifyingGlassIcon className="h-5 w-5 text-text-muted" />
           </div>
           <input
             type="text"
