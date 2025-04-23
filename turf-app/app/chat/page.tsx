@@ -6,6 +6,7 @@ import Message from '../../components/Message';
 import ChatInput from '../../components/ChatInput';
 import { supabase, Message as MessageType, User, Reaction as ReactionType, Circle } from '../../lib/supabase/client';
 import { BellIcon } from '@heroicons/react/outline';
+import Link from 'next/link';
 
 // Mock data for development purposes
 const mockUsers: User[] = [
@@ -320,11 +321,11 @@ export default function Chat() {
       geniusAwardsRemaining={users['user-1'].genius_awards_remaining}
       notifications={[]}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full bg-background">
         {/* Chat header */}
         <div className="p-4 border-b border-background-tertiary flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-text-primary">
               {circles.find(c => c.id === activeCircleId)?.topic}
             </h2>
             <p className="text-text-secondary text-sm">
@@ -333,7 +334,7 @@ export default function Chat() {
           </div>
           
           <button 
-            className="p-2 rounded-full hover:bg-background-tertiary text-text-secondary hover:text-text-primary"
+            className="p-2 rounded-full hover:bg-background-tertiary text-text-secondary hover:text-text-primary transition-colors"
             onClick={() => {/* Show notifications */}}
           >
             <BellIcon className="h-6 w-6" />
@@ -342,10 +343,10 @@ export default function Chat() {
         
         {/* Pinned message */}
         {pinnedMessage && (
-          <div className="px-4 py-2 bg-background-secondary border-b border-background-tertiary">
+          <div className="px-4 py-2 bg-background-secondary/50 border-b border-accent-primary border-opacity-50">
             <div className="pinned-message">
               <div className="flex items-center mb-2">
-                <span className="text-accent-primary font-semibold">Pinned Message</span>
+                <span className="text-accent-primary font-semibold">📌 Pinned Message</span>
                 <span className="ml-2 text-text-secondary text-xs">Most engaging message right now</span>
               </div>
               <p className="text-text-primary">{pinnedMessage.content}</p>
@@ -383,7 +384,7 @@ export default function Chat() {
         </div>
         
         {/* Chat input */}
-        <div className="mt-auto">
+        <div className="mt-auto border-t border-background-tertiary p-4">
           <ChatInput
             onSendMessage={handleSendMessage}
             replyingTo={replyToId}
@@ -392,39 +393,36 @@ export default function Chat() {
             onAuthPrompt={() => setShowAuthModal(true)}
           />
         </div>
-        
-        {/* Mobile spacing for bottom nav */}
-        <div className="h-16 md:hidden" />
       </div>
       
       {/* Authentication modal */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-30 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-30 bg-black bg-opacity-70 flex items-center justify-center">
           <div className="bg-background-secondary rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Sign in to continue</h2>
+            <h2 className="text-xl font-bold mb-4 text-text-primary">Sign in to continue</h2>
             <p className="mb-6 text-text-secondary">
               You need to sign in or create an account to participate in discussions.
             </p>
             <div className="space-y-4">
-              <button 
-                className="button-primary w-full"
-                onClick={() => {
-                  setIsAuthenticated(true);
-                  setShowAuthModal(false);
-                }}
+              <Link 
+                href="/auth/signin"
+                className="block w-full button-primary text-center"
               >
                 Sign In
-              </button>
-              <button 
-                className="button-secondary w-full"
-                onClick={() => {
-                  /* Navigate to signup page */
-                  setShowAuthModal(false);
-                }}
+              </Link>
+              <Link 
+                href="/auth/signup"
+                className="block w-full button-secondary text-center"
               >
                 Create Account
-              </button>
+              </Link>
             </div>
+            <button 
+              onClick={() => setShowAuthModal(false)}
+              className="mt-4 text-text-secondary hover:text-text-primary transition-colors text-sm"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

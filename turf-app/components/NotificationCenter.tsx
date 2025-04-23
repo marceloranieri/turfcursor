@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { BellIcon, XIcon } from '@heroicons/react/outline';
+import React, { useState, useRef, useEffect } from 'react';
+import { BellIcon, XIcon, CheckIcon } from '@heroicons/react/outline';
+import { format, isToday, isYesterday } from 'date-fns';
 
 interface Notification {
   id: string;
@@ -18,105 +19,148 @@ interface NotificationCenterProps {
   onClearAll: () => void;
 }
 
-export default function NotificationCenter({
-  notifications,
-  onMarkAsRead,
-  onClearAll,
+export default function NotificationCenter({ 
+  notifications, 
+  onMarkAsRead, 
+  onClearAll 
 }: NotificationCenterProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const unreadCount = notifications.filter(n => !n.read).length;
   
-  const toggleOpen = () => {
-    setIsOpen(!isOpen);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  const formatNotificationTime = (date: Date) => {
+    if (isToday(date)) {
+      return `Today at ${format(date, 'h:mm a')}`;
+    } else if (isYesterday(date)) {
+      return `Yesterday at ${format(date, 'h:mm a')}`;
+    } else {
+      return format(date, 'MMM d, yyyy');
+    }
   };
   
-  const getTypeIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'harmony_points':
-        return <span className="text-accent-primary">🎯</span>;
+        return (
+          <div className="w-8 h-8 rounded-full bg-accent-primary/20 flex items-center justify-center text-accent-primary">
+            <span className="text-lg font-bold">HP</span>
+          </div>
+        );
       case 'genius_award':
-        return <span className="text-gold">🏆</span>;
+        return (
+          <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center text-gold">
+            <span className="text-lg font-bold">⭐</span>
+          </div>
+        );
       case 'pinned':
-        return <span>📌</span>;
+        return (
+          <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+            </svg>
+          </div>
+        );
       case 'wizard':
-        return <span>🧙</span>;
-      case 'general':
-        return <span>📢</span>;
+        return (
+          <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500">
+            <span className="text-lg font-bold">🧙</span>
+          </div>
+        );
+      default:
+        return (
+          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+            <span className="text-lg font-bold">i</span>
+          </div>
+        );
     }
   };
   
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
-        onClick={toggleOpen}
-        className="relative p-2 rounded-full hover:bg-background-tertiary transition-colors focus:outline-none"
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 rounded-full hover:bg-background-tertiary focus:outline-none transition-colors"
         aria-label="Notifications"
       >
-        <BellIcon className="w-6 h-6 text-text-primary" />
+        <BellIcon className="w-5 h-5 text-text-primary" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-accent-primary rounded-full">
-            {unreadCount}
+          <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-xs font-bold text-white">
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-background-secondary rounded-lg shadow-lg overflow-hidden z-50">
-          <div className="flex items-center justify-between p-4 border-b border-background-tertiary">
-            <h3 className="font-semibold text-text-primary">Notifications</h3>
+        <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-background-secondary rounded-md shadow-lg z-50 border border-background-tertiary">
+          <div className="p-3 border-b border-background-tertiary flex justify-between items-center">
+            <h3 className="font-medium text-text-primary">Notifications</h3>
             {notifications.length > 0 && (
-              <button
+              <button 
                 onClick={onClearAll}
-                className="text-xs text-accent-primary hover:underline focus:outline-none"
+                className="text-xs text-text-secondary hover:text-text-primary focus:outline-none"
               >
                 Clear all
               </button>
             )}
           </div>
           
-          <div className="max-h-96 overflow-y-auto">
+          <div className="divide-y divide-background-tertiary">
             {notifications.length === 0 ? (
-              <div className="p-4 text-center text-text-secondary">
-                <p>No notifications yet!</p>
+              <div className="py-6 px-4 text-center">
+                <p className="text-text-secondary text-sm">No notifications yet</p>
               </div>
             ) : (
-              <ul>
-                {notifications.map((notification) => (
-                  <li
-                    key={notification.id}
-                    className={`p-4 border-b border-background-tertiary hover:bg-background-tertiary transition-colors ${
-                      !notification.read ? 'bg-opacity-10 bg-accent-primary' : ''
-                    }`}
-                    onClick={() => onMarkAsRead(notification.id)}
-                  >
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0 mr-3 mt-1">
-                        {getTypeIcon(notification.type)}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-text-primary">{notification.message}</p>
-                        {notification.wizNote && (
-                          <p className="text-xs italic text-accent-secondary mt-1">
-                            "{notification.wizNote}"
-                          </p>
-                        )}
-                        <p className="text-xs text-text-muted mt-1">
-                          {notification.timestamp.toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
+              notifications.map((notification) => (
+                <div 
+                  key={notification.id} 
+                  className={`p-3 flex items-start gap-3 hover:bg-background/40 transition-colors ${
+                    !notification.read ? 'bg-background/20' : ''
+                  }`}
+                >
+                  {getNotificationIcon(notification.type)}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2">
+                      <p className="text-sm font-medium text-text-primary">
+                        {notification.message}
+                      </p>
                       {!notification.read && (
-                        <div className="flex-shrink-0 ml-2">
-                          <div className="w-2 h-2 rounded-full bg-accent-primary"></div>
-                        </div>
+                        <button
+                          onClick={() => onMarkAsRead(notification.id)}
+                          className="flex-shrink-0 text-text-secondary hover:text-text-primary focus:outline-none"
+                          aria-label="Mark as read"
+                        >
+                          <CheckIcon className="w-4 h-4" />
+                        </button>
                       )}
                     </div>
-                  </li>
-                ))}
-              </ul>
+                    
+                    {notification.wizNote && (
+                      <p className="text-xs text-text-secondary mt-1 italic">
+                        "{notification.wizNote}"
+                      </p>
+                    )}
+                    
+                    <p className="text-xs text-text-muted mt-1">
+                      {formatNotificationTime(notification.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>

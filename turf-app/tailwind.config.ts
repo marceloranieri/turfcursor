@@ -31,22 +31,41 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        "background-secondary": "var(--background-secondary)",
-        "background-tertiary": "var(--background-tertiary)",
-        "text-primary": "var(--text-primary)",
-        "text-secondary": "var(--text-secondary)",
-        "text-muted": "var(--text-muted)",
-        "accent-primary": "var(--accent-primary)",
-        "accent-secondary": "var(--accent-secondary)",
-        success: "var(--success)",
-        danger: "var(--danger)",
-        warning: "var(--warning)",
+        'background': {
+          DEFAULT: '#2C2F33', // Discord dark gray
+          'secondary': '#23272A', // Darker gray
+          'tertiary': '#202225', // Almost black
+        },
+        'text': {
+          'primary': '#FFFFFF', // White
+          'secondary': '#B9BBBE', // Light gray
+          'muted': '#72767D', // Medium gray
+        },
+        'accent': {
+          'primary': '#FFD700', // Gold
+          'secondary': '#2F80ED', // Bright blue
+        },
+        'gold': '#FFD700',
+        'success': '#57F287', // Discord green
+        'danger': '#ED4245', // Discord red
+        'warning': '#FEE75C', // Discord yellow
       },
       screens: {
         'mobile': {'max': '767px'},
         'tablet': {'min': '768px', 'max': '1279px'},
         'desktop': {'min': '1280px'},
+      },
+      fontFamily: {
+        sans: ['Inter', 'Roboto', 'SF Pro', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'message': '0 1px 3px rgba(0, 0, 0, 0.1)',
+        'card': '0 4px 6px rgba(0, 0, 0, 0.1)',
+      },
+      borderRadius: {
+        'message': '4px',
+        'button': '4px',
+        'input': '4px',
       },
     },
   },

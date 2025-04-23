@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { User, Reaction, Message as MessageType } from '../lib/supabase/client';
 import { ReplyIcon, ThumbUpIcon, ThumbDownIcon, GiftIcon, EmojiHappyIcon } from '@heroicons/react/outline';
+import ReactionPicker from './ReactionPicker';
 
 interface MessageProps {
   message: MessageType;
@@ -169,18 +170,11 @@ export default function Message({
           
           {/* Emoji picker */}
           {showReactionPicker && (
-            <div className="mt-2 p-2 bg-background-secondary rounded-lg shadow-lg border border-background-tertiary">
-              <div className="flex flex-wrap gap-2">
-                {commonEmojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => handleEmojiSelect(emoji)}
-                    className="w-8 h-8 flex items-center justify-center hover:bg-background-tertiary rounded"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
+            <div className="mt-2 relative">
+              <ReactionPicker 
+                onSelectEmoji={handleEmojiSelect} 
+                onClose={() => setShowReactionPicker(false)} 
+              />
             </div>
           )}
         </div>

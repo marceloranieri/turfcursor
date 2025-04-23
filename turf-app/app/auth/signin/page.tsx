@@ -1,163 +1,137 @@
 'use client';
 
-import React, { useState } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase/client';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
-      // In a real app, you would connect to Supabase auth
-      // const { data, error } = await supabase.auth.signInWithPassword({
-      //   email,
-      //   password,
-      // });
-      
-      // if (error) throw error;
-      
-      // For demo, simulate successful login
-      setTimeout(() => {
-        setLoading(false);
-        router.push('/chat');
-      }, 1000);
-    } catch (err) {
-      setError('Invalid email or password');
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      router.push('/chat');
+    } catch (error: any) {
+      setError(error.message || 'An error occurred during sign in.');
+    } finally {
       setLoading(false);
     }
   };
-  
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-background-secondary">
-      <div className="max-w-md w-full bg-background-tertiary rounded-lg p-8 shadow-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-accent-primary mb-2">Sign In</h1>
-          <p className="text-text-secondary">Welcome back to Turf!</p>
-        </div>
+    <div className="auth-container bg-background">
+      <div className="mb-8">
+        <h1 className="text-5xl font-bold text-text-primary">Turf</h1>
+        <p className="text-xl text-text-secondary mt-2">Daily Debates. Real Connections.</p>
+      </div>
+      
+      <div className="auth-card">
+        <h2 className="auth-title">Sign In</h2>
         
         {error && (
-          <div className="bg-danger bg-opacity-20 text-danger p-3 rounded-md mb-4">
+          <div className="bg-danger/10 border border-danger text-text-primary p-3 rounded-md mb-4">
             {error}
           </div>
         )}
         
         <form onSubmit={handleSignIn} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-text-secondary mb-1">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-text-secondary mb-1">Email</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="your@email.com"
               required
+              className="w-full p-3 bg-background-tertiary border border-background-tertiary rounded-md text-text-primary focus:border-accent-primary focus:outline-none"
+              placeholder="your@email.com"
             />
           </div>
           
           <div>
-            <label htmlFor="password" className="block text-text-secondary mb-1">
-              Password
-            </label>
+            <label htmlFor="password" className="block text-text-secondary mb-1">Password</label>
             <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
               required
+              className="w-full p-3 bg-background-tertiary border border-background-tertiary rounded-md text-text-primary focus:border-accent-primary focus:outline-none"
+              placeholder="••••••••"
             />
-          </div>
-          
-          <div className="flex justify-end">
-            <Link 
-              href="/auth/forgot-password" 
-              className="text-accent-secondary hover:underline text-sm"
-            >
-              Forgot password?
-            </Link>
           </div>
           
           <button
             type="submit"
-            className={`button-primary w-full ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             disabled={loading}
+            className="w-full button-primary"
           >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-background mr-2"></div>
-                Signing in...
-              </div>
-            ) : (
-              'Sign In'
-            )}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
         
-        <div className="mt-6 text-center">
-          <p className="text-text-secondary">
-            Don't have an account?{' '}
-            <Link href="/auth/signup" className="text-accent-primary hover:underline">
-              Sign Up
-            </Link>
-          </p>
+        <div className="mt-6">
+          <p className="text-text-secondary text-center">Don't have an account?</p>
+          <Link 
+            href="/auth/signup"
+            className="block text-center mt-2 text-accent-primary hover:underline"
+          >
+            Sign Up
+          </Link>
         </div>
         
         <div className="mt-8">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-background-secondary"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background-tertiary text-text-secondary">
-                Or continue with
-              </span>
-            </div>
-          </div>
-          
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <button className="py-2 px-4 border border-background-secondary rounded-md hover:bg-background-secondary">
-              <div className="flex justify-center">
-                <span className="sr-only">Sign in with Google</span>
-                <svg className="h-5 w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
-                </svg>
-              </div>
+          <p className="text-text-secondary text-center mb-4">Or continue with</p>
+          <div className="flex justify-center space-x-4">
+            <button className="social-auth-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+              </svg>
             </button>
-            
-            <button className="py-2 px-4 border border-background-secondary rounded-md hover:bg-background-secondary">
-              <div className="flex justify-center">
-                <span className="sr-only">Sign in with Facebook</span>
-                <svg className="h-5 w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                  <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-                </svg>
-              </div>
+            <button className="social-auth-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"></path>
+                <path d="M2 12h10"></path>
+                <path d="M12 2v10"></path>
+              </svg>
             </button>
-            
-            <button className="py-2 px-4 border border-background-secondary rounded-md hover:bg-background-secondary">
-              <div className="flex justify-center">
-                <span className="sr-only">Sign in with GitHub</span>
-                <svg className="h-5 w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                </svg>
-              </div>
+            <button className="social-auth-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
             </button>
           </div>
         </div>
+        
+        <div className="mt-8 text-text-muted text-xs text-center">
+          <p>By continuing, you agree to our Terms of Service and Privacy Policy.</p>
+        </div>
       </div>
-    </main>
+      
+      <div className="mt-6">
+        <Link 
+          href="/"
+          className="text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Return Home
+        </Link>
+      </div>
+    </div>
   );
 } 
