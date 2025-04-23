@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Use a more defensive approach for environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-// Create a mock client for development if environment variables are missing
+// Create a mock client for development/build if environment variables are missing
 const createMockClient = () => {
   console.warn('Using mock Supabase client - environment variables are missing');
   return {
@@ -22,6 +23,14 @@ const createMockClient = () => {
   };
 };
 
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : createMockClient(); 
+// Create the client with a try-catch to handle any initialization errors
+let supabase;
+try {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
+} catch (error) {
+  console.error('Error initializing Supabase client:', error);
+  supabase = createMockClient();
+}
+
+export { supabase };
+export default supabase; 
