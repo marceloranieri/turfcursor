@@ -1,6 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "cd turf-app && npm install && npm run build",
-  "outputDirectory": "turf-app/.next",
-  "installCommand": "cd turf-app && npm install"
+  "outputDirectory": "turf-app/.next"
 } 
