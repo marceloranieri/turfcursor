@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light mode colors */
+  --background: #E6F0FA;
+  --background-secondary: #FFFFFF;
+  --background-tertiary: #F2F2F2;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --accent-primary: #007BFF;
+  --accent-secondary: #2F80ED; /* Discord blurple */
+  --gold: #FFD700;
+  --success: #43B581;
+  --danger: #F04747;
+  --warning: #FAA61A;
+}
+
+/* Dark mode colors */
+.dark-mode {
+  --background: #2C2F33;
+  --background-secondary: #36393F;
+  --background-tertiary: #202225;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B9BBBE;
+  --text-muted: #72767D;
+  --accent-primary: #007BFF;
+  --accent-secondary: #2F80ED;
+}
+
+/* Auto dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #2C2F33;
+    --background-secondary: #36393F;
+    --background-tertiary: #202225;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B9BBBE;
+    --text-muted: #72767D;
+  }
+}
+
+body {
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: 'Roboto', 'Inter', 'Open Sans', sans-serif;
+}
+
+/* Discord-inspired components */
+.message-bubble {
+  @apply p-3 rounded-lg my-1;
+  background-color: var(--background-secondary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.message-bubble.wizard {
+  @apply border-l-4;
+  border-left-color: var(--accent-secondary);
+  background-color: rgba(47, 128, 237, 0.1);
+}
+
+.button-primary {
+  @apply px-4 py-2 rounded-md font-medium transition-colors;
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+}
+
+.button-primary:hover {
+  @apply brightness-90;
+}
+
+.button-secondary {
+  @apply px-4 py-2 rounded-md font-medium border transition-colors;
+  background-color: transparent;
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.button-secondary:hover {
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+}
+
+.button-gold {
+  @apply px-4 py-2 rounded-md font-medium transition-colors;
+  background-color: var(--gold);
+  color: var(--background-tertiary);
+}
+
+.button-gold:hover {
+  @apply brightness-90;
+}
+
+.input-field {
+  @apply px-4 py-2 rounded-md w-full;
+  background-color: var(--background-tertiary);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+}
+
+.input-field:focus {
+  @apply outline-none;
+  border-color: var(--accent-primary);
+}
+
+/* Specific component styles */
+.pinned-message {
+  @apply border-2 rounded-lg p-3 my-2;
+  border-color: var(--gold);
+  background-color: var(--background-secondary);
+}
+
+.reaction-button {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-1 transition-colors;
+  background-color: var(--background-tertiary);
+  color: var(--text-secondary);
+}
+
+.reaction-button:hover,
+.reaction-button.active {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: var(--accent-primary);
+}
+
+.genius-award {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-1;
+  background-color: var(--gold);
+  color: var(--background-tertiary);
+}
+
+.harmony-points {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-1;
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+}
+
+.harmony-points.negative {
+  background-color: var(--danger);
+}
+
+/* Desktop layout */
+@media (min-width: 1280px) {
+  .app-container {
+    @apply grid grid-cols-12 h-screen w-screen;
+  }
+  
+  .sidebar {
+    @apply col-span-1 h-full;
+    background-color: var(--background-tertiary);
+  }
+  
+  .channel-list {
+    @apply col-span-2 h-full overflow-y-auto;
+    background-color: var(--background-secondary);
+  }
+  
+  .chat-area {
+    @apply col-span-9 h-full overflow-hidden flex flex-col;
+  }
+}
+
+/* Tablet layout */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .app-container {
+    @apply grid grid-cols-12 h-screen w-screen;
+  }
+  
+  .sidebar {
+    @apply col-span-1 h-full;
+    background-color: var(--background-tertiary);
+  }
+  
+  .channel-list {
+    @apply col-span-3 h-full overflow-y-auto;
+    background-color: var(--background-secondary);
+  }
+  
+  .chat-area {
+    @apply col-span-8 h-full overflow-hidden flex flex-col;
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 767px) {
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 flex justify-around items-center p-3;
+    background-color: var(--background-secondary);
+    border-top: 1px solid var(--background-tertiary);
+    z-index: 100;
+  }
+  
+  .chat-area {
+    @apply pb-16;
+  }
+}

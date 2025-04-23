@@ -1,0 +1,197 @@
+'use client';
+
+import React, { useState } from 'react';
+import Image from 'next/image';
+import { User, Reaction, Message as MessageType } from '../lib/supabase/client';
+import { ReplyIcon, ThumbUpIcon, ThumbDownIcon, GiftIcon, EmojiHappyIcon } from '@heroicons/react/outline';
+
+interface MessageProps {
+  message: MessageType;
+  user: User;
+  reactions: Reaction[];
+  replyToMessage?: MessageType;
+  replyToUser?: User;
+  onReply: (messageId: string) => void;
+  onReaction: (messageId: string, reaction: string) => void;
+  onUpvote: (messageId: string) => void;
+  onDownvote: (messageId: string) => void;
+  onGeniusAward: (messageId: string) => void;
+  remainingGeniusAwards: number;
+}
+
+export default function Message({
+  message,
+  user,
+  reactions,
+  replyToMessage,
+  replyToUser,
+  onReply,
+  onReaction,
+  onUpvote,
+  onDownvote,
+  onGeniusAward,
+  remainingGeniusAwards,
+}: MessageProps) {
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  
+  // Group reactions by content
+  const groupedReactions = reactions.reduce((acc, reaction) => {
+    if (!acc[reaction.content]) {
+      acc[reaction.content] = [];
+    }
+    acc[reaction.content].push(reaction);
+    return acc;
+  }, {} as Record<string, Reaction[]>);
+  
+  // Common emoji reactions
+  const commonEmojis = ['👍', '👎', '❤️', '😂', '😮', '🎉', '🔥', '👀'];
+  
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  const handleReactionClick = () => {
+    setShowReactionPicker(!showReactionPicker);
+  };
+  
+  const handleEmojiSelect = (emoji: string) => {
+    onReaction(message.id, emoji);
+    setShowReactionPicker(false);
+  };
+  
+  return (
+    <div className={`my-4 ${message.is_wizard ? 'message-bubble wizard' : ''}`}>
+      {/* Reply reference */}
+      {replyToMessage && replyToUser && (
+        <div className="flex items-center text-xs text-text-muted ml-12 mb-1">
+          <ReplyIcon className="w-3 h-3 mr-1" />
+          <span>Replying to </span>
+          <span className="font-medium ml-1">{replyToUser.username}</span>
+        </div>
+      )}
+      
+      <div className="flex items-start">
+        {/* User avatar */}
+        <div className="flex-shrink-0 mr-3">
+          <div className="w-10 h-10 rounded-full bg-background-tertiary flex items-center justify-center text-lg font-semibold text-text-primary">
+            {user.username.charAt(0).toUpperCase()}
+          </div>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center">
+            {/* Username */}
+            <span className="font-semibold text-text-primary">
+              {user.username}
+              {user.is_debate_maestro && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gold text-background">
+                  Debate Maestro
+                </span>
+              )}
+            </span>
+            
+            {/* Timestamp */}
+            <span className="ml-2 text-sm text-text-muted">
+              {formatTime(message.created_at)}
+            </span>
+            
+            {/* Harmony points (if any) */}
+            {(message.upvotes > 0 || message.downvotes > 0) && (
+              <span className={`ml-2 harmony-points ${message.upvotes - message.downvotes < 0 ? 'negative' : ''}`}>
+                {message.upvotes - message.downvotes > 0 ? '+' : ''}{message.upvotes - message.downvotes}
+              </span>
+            )}
+          </div>
+          
+          {/* Message content */}
+          <div className="mt-1 text-text-primary whitespace-pre-wrap break-words">
+            {message.content}
+          </div>
+          
+          {/* Reactions */}
+          {Object.keys(groupedReactions).length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {Object.entries(groupedReactions).map(([emoji, reactions]) => (
+                <button
+                  key={emoji}
+                  onClick={() => onReaction(message.id, emoji)}
+                  className="reaction-button"
+                >
+                  <span>{emoji}</span>
+                  <span className="ml-1">{reactions.length}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {/* Action buttons */}
+          <div className="mt-2 flex items-center space-x-2 text-text-muted">
+            <button
+              onClick={() => onReply(message.id)}
+              className="flex items-center text-xs hover:text-accent-primary transition-colors"
+            >
+              <ReplyIcon className="w-4 h-4 mr-1" />
+              Reply
+            </button>
+            
+            <button
+              onClick={() => onUpvote(message.id)}
+              className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
+                message.upvotes > 0 ? 'text-accent-primary' : ''
+              }`}
+            >
+              <ThumbUpIcon className="w-4 h-4 mr-1" />
+              {message.upvotes > 0 ? message.upvotes : ''}
+            </button>
+            
+            <button
+              onClick={() => onDownvote(message.id)}
+              className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
+                message.downvotes > 0 ? 'text-danger' : ''
+              }`}
+            >
+              <ThumbDownIcon className="w-4 h-4 mr-1" />
+              {message.downvotes > 0 ? message.downvotes : ''}
+            </button>
+            
+            <button
+              onClick={handleReactionClick}
+              className="flex items-center text-xs hover:text-accent-primary transition-colors"
+            >
+              <EmojiHappyIcon className="w-4 h-4 mr-1" />
+              React
+            </button>
+            
+            {remainingGeniusAwards > 0 && (
+              <button
+                onClick={() => onGeniusAward(message.id)}
+                className="flex items-center text-xs hover:text-gold transition-colors"
+              >
+                <GiftIcon className="w-4 h-4 mr-1" />
+                Genius
+              </button>
+            )}
+          </div>
+          
+          {/* Emoji picker */}
+          {showReactionPicker && (
+            <div className="mt-2 p-2 bg-background-secondary rounded-lg shadow-lg border border-background-tertiary">
+              <div className="flex flex-wrap gap-2">
+                {commonEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleEmojiSelect(emoji)}
+                    className="w-8 h-8 flex items-center justify-center hover:bg-background-tertiary rounded"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+} 
