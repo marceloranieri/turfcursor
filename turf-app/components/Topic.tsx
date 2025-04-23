@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase/client';
+import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../lib/auth/AuthContext';
 import toast from 'react-hot-toast';
 import DiscordLayout from './layout/DiscordLayout';
@@ -41,7 +43,11 @@ export default function Topic() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching topics:', error);
+        toast.error('Failed to load topics');
+        return;
+      }
 
       const mappedTopics = data?.map((topic: any) => ({
         id: topic.id,
@@ -55,8 +61,8 @@ export default function Topic() {
         setCurrentTopic(mappedTopics[0].id);
       }
     } catch (error) {
-      console.error('Error fetching topics:', error);
-      toast.error('Failed to load topics');
+      console.error('Unexpected error fetching topics:', error);
+      toast.error('An unexpected error occurred while loading topics');
     }
   }, [currentTopic]);
 
@@ -77,7 +83,11 @@ export default function Topic() {
         .eq('topic_id', currentTopic)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching messages:', error);
+        toast.error('Failed to load messages');
+        return;
+      }
 
       const mappedMessages = data?.map((message: any) => ({
         id: message.id,
@@ -93,59 +103,37 @@ export default function Topic() {
 
       setMessages(mappedMessages);
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      toast.error('Failed to load messages');
+      console.error('Unexpected error fetching messages:', error);
+      toast.error('An unexpected error occurred while loading messages');
     } finally {
       setLoading(false);
     }
   }, [currentTopic]);
 
-  useEffect(() => {
-    fetchTopics();
-  }, [fetchTopics]);
-
-  useEffect(() => {
-    if (currentTopic) {
-      fetchMessages();
-    }
-  }, [currentTopic, fetchMessages]);
-
   const sendMessage = async () => {
-    if (!inputValue.trim() || !user || !currentTopic) return;
+    if (!inputValue.trim() || !currentTopic || !user) return;
 
     try {
-      const newMessage = {
-        content: inputValue.trim(),
-        topic_id: currentTopic,
-        user_id: user.id
-      };
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('messages')
-        .insert([newMessage])
-        .select();
+        .insert({
+          content: inputValue.trim(),
+          topic_id: currentTopic,
+          user_id: user.id,
+          created_at: new Date().toISOString()
+        });
 
-      if (error) throw error;
-
-      if (data) {
-        const mappedMessage = {
-          id: data[0].id,
-          content: data[0].content,
-          author: {
-            name: user.email?.split('@')[0] || 'Anonymous',
-            avatar: user.user_metadata?.avatar_url
-          },
-          timestamp: new Date(data[0].created_at),
-          reactions: []
-        };
-
-        setMessages([...messages, mappedMessage]);
-        setInputValue('');
-        toast.success('Message sent!');
+      if (error) {
+        console.error('Error sending message:', error);
+        toast.error('Failed to send message');
+        return;
       }
+
+      setInputValue('');
+      fetchMessages();
     } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      console.error('Unexpected error sending message:', error);
+      toast.error('An unexpected error occurred while sending message');
     }
   };
 
@@ -158,94 +146,50 @@ export default function Topic() {
 
   const handleTopicSelect = (topicId: string) => {
     setCurrentTopic(topicId);
-    setTopics(topics.map(topic => ({
-      ...topic,
-      isActive: topic.id === topicId
-    })));
   };
 
-  const currentTopicData = topics.find(topic => topic.id === currentTopic);
+  useEffect(() => {
+    fetchTopics();
+  }, [fetchTopics]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
 
   return (
-    <DiscordLayout
-      topics={topics}
-      currentUser={user ? {
-        name: user.email?.split('@')[0] || 'Anonymous',
-        avatar: user.user_metadata?.avatar_url,
-        status: 'Online'
-      } : undefined}
-      onTopicSelect={handleTopicSelect}
-    >
-      {/* Chat Header */}
-      <div className="chat-header">
-        <div className="chat-header-hash">#</div>
-        <div className="chat-header-topic">
-          {currentTopicData?.title || 'Select a Topic'}
-          {currentTopicData?.description && (
-            <div className="chat-header-description">{currentTopicData.description}</div>
+    <DiscordLayout>
+      <div className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : (
+            messages.map((message) => (
+              <DiscordMessage key={message.id} message={message} />
+            ))
           )}
         </div>
-        <div className="chat-header-actions">
-          <div className="header-action">📌</div>
-          <div className="header-action">👥</div>
-          <div className="header-action">🔍</div>
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <div className="messages-container">
-        {loading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <div className="text-4xl mb-2">💭</div>
-            <div>No messages yet</div>
-          </div>
-        ) : (
-          messages.map(message => (
-            <DiscordMessage
-              key={message.id}
-              author={message.author}
-              content={message.content}
-              timestamp={message.timestamp}
-              reactions={message.reactions}
-              isPinned={message.isPinned}
+        <div className="p-4 border-t">
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message..."
+              className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          ))
-        )}
+            <button
+              onClick={sendMessage}
+              disabled={!inputValue.trim() || !user}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
+        </div>
       </div>
-
-      {/* Input Area */}
-      {user ? (
-        <div className="input-container">
-          <div className="input-actions">
-            <div className="input-action">+</div>
-            <div className="input-action">GIF</div>
-          </div>
-          <input
-            type="text"
-            className="input-field"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message #${currentTopicData?.title || 'Select a Topic'}`}
-          />
-          <div className="input-buttons">
-            <div className="input-action">😊</div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex justify-center items-center p-4 bg-gray-800">
-          <button
-            onClick={() => window.location.href = '/login'}
-            className="btn btn-primary"
-          >
-            Sign In to Join the Discussion
-          </button>
-        </div>
-      )}
     </DiscordLayout>
   );
 } 
