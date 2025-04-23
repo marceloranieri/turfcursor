@@ -1,0 +1,12 @@
+README.md
+.git
+.env
+.env.*
+.gitignore
+.vscode
+docs
+supabase
+deploy-function.sh
+test-supabase-connection.*
+supabase_setup_guide.md
+supabase_schema.sql 

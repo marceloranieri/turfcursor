@@ -1,0 +1,8 @@
+{
+  "projectSettings": {
+    "framework": "nextjs",
+    "buildCommand": "cd turf-app && npm install && npm run build",
+    "outputDirectory": "turf-app/.next",
+    "rootDirectory": "turf-app"
+  }
+} 
