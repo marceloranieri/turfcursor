@@ -16,7 +16,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+  // Configure output for optimal Vercel deployment
+  output: 'standalone',
   experimental: {
+    // Enable server actions (stable feature in Next.js 14)
     serverActions: true,
   },
   // Add Vercel Speed Insights configuration
