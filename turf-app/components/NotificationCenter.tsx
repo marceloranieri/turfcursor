@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { BellIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { format, isToday, isYesterday } from 'date-fns';
 
 interface Notification {
