@@ -12,7 +12,21 @@ const publicRoutes = [
 ];
 
 export function middleware(request: NextRequest) {
-  // For now, just pass through all requests
+  const { pathname } = request.nextUrl;
+  
+  // Check if the path is a public route
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(`${route}/`)
+  );
+  
+  // For public routes, allow access
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+  
+  // For all other routes, check for authentication
+  // For now, we'll just pass through all requests
+  // In a real implementation, you would check for a session token
   return NextResponse.next();
 }
 
