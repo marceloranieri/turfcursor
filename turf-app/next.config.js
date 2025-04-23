@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    unoptimized: true,
     domains: ['*'],
   },
   // Simplify the configuration for Vercel deployment
@@ -11,10 +10,6 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
-  },
-  swcMinify: true,
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
   },
 };
 
