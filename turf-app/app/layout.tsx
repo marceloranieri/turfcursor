@@ -1,48 +1,27 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { AuthProvider } from "../lib/auth/AuthContext";
-import { Toaster } from "react-hot-toast";
+import './globals.css';
+import '@/app/styles/discord-theme.css';
+import { Inter } from 'next/font/google';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from '@/lib/auth/AuthContext';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: "Turf - Daily Debates",
-  description: "Daily Debates. Real Connections.",
+export const metadata = {
+  title: 'Turf - Social Debate Platform',
+  description: 'Join daily debates and connect with others through meaningful discussions.',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
           {children}
-          <Toaster 
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#333',
-                color: '#fff',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#4caf50',
-                  secondary: '#fff',
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#f44336',
-                  secondary: '#fff',
-                },
-              },
-            }}
-          />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
