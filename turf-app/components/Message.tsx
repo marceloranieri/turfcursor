@@ -9,28 +9,24 @@ interface MessageProps {
   message: MessageType;
   user: User;
   reactions: Reaction[];
-  replyToMessage?: MessageType;
-  replyToUser?: User;
+  replyTo?: MessageType;
   onReply: (messageId: string) => void;
-  onReaction: (messageId: string, reaction: string) => void;
-  onUpvote: (messageId: string) => void;
-  onDownvote: (messageId: string) => void;
+  onReact: (messageId: string, reaction: string) => void;
   onGeniusAward: (messageId: string) => void;
-  remainingGeniusAwards: number;
+  isWizardMessage?: boolean;
+  isPinned?: boolean;
 }
 
 export default function Message({
   message,
   user,
   reactions,
-  replyToMessage,
-  replyToUser,
+  replyTo,
   onReply,
-  onReaction,
-  onUpvote,
-  onDownvote,
+  onReact,
   onGeniusAward,
-  remainingGeniusAwards,
+  isWizardMessage = false,
+  isPinned = false,
 }: MessageProps) {
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   
@@ -56,18 +52,17 @@ export default function Message({
   };
   
   const handleEmojiSelect = (emoji: string) => {
-    onReaction(message.id, emoji);
+    onReact(message.id, emoji);
     setShowReactionPicker(false);
   };
   
   return (
-    <div className={`my-4 ${message.is_wizard ? 'message-bubble wizard' : ''}`}>
+    <div className={`my-4 ${isWizardMessage ? 'message-bubble wizard' : ''}`}>
       {/* Reply reference */}
-      {replyToMessage && replyToUser && (
+      {replyTo && (
         <div className="flex items-center text-xs text-text-muted ml-12 mb-1">
           <ReplyIcon className="w-3 h-3 mr-1" />
-          <span>Replying to </span>
-          <span className="font-medium ml-1">{replyToUser.username}</span>
+          <span>Replying to message</span>
         </div>
       )}
       
@@ -115,7 +110,7 @@ export default function Message({
               {Object.entries(groupedReactions).map(([emoji, reactions]) => (
                 <button
                   key={emoji}
-                  onClick={() => onReaction(message.id, emoji)}
+                  onClick={() => onReact(message.id, emoji)}
                   className="reaction-button"
                 >
                   <span>{emoji}</span>
@@ -136,7 +131,7 @@ export default function Message({
             </button>
             
             <button
-              onClick={() => onUpvote(message.id)}
+              onClick={() => onReact(message.id, '👍')}
               className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
                 message.upvotes > 0 ? 'text-accent-primary' : ''
               }`}
@@ -146,7 +141,7 @@ export default function Message({
             </button>
             
             <button
-              onClick={() => onDownvote(message.id)}
+              onClick={() => onReact(message.id, '👎')}
               className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
                 message.downvotes > 0 ? 'text-danger' : ''
               }`}
@@ -163,15 +158,13 @@ export default function Message({
               React
             </button>
             
-            {remainingGeniusAwards > 0 && (
-              <button
-                onClick={() => onGeniusAward(message.id)}
-                className="flex items-center text-xs hover:text-gold transition-colors"
-              >
-                <GiftIcon className="w-4 h-4 mr-1" />
-                Genius
-              </button>
-            )}
+            <button
+              onClick={() => onGeniusAward(message.id)}
+              className="flex items-center text-xs hover:text-gold transition-colors"
+            >
+              <GiftIcon className="w-4 h-4 mr-1" />
+              Genius
+            </button>
           </div>
           
           {/* Emoji picker */}
