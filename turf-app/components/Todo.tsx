@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase/client';
 import { useAuth } from '../lib/auth/AuthContext';
 import toast from 'react-hot-toast';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface TodoItem {
   id: string;

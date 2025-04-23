@@ -39,7 +39,7 @@ export default function TopicAdmin() {
           .single();
 
         if (error) throw error;
-        setIsAdmin(data?.is_debate_maestro || false);
+        setIsAdmin(Boolean((data as { is_debate_maestro?: boolean })?.is_debate_maestro));
       } catch (error) {
         console.error('Error checking admin status:', error);
         setIsAdmin(false);
@@ -66,7 +66,7 @@ export default function TopicAdmin() {
         // Get all topics
         const { data, error } = await supabase.from('topics').select('*');
         if (error) throw error;
-        setAllTopics(data as Topic[]);
+        setAllTopics(data as unknown as Topic[]);
       } catch (error) {
         console.error('Error loading topic data:', error);
         toast.error('Failed to load topic data');
@@ -130,7 +130,7 @@ export default function TopicAdmin() {
         // Update the list of all topics
         const { data, error } = await supabase.from('topics').select('*');
         if (error) throw error;
-        setAllTopics(data as Topic[]);
+        setAllTopics(data as unknown as Topic[]);
       }
     } catch (error) {
       console.error('Error adding topic:', error);

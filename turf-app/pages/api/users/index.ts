@@ -49,8 +49,8 @@ export default async function handler(
     }
 
     // Create a map of user data indexed by ID for easy access
-    const usersMap = data.reduce((acc: Record<string, any>, user) => {
-      acc[user.id] = user;
+    const usersMap = data.reduce((acc: Record<string, any>, user: any) => {
+      acc[(user as { id: string }).id] = user;
       return acc;
     }, {});
 

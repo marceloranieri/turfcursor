@@ -47,7 +47,7 @@ export async function getCurrentUser() {
     if (error) throw error;
     if (!data) return null;
     
-    return data as User;
+    return data as unknown as User;
   });
 }
 
@@ -61,7 +61,7 @@ export async function getCircles() {
       
     if (error) throw error;
     
-    return data as Circle[];
+    return data as unknown as Circle[];
   });
 }
 
@@ -76,7 +76,7 @@ export async function getMessages(circleId: string) {
       
     if (error) throw error;
     
-    return data as Message[];
+    return data as unknown as Message[];
   });
 }
 
@@ -94,7 +94,7 @@ export async function sendMessage(message: Omit<Message, 'id' | 'created_at'>) {
     if (error) throw error;
     if (!data) throw new Error('Failed to send message');
     
-    return data as Message;
+    return data as unknown as Message;
   });
 }
 
@@ -110,7 +110,7 @@ export async function getReactions(messageIds: string[]) {
       
     if (error) throw error;
     
-    return data as Reaction[];
+    return data as unknown as Reaction[];
   });
 }
 
@@ -129,10 +129,11 @@ export async function addReaction(reaction: Omit<Reaction, 'id' | 'created_at'>)
       
     // If it exists, delete it (toggle behavior)
     if (existingReaction) {
+      const existingId = (existingReaction as unknown as { id: string }).id;
       const { error: deleteError } = await supabase
         .from('reactions')
         .delete()
-        .eq('id', existingReaction.id);
+        .eq('id', existingId);
         
       if (deleteError) throw deleteError;
       
@@ -152,7 +153,7 @@ export async function addReaction(reaction: Omit<Reaction, 'id' | 'created_at'>)
     if (error) throw error;
     if (!data) throw new Error('Failed to add reaction');
     
-    return data as Reaction;
+    return data as unknown as Reaction;
   });
 }
 
@@ -171,7 +172,7 @@ export async function getNotifications() {
       
     if (error) throw error;
     
-    return data as Notification[];
+    return data as unknown as Notification[];
   });
 }
 
@@ -227,11 +228,13 @@ export async function giveGeniusAward(messageId: string) {
     if (messageError) throw messageError;
     if (!message) throw new Error('Message not found');
     
+    const messageUserId = (message as unknown as { user_id: string }).user_id;
+    
     // Start a transaction by using Supabase's RPC
     const { error: transactionError } = await supabase.rpc('award_genius', {
       p_message_id: messageId,
       p_from_user_id: currentUser.id,
-      p_to_user_id: message.user_id
+      p_to_user_id: messageUserId
     });
     
     if (transactionError) throw transactionError;

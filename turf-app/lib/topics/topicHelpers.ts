@@ -18,7 +18,7 @@ export async function getActiveTopics(): Promise<Topic[]> {
       
     if (error) throw error;
     
-    return data as Topic[];
+    return data as unknown as Topic[];
   } catch (error) {
     console.error('Error fetching active topics:', error);
     toast.error('Failed to load daily topics');
@@ -92,7 +92,7 @@ export async function getTopicHistory(): Promise<TopicHistory[]> {
       
     if (error) throw error;
     
-    return data as TopicHistory[];
+    return data as unknown as TopicHistory[];
   } catch (error) {
     console.error('Error fetching topic history:', error);
     toast.error('Failed to load topic history');
@@ -119,7 +119,7 @@ export async function addTopic(topic: Omit<Topic, 'id' | 'created_at' | 'active'
     if (error) throw error;
     
     toast.success('Topic added successfully');
-    return data as Topic;
+    return data as unknown as Topic;
   } catch (error: any) {
     console.error('Error adding topic:', error);
     // Handle unique constraint violation
