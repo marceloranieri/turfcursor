@@ -6,8 +6,15 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 
 ## Features
 
-- Real-time chat with channels ("Circles") for different debate topics
-- Automated daily topic rotation system (5 new topics every 24 hours)
+- **Modern Discord-inspired UI**: Clean and intuitive interface following Discord's design patterns
+- **Authentication**: Secure email/password authentication with user profiles
+- **Real-time Chat**: Instant message updates using Supabase's real-time subscriptions
+- **Topics System**: 
+  - Organized discussions through categorized topics
+  - Automated daily rotation with 5 new topics every 24 hours
+- **Responsive Design**: Fully responsive layout that works on desktop and mobile
+- **Dark Mode**: Built-in dark mode support for better user experience
+- **Performance Monitoring**: Integrated Vercel Speed Insights for performance tracking
 - User authentication and profiles
 - Message reactions with emoji picker
 - Reply threading and conversation flows
@@ -20,10 +27,12 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 ## Tech Stack
 
 - **Frontend**: Next.js 13+ with App Router
-- **Styling**: Tailwind CSS
-- **Database & Auth**: Supabase
-- **Edge Functions**: Supabase Functions
+- **Styling**: Tailwind CSS with Discord-inspired UI components
+- **Backend**: Supabase (PostgreSQL, Auth, Real-time subscriptions)
 - **Deployment**: Vercel
+- **Authentication**: Supabase Auth
+- **Real-time**: Supabase Real-time
+- **Edge Functions**: Supabase Functions
 - **Automation**: GitHub Actions
 
 ## Getting Started
@@ -87,11 +96,14 @@ turf-app/
 ├── components/             # React components
 │   ├── admin/              # Admin components
 │   │   └── TopicAdmin.tsx  # Topic admin interface
+│   ├── layout/             # Layout components
+│   │   └── DiscordLayout.tsx # Discord-inspired layout
+│   ├── ui/                 # UI components
+│   │   ├── DiscordButton.tsx # Custom button component
+│   │   ├── DiscordInput.tsx  # Custom input component
+│   │   └── DiscordMessage.tsx # Message component
 │   ├── AuthModal.tsx       # Authentication modal
-│   ├── ChatInput.tsx       # Message input
-│   ├── ChatLayout.tsx      # Chat layout
 │   ├── DailyTopics.tsx     # Daily topics display
-│   ├── Message.tsx         # Message component
 │   ├── NotificationCenter.tsx # Notifications
 │   └── ReactionPicker.tsx  # Emoji reactions
 ├── lib/                    # Utility functions

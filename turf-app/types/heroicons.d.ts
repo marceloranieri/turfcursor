@@ -4,6 +4,7 @@ declare module '@heroicons/react/24/outline' {
   export type IconProps = ComponentProps<'svg'>;
 
   export const BellIcon: FC<IconProps>;
+  export const ChatBubbleOvalLeftIcon: FC<IconProps>;
   export const ChatIcon: FC<IconProps>;
   export const ChevronRightIcon: FC<IconProps>;
   export const CogIcon: FC<IconProps>;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import ChatLayout from '@/components/layout/ChatLayout';
+import DiscordLayout from '@/components/layout/DiscordLayout';
 import Message from '@/components/Message';
 import ChatInput from '@/components/ChatInput';
 import { Message as MessageType, User, Reaction as ReactionType, Circle } from '@/lib/supabase/client';
@@ -198,15 +198,15 @@ export default function Chat() {
   }
   
   return (
-    <ChatLayout
+    <DiscordLayout
       circles={circles}
       activeCircleId={activeCircleId}
       onCircleChange={setActiveCircleId}
-      isAuthenticated={isAuthenticated}
-      username={currentUser?.username || 'Guest'}
-      harmonyPoints={currentUser?.harmony_points || 0}
-      isDebateMaestro={currentUser?.is_debate_maestro || false}
-      geniusAwardsRemaining={currentUser?.genius_awards_remaining || 0}
+      isAuthenticated={!!currentUser}
+      username={currentUser?.user_metadata?.full_name || 'Guest'}
+      harmonyPoints={currentUser?.user_metadata?.harmony_points || 0}
+      isDebateMaestro={currentUser?.user_metadata?.is_debate_maestro || false}
+      geniusAwardsRemaining={currentUser?.user_metadata?.genius_awards_remaining || 0}
       notifications={[]} // In a real app, you'd fetch notifications here
     >
       <div className="flex flex-col h-full bg-background">
@@ -245,7 +245,7 @@ export default function Chat() {
                   </div>
                   <p className="text-text-primary">{pinnedMessage.content}</p>
                   <div className="text-text-secondary text-xs mt-1">
-                    By {users[pinnedMessage.user_id]?.username || 'Unknown User'}
+                    By {users[pinnedMessage.user_id]?.user_metadata?.full_name || 'Unknown User'}
                   </div>
                 </div>
               </div>
@@ -291,7 +291,7 @@ export default function Chat() {
                 onSendMessage={handleSendMessage}
                 replyingTo={replyToId}
                 onCancelReply={() => setReplyToId(undefined)}
-                isAuthenticated={isAuthenticated}
+                isAuthenticated={!!currentUser}
                 onAuthPrompt={() => setShowAuthModal(true)}
               />
             </div>
@@ -330,6 +330,6 @@ export default function Chat() {
           </div>
         </div>
       )}
-    </ChatLayout>
+    </DiscordLayout>
   );
 } 
