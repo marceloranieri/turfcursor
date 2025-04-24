@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -23,23 +23,18 @@ export default function SettingsPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchSettings();
-    }
-  }, [user]);
+  const fetchSettings = useCallback(async () => {
+    if (!user) return;
 
-  const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
         .from('user_settings')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // Settings don't exist yet, create default settings
           await saveSettings(settings);
         } else {
           throw error;
@@ -50,7 +45,11 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error fetching settings:', error);
     }
-  };
+  }, [user, settings]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const saveSettings = async (newSettings: Settings) => {
     if (!user) return;

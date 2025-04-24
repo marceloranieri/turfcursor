@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { HomeIcon, UserIcon, CogIcon, ChatBubbleLeftIcon, ArrowRightOnRectangleIcon, PlusIcon, HashtagIcon } from '@heroicons/react/24/outline';
-import { Circle } from '../lib/supabase/client';
-import NotificationCenter from './NotificationCenter';
+import { HomeIcon, UserIcon, Cog6ToothIcon as CogIcon, ChatBubbleOvalLeftIcon, ArrowRightOnRectangleIcon, PlusIcon, HashtagIcon } from '@heroicons/react/24/outline';
+import { Circle } from '../../lib/supabase/client';
+import NotificationCenter from '../notifications/NotificationCenter';
 
 // Dynamically import the AuthModal to avoid SSR issues
-const AuthModal = dynamic(() => import('./AuthModal'), { ssr: false });
+const AuthModal = dynamic(() => import('../AuthModal'), { ssr: false });
 
 interface ChatLayoutProps {
   children: React.ReactNode;
@@ -62,10 +62,7 @@ export default function ChatLayout({
   };
   
   const handleLogout = () => {
-    // In a real app, this would sign out the user with Supabase
-    // supabase.auth.signOut().then(() => {
     router.push('/');
-    // });
   };
   
   const handleMarkNotificationAsRead = (id: string) => {
@@ -369,7 +366,7 @@ export default function ChatLayout({
           onClick={() => setIsMobileMenuOpen(true)}
           className="flex flex-col items-center justify-center text-text-muted hover:text-text-primary"
         >
-          <ChatBubbleLeftIcon className="w-6 h-6" />
+          <ChatBubbleOvalLeftIcon className="w-6 h-6" />
           <span className="text-xs mt-1">Circles</span>
         </button>
         

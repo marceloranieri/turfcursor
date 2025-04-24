@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import ChatLayout from '../../components/ChatLayout';
-import Message from '../../components/Message';
-import ChatInput from '../../components/ChatInput';
-import { Message as MessageType, User, Reaction as ReactionType, Circle } from '../../lib/supabase/client';
+import React, { useState, useEffect, useCallback } from 'react';
+import ChatLayout from '@/components/layout/ChatLayout';
+import Message from '@/components/Message';
+import ChatInput from '@/components/ChatInput';
+import { Message as MessageType, User, Reaction as ReactionType, Circle } from '@/lib/supabase/client';
 import { BellIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { useAuth } from '../../lib/auth/AuthContext';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { 
   getCircles, 
   getMessages, 
@@ -16,7 +16,7 @@ import {
   addReaction,
   giveGeniusAward, 
   getCurrentUser
-} from '../../lib/database/apiHelpers';
+} from '@/lib/database/apiHelpers';
 import { useRouter } from 'next/navigation';
 
 export default function Chat() {
@@ -33,79 +33,32 @@ export default function Chat() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isDataLoading, setIsDataLoading] = useState(true);
   
-  // Load user data on auth state change
-  useEffect(() => {
-    if (!isLoading) {
-      setIsAuthenticated(!!session);
-      
-      if (session) {
-        loadUserData();
-      }
-    }
-  }, [session, isLoading]);
-  
-  // Load initial data
-  useEffect(() => {
-    const loadInitialData = async () => {
-      setIsDataLoading(true);
-      try {
-        // Load circles
-        const circlesData = await getCircles();
-        setCircles(circlesData);
-        
-        // Set active circle if not already set
-        if (circlesData.length > 0 && !activeCircleId) {
-          setActiveCircleId(circlesData[0].id);
-        }
-      } catch (error) {
-        console.error("Error loading initial data:", error);
-      } finally {
-        setIsDataLoading(false);
-      }
-    };
-    
-    loadInitialData();
-  }, [activeCircleId]);
-  
-  // Load messages and reactions when active circle changes
-  useEffect(() => {
-    if (activeCircleId) {
-      loadCircleData(activeCircleId);
-    }
-  }, [activeCircleId]);
-  
-  // Helper function to load user data
-  const loadUserData = async () => {
+  // Load user data
+  const loadUserData = useCallback(async () => {
     const user = await getCurrentUser();
     if (user) {
       setCurrentUser(user);
       setUsers(prev => ({ ...prev, [user.id]: user }));
     }
-  };
-  
-  // Helper function to load circle data
-  const loadCircleData = async (circleId: string) => {
+  }, []);
+
+  // Load circle data
+  const loadCircleData = useCallback(async (circleId: string) => {
     setIsDataLoading(true);
     try {
-      // Load messages for the circle
       const messagesData = await getMessages(circleId);
       setMessages(messagesData);
       
-      // Load reactions for these messages
       const messageIds = messagesData.map(msg => msg.id);
       const reactionsData = await getReactions(messageIds);
       setReactions(reactionsData);
       
-      // Load user data for message authors
       const userIds = new Set<string>();
       messagesData.forEach(msg => userIds.add(msg.user_id));
       reactionsData.forEach(reaction => userIds.add(reaction.user_id));
       
-      // We'd need to implement a function to fetch multiple users by IDs
-      // For simplicity, let's assume we have such a function
       const usersObj: { [key: string]: User } = {};
       for (const userId of userIds) {
-        // In a real app, you'd batch these requests
         const { data } = await fetch(`/api/users/${userId}`).then(res => res.json());
         if (data) {
           usersObj[userId] = data;
@@ -118,14 +71,49 @@ export default function Chat() {
     } finally {
       setIsDataLoading(false);
     }
-  };
+  }, []);
+
+  // Load initial data
+  const loadInitialData = useCallback(async () => {
+    setIsDataLoading(true);
+    try {
+      const circlesData = await getCircles();
+      setCircles(circlesData);
+      
+      if (circlesData.length > 0 && !activeCircleId) {
+        setActiveCircleId(circlesData[0].id);
+      }
+    } catch (error) {
+      console.error("Error loading initial data:", error);
+    } finally {
+      setIsDataLoading(false);
+    }
+  }, [activeCircleId]);
+
+  // Auth state effect
+  useEffect(() => {
+    if (!isLoading) {
+      setIsAuthenticated(!!session);
+      
+      if (session) {
+        loadUserData();
+      }
+    }
+  }, [session, isLoading, loadUserData]);
   
-  // Filter messages for the current circle
-  const currentCircleMessages = messages.filter(msg => msg.circle_id === activeCircleId);
+  // Initial data load effect
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
   
-  // Get pinned message if any
-  const pinnedMessage = currentCircleMessages.find(msg => msg.is_pinned);
-  
+  // Active circle effect
+  useEffect(() => {
+    if (activeCircleId) {
+      loadCircleData(activeCircleId);
+    }
+  }, [activeCircleId, loadCircleData]);
+
+  // Message handlers
   const handleSendMessage = async (content: string, type: 'text' | 'gif') => {
     if (!currentUser || !activeCircleId) return;
     
@@ -156,14 +144,13 @@ export default function Chat() {
     if (!currentUser) return;
     
     try {
-      const result = await addReaction({
+      await addReaction({
         message_id: messageId,
         user_id: currentUser.id,
         type: 'emoji',
         content: reaction,
       });
       
-      // Refresh reactions
       const messageIds = messages.map(msg => msg.id);
       const reactionsData = await getReactions(messageIds);
       setReactions(reactionsData);
@@ -179,13 +166,10 @@ export default function Chat() {
       const success = await giveGeniusAward(messageId);
       
       if (success) {
-        // Refresh user data to get updated genius awards
         await loadUserData();
         
-        // Update the recipient as well (in a real app, this would be done via a real-time subscription)
         const message = messages.find(m => m.id === messageId);
         if (message) {
-          // Refresh the recipient's data
           const { data } = await fetch(`/api/users/${message.user_id}`).then(res => res.json());
           if (data) {
             setUsers(prev => ({ ...prev, [message.user_id]: data }));
@@ -198,8 +182,12 @@ export default function Chat() {
       console.error("Error giving genius award:", error);
     }
   };
-  
-  // Check if user is authenticated before rendering
+
+  // Derived state
+  const currentCircleMessages = messages.filter(msg => msg.circle_id === activeCircleId);
+  const pinnedMessage = currentCircleMessages.find(msg => msg.is_pinned);
+
+  // Auth checks
   if (isLoading) {
     return <div className="loading">Loading...</div>;
   }

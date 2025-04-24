@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DiscordInput } from '@/components/ui/DiscordInput';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import { Profile } from '@/lib/types';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -16,18 +17,14 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
@@ -37,7 +34,11 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -103,9 +104,11 @@ export default function ProfilePage() {
           <div className="flex items-start justify-between mb-8">
             <div className="flex items-center gap-6">
               <div className="relative">
-                <img
+                <Image
                   src={profile.avatar_url || '/default-avatar.png'}
                   alt={profile.username}
+                  width={96}
+                  height={96}
                   className="w-24 h-24 rounded-full"
                 />
                 {isEditing && (

@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+'use client';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Message as MessageComponent } from './Message';
 import { Message, Topic } from '@/lib/types';
 import { useSupabaseRealtime } from '@/lib/hooks/useSupabaseRealtime';
@@ -19,19 +21,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic }) => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
-  useEffect(() => {
-    fetchMessages();
-  }, [topic.id]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -54,7 +48,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic }) => {
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  };
+  }, [topic.id]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const handleNewMessage = (message: Message) => {
     if (message.parent_id) {

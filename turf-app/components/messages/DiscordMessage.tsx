@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { format } from 'date-fns';
 import Image from 'next/image';
@@ -87,9 +89,11 @@ const DiscordMessage: React.FC<DiscordMessageProps> = ({
 
         {attachment && (
           <div className="message-attachment">
-            <img 
-              src={attachment.url} 
-              alt={attachment.alt || 'Attachment'} 
+            <Image
+              src={attachment.url}
+              alt={attachment.alt || 'Attachment'}
+              width={300}
+              height={200}
               className="attachment-image"
             />
           </div>
@@ -115,7 +119,17 @@ const DiscordMessage: React.FC<DiscordMessageProps> = ({
             {replies.map((reply) => (
               <div key={reply.id} className="reply">
                 <div className="reply-avatar">
-                  {reply.author.avatar || reply.author.name[0]}
+                  {reply.author.avatar ? (
+                    <Image
+                      src={reply.author.avatar}
+                      alt={reply.author.name}
+                      width={24}
+                      height={24}
+                      className="rounded-full"
+                    />
+                  ) : (
+                    reply.author.name[0]
+                  )}
                 </div>
                 <div className="message-content">
                   <div className="message-header">
