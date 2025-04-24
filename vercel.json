@@ -1,8 +1,1 @@
-{
-  "version": 2,
-  "framework": "nextjs",
-  "rootDirectory": "turf-app",
-  "buildCommand": "VERCEL_FORCE_NO_BUILD_CACHE=1 next build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install"
-} 
+{"version":2,"framework":"nextjs","rootDirectory":".","buildCommand":"VERCEL_FORCE_NO_BUILD_CACHE=1 next build","outputDirectory":".next","installCommand":"npm install","comment":"This is a fresh deployment with cache invalidation"}
