@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "name": "turf-monorepo",
+  "workspaces": [
+    "turf-app"
+  ],
+  "scripts": {
+    "dev": "cd turf-app && npm run dev",
+    "build": "cd turf-app && npm run build",
+    "start": "cd turf-app && npm run start",
+    "install:app": "cd turf-app && npm ci",
+    "postinstall": "npm run install:app"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "peerDependencies": {
+    "next": "^14.0.4"
+  }
+} 
