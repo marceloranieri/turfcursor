@@ -1,3 +1,16 @@
+import { User as SupabaseUser } from '@supabase/supabase-js';
+
+export interface UserMetadata {
+  full_name?: string;
+  harmony_points?: number;
+  is_debate_maestro?: boolean;
+  genius_awards_remaining?: number;
+}
+
+export interface User extends SupabaseUser {
+  user_metadata?: UserMetadata;
+}
+
 export interface Profile {
   id: string;
   username: string;

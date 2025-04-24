@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
 
-function NotificationCenter() {
+export default function NotificationCenter() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -185,7 +185,4 @@ function NotificationCenter() {
       )}
     </div>
   );
-}
-
-export { NotificationCenter };
-export default NotificationCenter; 
+} 

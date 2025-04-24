@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DiscordLayout from '@/components/layout/DiscordLayout';
 import Message from '@/components/Message';
 import ChatInput from '@/components/ChatInput';
-import { Message as MessageType, User, Reaction as ReactionType, Circle } from '@/lib/supabase/client';
+import { Message as MessageType, Reaction as ReactionType, Circle } from '@/lib/supabase/client';
+import { User } from '@/types/supabase';
 import { BellIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -245,7 +246,7 @@ export default function Chat() {
                   </div>
                   <p className="text-text-primary">{pinnedMessage.content}</p>
                   <div className="text-text-secondary text-xs mt-1">
-                    By {users[pinnedMessage.user_id]?.user_metadata?.full_name || 'Unknown User'}
+                    By {(users[pinnedMessage.user_id] as any)?.user_metadata?.full_name || 'Unknown User'}
                   </div>
                 </div>
               </div>

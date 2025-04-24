@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import Image from 'next/image';
 
@@ -65,14 +65,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 className="flex items-center gap-2 p-2 rounded hover:bg-[var(--channel-hover)]"
               >
                 <Image
-                  src={user?.user_metadata?.avatar_url || '/default-avatar.png'}
+                  src={(user as any)?.user_metadata?.avatar_url || '/default-avatar.png'}
                   alt="Profile"
                   width={32}
                   height={32}
                   className="rounded-full"
                 />
                 <span className="text-[var(--text-normal)]">
-                  {user?.user_metadata?.username || 'User'}
+                  {(user as any)?.user_metadata?.username || 'User'}
                 </span>
               </button>
 

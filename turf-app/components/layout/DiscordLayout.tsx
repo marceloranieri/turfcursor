@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { HomeIcon, UserIcon, Cog6ToothIcon as CogIcon, ChatBubbleOvalLeftIcon, ArrowRightOnRectangleIcon, PlusIcon, HashtagIcon } from '@heroicons/react/24/outline';
 import { Circle } from '../../lib/supabase/client';
-import NotificationCenter from '../notifications/NotificationCenter';
 
-// Dynamically import the AuthModal to avoid SSR issues
+// Dynamically import components to avoid SSR issues
 const AuthModal = dynamic(() => import('../AuthModal'), { ssr: false });
+const NotificationCenter = dynamic(() => import('@/components/notifications/NotificationCenter').then(mod => ({ default: mod.NotificationCenter })), { ssr: false });
 
 interface DiscordLayoutProps {
   children: React.ReactNode;

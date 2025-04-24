@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
+import { User } from '../../types/supabase';
 import { Database } from './database.types';
 
 // Initialize the Supabase client with environment variables
@@ -12,36 +13,13 @@ if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
   console.error('Missing Supabase environment variables. Please check your .env file.');
 }
 
-// Create a single supabase client for interacting with your database
-export const supabase: SupabaseClient<Database> = createClient<Database>(
-  supabaseUrl, 
-  supabaseAnonKey, 
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-    global: {
-      headers: {
-        'x-application-name': 'turf-app',
-      },
-    },
-  }
-);
+// Create the Supabase client with the extended User type
+export const supabase = createClient<{ Users: User }>(supabaseUrl, supabaseAnonKey);
+
+// Re-export other necessary items
+export * from '../../types/supabase';
 
 // Types for database tables
-export type User = {
-  id: string;
-  username: string;
-  email: string;
-  avatar_url?: string;
-  created_at: string;
-  harmony_points: number;
-  genius_awards_received: number;
-  genius_awards_remaining: number;
-  is_debate_maestro: boolean;
-};
-
 export type Message = {
   id: string;
   user_id: string;

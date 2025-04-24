@@ -35,7 +35,26 @@ export default function SettingsPage() {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          await saveSettings(settings);
+          // No settings found, create default settings
+          const { data: newSettings, error: createError } = await supabase
+            .from('user_settings')
+            .insert([
+              {
+                user_id: user.id,
+                notifications_enabled: true,
+                email_notifications: true,
+                dark_mode: false,
+                sound_enabled: true,
+              },
+            ])
+            .select()
+            .single();
+
+          if (createError) {
+            throw createError;
+          } else if (newSettings) {
+            setSettings(newSettings);
+          }
         } else {
           throw error;
         }
@@ -45,7 +64,7 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error fetching settings:', error);
     }
-  }, [user, settings]);
+  }, [user, settings, supabase]);
 
   useEffect(() => {
     fetchSettings();
