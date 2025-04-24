@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "rootDirectory": "turf-app",
+  "buildCommand": "VERCEL_FORCE_NO_BUILD_CACHE=1 next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install"
+} 
