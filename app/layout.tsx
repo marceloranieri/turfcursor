@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import { Metadata } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,11 +21,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           {children}
           <Toaster position="top-right" />
           <SpeedInsights />
+          <Script src="/fix.js" strategy="afterInteractive" />
         </AuthProvider>
       </body>
     </html>
