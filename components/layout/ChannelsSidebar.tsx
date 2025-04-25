@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Topic {
   id: string;
@@ -13,6 +14,12 @@ interface ChannelsSidebarProps {
 }
 
 const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
+  const router = useRouter();
+  
+  const handleTopicClick = (id: string) => {
+    router.push(`/chat/${id}`);
+  };
+  
   return (
     <div className="channels-sidebar bg-background-secondary w-60 h-screen overflow-y-auto fixed left-[72px] top-0">
       {/* Server Header */}
@@ -50,6 +57,7 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
               className={`channel px-2 py-1.5 mx-2 rounded flex items-center cursor-pointer ${
                 topic.isActive ? 'bg-background-tertiary text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-background-tertiary/50'
               }`}
+              onClick={() => handleTopicClick(topic.id)}
             >
               <div className="channel-icon mr-2 text-text-muted">#</div>
               <div className="truncate">{topic.name}</div>

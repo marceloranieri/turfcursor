@@ -1,10 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const ServerSidebar = () => {
+  const router = useRouter();
+  
   return (
     <div className="server-sidebar bg-background-tertiary h-screen w-[72px] flex flex-col items-center py-4 fixed left-0 top-0">
-      <div className="server-icon active bg-gold text-background-primary w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mb-2">
+      <div 
+        className="server-icon active bg-gold text-background-primary w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mb-2 cursor-pointer"
+        onClick={() => router.push('/')}
+      >
         T
       </div>
       <div className="server-divider w-8 h-[2px] bg-gray-700 my-2"></div>
