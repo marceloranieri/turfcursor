@@ -2,20 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Discord-inspired color palette */
-  --color-background-primary: #2C2F33;
-  --color-background-secondary: #23272A;
-  --color-background-tertiary: #202225;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #B9BBBE;
-  --color-text-muted: #72767D;
-  --color-accent-primary: #FFD700; /* Gold accent */
-  --color-accent-secondary: #2F80ED; /* Bright blue */
-  --color-danger: #ED4245;
-  --color-success: #57F287;
-  --color-gold: #FFD700;
-  --color-border: #4F545C;
+@layer base {
+  :root {
+    /* Discord-inspired color palette */
+    --color-background-primary: #2C2F33;
+    --color-background-secondary: #23272A;
+    --color-background-tertiary: #202225;
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #B9BBBE;
+    --color-text-muted: #72767D;
+    --color-accent-primary: #FFD700; /* Gold accent */
+    --color-accent-secondary: #2F80ED; /* Bright blue */
+    --color-danger: #ED4245;
+    --color-success: #57F287;
+    --color-gold: #FFD700;
+    --color-border: #4F545C;
+  }
 }
 
 /* Base styles */

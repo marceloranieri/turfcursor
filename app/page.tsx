@@ -24,10 +24,10 @@ function ErrorBoundary({ error }: { error: Error }) {
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background-primary">
+    <main className="min-h-screen flex items-center justify-center bg-[#2C2F33]">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Turf</h1>
-        <p className="text-lg text-gray-600">Your social debate platform</p>
+        <h1 className="text-4xl font-bold mb-4 text-white">Welcome to Turf</h1>
+        <p className="text-lg text-gray-300">Your social debate platform</p>
       </div>
     </main>
   );

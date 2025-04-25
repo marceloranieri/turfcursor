@@ -31,24 +31,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'background': {
+        background: {
           DEFAULT: '#2C2F33', // Discord dark gray
-          'secondary': '#23272A', // Darker gray
-          'tertiary': '#202225', // Almost black
+          secondary: '#23272A', // Darker gray
+          tertiary: '#202225', // Almost black
+          primary: '#2C2F33', // Make sure this is explicitly defined
         },
-        'text': {
-          'primary': '#FFFFFF', // White
-          'secondary': '#B9BBBE', // Light gray
-          'muted': '#72767D', // Medium gray
+        text: {
+          primary: '#FFFFFF', // White
+          secondary: '#B9BBBE', // Light gray
+          muted: '#72767D', // Medium gray
         },
-        'accent': {
-          'primary': '#FFD700', // Gold
-          'secondary': '#2F80ED', // Bright blue
+        accent: {
+          primary: '#FFD700', // Gold
+          secondary: '#2F80ED', // Bright blue
         },
-        'gold': '#FFD700',
-        'success': '#57F287', // Discord green
-        'danger': '#ED4245', // Discord red
-        'warning': '#FEE75C', // Discord yellow
+        gold: '#FFD700',
+        success: '#57F287', // Discord green
+        danger: '#ED4245', // Discord red
+        warning: '#FEE75C', // Discord yellow
       },
       screens: {
         'mobile': {'max': '767px'},
