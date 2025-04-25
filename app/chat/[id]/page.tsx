@@ -134,7 +134,7 @@ const DEMO_MESSAGES = {
     {
       id: 'msg2',
       author: { id: 'user5', name: 'Elijah', avatar: 'E' },
-      content: 'Transparency is crucial. Users should always know when they're interacting with AI vs humans.',
+      content: "Transparency is crucial. Users should always know when they're interacting with AI vs humans.",
       timestamp: 'Today at 10:22 AM'
     }
   ]
