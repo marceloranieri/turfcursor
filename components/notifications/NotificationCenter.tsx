@@ -7,100 +7,27 @@ import { supabase } from '@/lib/supabaseClient';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
 
-export const NotificationCenter: React.FC = () => {
+interface NotificationCenterProps {
+  notifications: Array<{
+    id: string;
+    type: 'harmony_points' | 'genius_award' | 'pinned' | 'wizard' | 'general';
+    message: string;
+    wizNote?: string;
+    timestamp: Date;
+    read: boolean;
+  }>;
+  onMarkAsRead: (id: string) => void;
+  onClearAll: () => void;
+}
+
+export const NotificationCenter: React.FC<NotificationCenterProps> = ({
+  notifications,
+  onMarkAsRead,
+  onClearAll
+}) => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  const fetchNotifications = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-
-      setNotifications(data || []);
-      setUnreadCount(data?.filter((n) => !n.read).length || 0);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchNotifications();
-
-    if (user) {
-      const channel = supabase
-        .channel('notifications_channel')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            const newNotification = payload.new as Notification;
-            setNotifications((prev) => [newNotification, ...prev]);
-            setUnreadCount((prev) => prev + 1);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user, fetchNotifications]);
-
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', user.id)
-        .eq('read', false);
-
-      if (error) throw error;
-
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
-  };
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -140,7 +67,7 @@ export const NotificationCenter: React.FC = () => {
             {unreadCount > 0 && (
               <DiscordButton
                 variant="secondary"
-                onClick={markAllAsRead}
+                onClick={onClearAll}
                 className="text-sm"
               >
                 Mark all as read
@@ -156,7 +83,7 @@ export const NotificationCenter: React.FC = () => {
                   className={`p-4 border-b border-[var(--divider)] hover:bg-[var(--channel-hover)] cursor-pointer ${
                     !notification.read ? 'bg-[var(--notification-unread)]' : ''
                   }`}
-                  onClick={() => markAsRead(notification.id)}
+                  onClick={() => onMarkAsRead(notification.id)}
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-xl">
@@ -164,10 +91,10 @@ export const NotificationCenter: React.FC = () => {
                     </span>
                     <div>
                       <p className="text-[var(--text-normal)]">
-                        {notification.content}
+                        {notification.message}
                       </p>
                       <p className="text-xs text-[var(--text-muted)] mt-1">
-                        {formatDistanceToNow(new Date(notification.created_at), {
+                        {formatDistanceToNow(notification.timestamp, {
                           addSuffix: true,
                         })}
                       </p>

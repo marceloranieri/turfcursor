@@ -40,6 +40,12 @@ export type User = {
   genius_awards_received: number;
   genius_awards_remaining: number;
   is_debate_maestro: boolean;
+  user_metadata?: {
+    full_name?: string;
+    harmony_points?: number;
+    is_debate_maestro?: boolean;
+    genius_awards_remaining?: number;
+  };
 };
 
 export type Message = {

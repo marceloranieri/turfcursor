@@ -17,6 +17,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'harmony_points' | 'genius_award' | 'pinned' | 'wizard' | 'general';
+    message: string;
+    wizNote?: string;
+    timestamp: Date;
+    read: boolean;
+  }>>([]);
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications(prev =>
+      prev.map(n => n.id === id ? { ...n, read: true } : n)
+    );
+  };
+
+  const handleClearAll = () => {
+    setNotifications(prev =>
+      prev.map(n => ({ ...n, read: true }))
+    );
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -58,7 +78,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </button>
 
           <div className="flex items-center gap-4">
-            <NotificationCenter />
+            <NotificationCenter
+              notifications={notifications}
+              onMarkAsRead={handleMarkAsRead}
+              onClearAll={handleClearAll}
+            />
             <div className="relative">
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}

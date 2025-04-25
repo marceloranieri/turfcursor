@@ -23,6 +23,12 @@ interface TopicMessage {
   isPinned?: boolean;
 }
 
+interface Circle {
+  id: string;
+  name: string;
+  icon: string;
+}
+
 export default function Topic() {
   const [messages, setMessages] = useState<TopicMessage[]>([]);
   const [topics, setTopics] = useState<Array<{
@@ -35,6 +41,84 @@ export default function Topic() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const [activeCircleId, setActiveCircleId] = useState<string>('1');
+  const [circles, setCircles] = useState<Circle[]>([]);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'harmony_points' | 'genius_award' | 'pinned' | 'wizard' | 'general';
+    message: string;
+    wizNote?: string;
+    timestamp: Date;
+    read: boolean;
+  }>>([]);
+
+  // Fetch circles and notifications
+  const fetchCirclesAndNotifications = useCallback(async () => {
+    try {
+      // Fetch circles
+      const { data: circlesData, error: circlesError } = await supabase
+        .from('circles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (circlesError) throw circlesError;
+      setCircles(circlesData || []);
+
+      // Set initial active circle if none selected
+      if (!activeCircleId && circlesData?.length > 0) {
+        setActiveCircleId(circlesData[0].id);
+      }
+
+      // Fetch notifications if user is authenticated
+      if (user) {
+        const { data: notificationsData, error: notificationsError } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (notificationsError) throw notificationsError;
+
+        // Transform notifications to match the expected format
+        const transformedNotifications = (notificationsData || []).map(notification => ({
+          id: notification.id,
+          type: notification.type as 'harmony_points' | 'genius_award' | 'pinned' | 'wizard' | 'general',
+          message: notification.content,
+          timestamp: new Date(notification.created_at),
+          read: notification.is_read
+        }));
+
+        setNotifications(transformedNotifications);
+      }
+    } catch (error) {
+      console.error('Error fetching circles and notifications:', error);
+      toast.error('Failed to load circles and notifications');
+    }
+  }, [user, activeCircleId]);
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const channel = supabase.channel('circles-and-notifications');
+
+    // Subscribe to circle changes
+    channel
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'circles' }, () => {
+        fetchCirclesAndNotifications();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        fetchCirclesAndNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchCirclesAndNotifications]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchCirclesAndNotifications();
+  }, [fetchCirclesAndNotifications]);
 
   const fetchTopics = useCallback(async () => {
     try {
@@ -157,7 +241,13 @@ export default function Topic() {
   }, [fetchMessages]);
 
   return (
-    <DiscordLayout>
+    <DiscordLayout
+      circles={circles}
+      activeCircleId={activeCircleId}
+      onCircleChange={setActiveCircleId}
+      isAuthenticated={!!user}
+      notifications={notifications}
+    >
       <div className="flex flex-col h-full">
         <div className="flex-1 overflow-y-auto p-4">
           {loading ? (

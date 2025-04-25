@@ -23,6 +23,27 @@ export default function SettingsPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  const saveSettings = useCallback(async (newSettings: Settings) => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: user.id,
+          ...newSettings,
+        });
+
+      if (error) throw error;
+      setSettings(newSettings);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
   const fetchSettings = useCallback(async () => {
     if (!user) return;
 
@@ -45,32 +66,11 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error fetching settings:', error);
     }
-  }, [user, settings]);
+  }, [user, settings, saveSettings]);
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
-
-  const saveSettings = async (newSettings: Settings) => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          ...newSettings,
-        });
-
-      if (error) throw error;
-      setSettings(newSettings);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleToggle = (key: keyof Settings) => {
     const newSettings = {
