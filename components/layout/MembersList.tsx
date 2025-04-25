@@ -159,6 +159,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
   const sortedRoles = ['owner', 'admin', 'moderator', 'member'].filter(role => groupedMembers[role]);
   
   const handleMemberClick = (memberId: string) => {
+    console.log("Member clicked:", memberId);
     // Toggle profile popup
     setActiveProfile(activeProfile === memberId ? null : memberId);
   };
@@ -272,7 +273,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
               {groupedMembers[role].map(member => (
                 <div key={member.id} className="relative">
                   <div 
-                    className="member-item flex items-center p-2 rounded-md hover:bg-background-primary cursor-pointer"
+                    className="member-item flex items-center p-2 rounded-md hover:bg-background-primary cursor-pointer border border-transparent hover:border-background-primary transition-all"
                     onClick={() => handleMemberClick(member.id)}
                   >
                     <div className="member-avatar w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center relative">
@@ -293,7 +294,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
                   
                   {/* Profile popup */}
                   {activeProfile === member.id && (
-                    <div className="profile-popup absolute left-0 mt-1 w-48 bg-background-tertiary rounded-md shadow-lg z-10">
+                    <div className="profile-popup absolute z-50 left-0 mt-1 w-48 bg-background-tertiary rounded-md shadow-lg border border-background-primary">
                       <div className="profile-header p-3 border-b border-background-primary text-center">
                         <div className="flex justify-center mb-2">
                           <div className="member-avatar w-12 h-12 rounded-full bg-background-secondary flex items-center justify-center relative">

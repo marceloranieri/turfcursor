@@ -93,7 +93,15 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
   };
   
   const handleTopicClick = (id: string) => {
-    router.push(`/chat/${id}`);
+    console.log("Topic clicked:", id);
+    try {
+      // Use window.location for a hard navigation if router isn't working
+      window.location.href = `/chat/${id}`;
+    } catch (e) {
+      console.error("Navigation error:", e);
+      // Fallback - direct assignment
+      window.location.href = `/chat/${id}`;
+    }
   };
   
   const toggleSearch = () => {
@@ -218,7 +226,7 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
               <div className="category-name">Daily Topics</div>
             </div>
             <div 
-              className="category-icon-right text-lg cursor-pointer hover:text-accent-primary transition-colors"
+              className="category-icon-right text-lg cursor-pointer bg-background-tertiary hover:bg-accent-primary hover:text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors"
               onClick={handleAddTopic}
             >
               +

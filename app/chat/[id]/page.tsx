@@ -8,6 +8,13 @@ import ChatArea from '@/components/layout/ChatArea';
 import MembersList from '@/components/layout/MembersList';
 import MobileNavigation from '@/components/layout/MobileNavigation';
 import GuestModal from '@/components/modals/GuestModal';
+import { createClient } from '@supabase/supabase-js';
+import MainLayout from '@/components/layout/MainLayout';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Defined topics with messages for demo purposes
 // In a real app, this would come from Supabase
@@ -159,17 +166,40 @@ export default function ChatPage() {
   
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
-  // In a real app, this would check authentication with Supabase
+  // Check authentication with Supabase
   useEffect(() => {
-    // Simulate checking auth
-    const checkAuth = () => {
-      // For demo: localStorage method
-      const hasAuth = localStorage.getItem('isAuthenticated');
-      setIsAuthenticated(hasAuth === 'true');
+    const checkAuth = async () => {
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session);
+        if (session) {
+          setUser(session.user);
+          console.log("User authenticated:", session.user);
+        } else {
+          console.log("No authenticated user");
+        }
+      } catch (error) {
+        console.error("Auth error:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     
     checkAuth();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      setUser(session?.user || null);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
   
   // Find the current topic
@@ -188,45 +218,82 @@ export default function ChatPage() {
   const pinnedMessage = DEMO_PINNED_MESSAGES[topicId as keyof typeof DEMO_PINNED_MESSAGES];
   
   const handleSendMessage = () => {
+    console.log("Send message triggered");
+    
     if (!isAuthenticated) {
+      console.log("User not authenticated, showing guest modal");
       setShowGuestModal(true);
       return;
     }
     
     // In a real app, this would send the message to Supabase
-    console.log('Message sent');
+    console.log('Message sent by user:', user?.id);
   };
   
-  const handleSignIn = () => {
-    // Simulate sign in for demo
-    localStorage.setItem('isAuthenticated', 'true');
-    setIsAuthenticated(true);
-    setShowGuestModal(false);
+  const handleSignIn = async () => {
+    try {
+      // For demo purposes, we'll use direct email link
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/chat/' + topicId
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Modal will be closed by auth state change listener
+    } catch (error) {
+      console.error('Error signing in:', error);
+      alert('Failed to sign in. Please try again.');
+    }
   };
   
   const handleCloseModal = () => {
     setShowGuestModal(false);
   };
   
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
   return (
-    <div className="app-container">
-      <ServerSidebar />
-      <ChannelsSidebar topics={topics} />
-      <ChatArea 
-        topic={currentTopic} 
-        messages={messages} 
-        pinnedMessage={pinnedMessage}
-        onSendMessage={handleSendMessage} 
-      />
-      <MembersList members={DEMO_MEMBERS} />
-      <MobileNavigation />
-      
-      {showGuestModal && (
-        <GuestModal 
-          onClose={handleCloseModal}
-          onSignIn={handleSignIn}
+    <MainLayout enableDebug={true}>
+      <div className="app-container">
+        <ServerSidebar />
+        <ChannelsSidebar topics={topics} />
+        <ChatArea 
+          topic={currentTopic} 
+          messages={messages} 
+          pinnedMessage={pinnedMessage}
+          onSendMessage={handleSendMessage} 
         />
-      )}
-    </div>
+        <MembersList members={DEMO_MEMBERS} topicId={topicId} />
+        <MobileNavigation />
+        
+        {showGuestModal && (
+          <div onClick={handleCloseModal} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div onClick={e => e.stopPropagation()} className="bg-background-secondary rounded-lg p-6 max-w-md w-full">
+              <h2 className="text-xl font-semibold mb-4">Sign In Required</h2>
+              <p className="mb-6">You need to sign in to send messages and interact with the debate.</p>
+              <div className="flex justify-end space-x-4">
+                <button 
+                  className="px-4 py-2 bg-background-tertiary text-text-primary rounded"
+                  onClick={handleCloseModal}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="px-4 py-2 bg-accent-primary text-white rounded"
+                  onClick={handleSignIn}
+                >
+                  Sign In
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </MainLayout>
   );
 } 

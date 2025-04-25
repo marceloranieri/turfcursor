@@ -139,26 +139,32 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   };
   
   const handleSendMessage = async (e: React.FormEvent) => {
+    console.log("handleSendMessage triggered", { messageText, isAuthenticated });
     e.preventDefault();
     
     // Verify authentication first
     if (!isAuthenticated) {
+      console.log("Not authenticated, calling onSendMessage to trigger auth modal");
       onSendMessage(); // This will trigger the auth modal in the parent
       return;
     }
     
     if (messageText.trim()) {
+      console.log("Sending message:", messageText);
       try {
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
+        console.log("Current user:", user);
         
         if (!user) {
+          console.log("No user found despite isAuthenticated=true, triggering auth modal");
           onSendMessage(); // Trigger auth modal
           return;
         }
         
         // For demo purpose, add the message locally first for better UX
         if (replyingTo) {
+          console.log("Adding reply to message:", replyingTo.id);
           // Add a reply to a message
           const updatedMessages = messages.map(message => {
             if (message.id === replyingTo.id) {
@@ -180,16 +186,27 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
           setMessages(updatedMessages);
           
           // In a real app, also save to Supabase
-          await supabase.from('messages').insert({
-            content: messageText,
-            user_id: user.id,
-            topic_id: topic.id,
-            parent_id: replyingTo.id,
-            created_at: new Date().toISOString()
-          });
+          try {
+            const { data, error } = await supabase.from('messages').insert({
+              content: messageText,
+              user_id: user.id,
+              topic_id: topic.id,
+              parent_id: replyingTo.id,
+              created_at: new Date().toISOString()
+            });
+            
+            if (error) {
+              console.error("Supabase insert error:", error);
+            } else {
+              console.log("Message saved to Supabase:", data);
+            }
+          } catch (supabaseError) {
+            console.error("Supabase operation failed:", supabaseError);
+          }
           
           setReplyingTo(null);
         } else {
+          console.log("Adding new message");
           // Add a new message
           const newMessage: Message = {
             id: `msg-${Date.now()}`,
@@ -201,12 +218,22 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
           setMessages([...messages, newMessage]);
           
           // In a real app, also save to Supabase
-          await supabase.from('messages').insert({
-            content: messageText,
-            user_id: user.id,
-            topic_id: topic.id,
-            created_at: new Date().toISOString()
-          });
+          try {
+            const { data, error } = await supabase.from('messages').insert({
+              content: messageText,
+              user_id: user.id,
+              topic_id: topic.id,
+              created_at: new Date().toISOString()
+            });
+            
+            if (error) {
+              console.error("Supabase insert error:", error);
+            } else {
+              console.log("Message saved to Supabase:", data);
+            }
+          } catch (supabaseError) {
+            console.error("Supabase operation failed:", supabaseError);
+          }
         }
       } catch (error) {
         console.error('Error sending message:', error);
@@ -214,6 +241,8 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
       
       setMessageText('');
       onSendMessage(); // Notify parent
+    } else {
+      console.log("Message text is empty, not sending");
     }
   };
   
@@ -693,7 +722,8 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
         />
         <button 
           type="submit"
-          className="ml-2 px-4 py-1 bg-accent-primary text-background-primary rounded-md hover:bg-gold transition-colors"
+          className="ml-2 px-6 py-2 bg-accent-primary text-white font-semibold rounded-md hover:bg-gold transition-colors"
+          onClick={() => console.log("Send button clicked")}
         >
           Send
         </button>

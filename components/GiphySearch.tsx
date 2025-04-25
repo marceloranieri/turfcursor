@@ -26,14 +26,19 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Use the directly set API key for debugging
+  const GIPHY_API_KEY = 'LAEhUpkO8Kb5pCjPgiufyX2LVJDv01s6';
+  
   // Load trending GIFs by default
   useEffect(() => {
+    console.log("GiphySearch mounted, fetching trending GIFs");
     fetchGifs();
   }, []);
 
   // Search for GIFs when query changes
   useEffect(() => {
     if (searchQuery) {
+      console.log("Search query changed to:", searchQuery);
       const debounceTimer = setTimeout(() => {
         fetchGifs();
       }, 500);
@@ -47,23 +52,30 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
     setError(null);
     
     try {
+      console.log("Fetching GIFs with query:", searchQuery || "trending");
+      
       const endpoint = searchQuery
-        ? `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${encodeURIComponent(searchQuery)}&limit=10&rating=g`
-        : `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=10&rating=g`;
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(searchQuery)}&limit=10&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=10&rating=g`;
+      
+      console.log("GIPHY endpoint:", endpoint);
       
       const response = await fetch(endpoint);
+      console.log("GIPHY response status:", response.status);
       
       if (!response.ok) {
         throw new Error('Failed to fetch GIFs');
       }
       
       const data = await response.json();
+      console.log("GIPHY data received:", data.data.length, "GIFs");
       setGifs(data.data);
     } catch (err) {
       console.error('Error fetching GIFs:', err);
       setError('Failed to load GIFs. Please try again.');
       
       // Fallback to static GIFs if API fails
+      console.log("Using fallback static GIFs");
       setGifs([
         {
           id: '1',
@@ -95,26 +107,31 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
     }
   };
 
+  const handleGifSelect = (gifUrl: string) => {
+    console.log("GIF selected:", gifUrl);
+    onSelect(gifUrl);
+  };
+
   return (
-    <div className="giphy-search w-full max-h-60 overflow-y-auto">
-      <div className="giphy-search-header flex justify-between items-center mb-2">
+    <div className="giphy-search w-full max-h-60 overflow-y-auto bg-background-tertiary p-3 rounded-md">
+      <div className="giphy-search-header flex justify-between items-center mb-3">
         <input
           type="text"
           placeholder="Search for GIFs..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-background-tertiary text-text-primary border border-background-primary rounded px-2 py-1 flex-1 mr-2"
+          className="bg-background-secondary text-text-primary border border-background-primary rounded px-3 py-2 flex-1 mr-2 focus:outline-none focus:ring-2 focus:ring-accent-primary"
         />
         <button 
           onClick={onClose}
-          className="text-text-muted hover:text-text-primary"
+          className="text-text-muted hover:text-text-primary p-2"
         >
           ✕
         </button>
       </div>
       
       {error && (
-        <div className="text-danger text-center py-2">{error}</div>
+        <div className="text-red-500 text-center py-2 mb-2">{error}</div>
       )}
       
       {loading ? (
@@ -122,25 +139,31 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
         </div>
       ) : (
-        <div className="giphy-results grid grid-cols-2 gap-2">
+        <div className="giphy-results grid grid-cols-2 gap-3">
           {gifs.map((gif) => (
             <div 
               key={gif.id}
-              className="giphy-result cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => onSelect(gif.images.fixed_height.url)}
+              className="giphy-result cursor-pointer hover:opacity-80 transition-opacity border border-background-primary rounded overflow-hidden"
+              onClick={() => handleGifSelect(gif.images.fixed_height.url)}
             >
               <img 
                 src={gif.images.fixed_height.url}
                 alt="GIF"
-                className="w-full h-auto rounded"
+                className="w-full h-auto"
                 loading="lazy"
               />
             </div>
           ))}
+          
+          {gifs.length === 0 && !loading && (
+            <div className="col-span-2 text-center py-4 text-text-muted">
+              No GIFs found. Try a different search term.
+            </div>
+          )}
         </div>
       )}
       
-      <div className="giphy-attribution text-xs text-text-muted text-center mt-2">
+      <div className="giphy-attribution text-xs text-text-muted text-center mt-3 py-1 border-t border-background-primary">
         Powered by GIPHY
       </div>
     </div>
