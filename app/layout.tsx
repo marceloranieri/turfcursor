@@ -24,33 +24,36 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
         <script dangerouslySetInnerHTML={{ __html: `
-          console.log('Inline script loaded');
-          function makeClickable() {
-            console.log('Making elements clickable');
-            const clickables = document.querySelectorAll('button, .channel, .reaction, .input-action, .member, .header-action');
-            clickables.forEach(el => {
+          console.log('Basic inline script loaded');
+          function addBasicInteractivity() {
+            console.log('Adding basic click handlers');
+            // Add click handlers to channels
+            document.querySelectorAll('.channel').forEach(function(el) {
               el.style.cursor = 'pointer';
-              el.addEventListener('click', function(e) {
-                console.log('Element clicked:', this);
-                if (this.classList.contains('channel')) {
-                  const name = this.querySelector('.truncate')?.textContent;
-                  if (name) {
-                    const topics = {
-                      'Remote Work Debate': '1',
-                      'AI Ethics': '2',
-                      'Climate Solutions': '3',
-                      'Education Reform': '4',
-                      'Cryptocurrency Future': '5'
-                    };
-                    window.location.href = '/chat/' + (topics[name] || '1');
-                  }
+              el.addEventListener('click', function() {
+                var name = this.querySelector('.truncate')?.textContent;
+                if (name) {
+                  var topics = {
+                    'Remote Work Debate': '1',
+                    'AI Ethics': '2',
+                    'Climate Solutions': '3',
+                    'Education Reform': '4',
+                    'Cryptocurrency Future': '5'
+                  };
+                  var id = topics[name] || '1';
+                  window.location.href = '/chat/' + id;
                 }
               });
             });
           }
-          document.addEventListener('DOMContentLoaded', makeClickable);
-          if (document.readyState === 'complete') makeClickable();
-          setTimeout(makeClickable, 1000);
+          // Execute when DOM is ready
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', addBasicInteractivity);
+          } else {
+            addBasicInteractivity();
+          }
+          // Try again after a short delay
+          setTimeout(addBasicInteractivity, 1000);
         ` }} />
       </head>
       <body className={inter.className}>
@@ -58,15 +61,7 @@ export default function RootLayout({
           {children}
           <Toaster position="top-right" />
           <SpeedInsights />
-          <Script src="/fix.js" strategy="afterInteractive" />
-          <script dangerouslySetInnerHTML={{ __html: `
-            setTimeout(function() {
-              if (window.initInteractivity) {
-                console.log('Running initInteractivity from inline fallback');
-                window.initInteractivity();
-              }
-            }, 2000);
-          ` }} />
+          <Script src="/fix-csp.js" strategy="afterInteractive" />
         </AuthProvider>
       </body>
     </html>
