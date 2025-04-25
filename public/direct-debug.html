@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct Debug Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #36393f;
+      color: #dcddde;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #2f3136;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    h1 {
+      color: white;
+      margin-top: 0;
+    }
+    .info {
+      margin-bottom: 20px;
+      border-left: 4px solid #5865f2;
+      padding-left: 15px;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 15px;
+      background-color: #202225;
+      border-radius: 4px;
+    }
+    .channel {
+      padding: 8px 12px;
+      background-color: #40444b;
+      margin: 8px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .channel:hover {
+      background-color: #45474e;
+    }
+    .channel .truncate {
+      display: inline-block;
+    }
+    .reaction {
+      display: inline-block;
+      padding: 5px 10px;
+      background-color: #40444b;
+      border-radius: 15px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .input-action {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      background-color: #40444b;
+      border-radius: 50%;
+      margin-right: 10px;
+      cursor: pointer;
+      text-align: center;
+      line-height: 30px;
+    }
+    .header-action {
+      display: inline-block;
+      padding: 5px;
+      background-color: #40444b;
+      border-radius: 4px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    form {
+      display: flex;
+      margin-top: 20px;
+    }
+    .input-field {
+      flex: 1;
+      padding: 10px;
+      background-color: #40444b;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      margin-right: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #5865f2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .console {
+      margin-top: 20px;
+      background-color: #202225;
+      color: #5de948;
+      font-family: monospace;
+      padding: 15px;
+      border-radius: 4px;
+      height: 200px;
+      overflow-y: auto;
+    }
+    .console-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px solid #36393f;
+      padding-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Direct Debug Page</h1>
+    
+    <div class="info">
+      <p>This page tests the direct-fix.js script without any server dependencies.</p>
+      <p>Open your browser console (F12) to see detailed logs of events.</p>
+    </div>
+    
+    <div class="test-section">
+      <h2>Channel Navigation Test</h2>
+      <p>Click on any channel below:</p>
+      
+      <div class="channel">
+        <div class="truncate">Remote Work Debate</div>
+      </div>
+      <div class="channel">
+        <div class="truncate">AI Ethics</div>
+      </div>
+      <div class="channel">
+        <div class="truncate">Climate Solutions</div>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>Interactive Elements Test</h2>
+      <p>Click any of these elements:</p>
+      
+      <div class="reaction">👍 2</div>
+      <div class="reaction">🔥 5</div>
+      <div class="input-action">😊</div>
+      <div class="header-action">🔔</div>
+    </div>
+    
+    <div class="test-section">
+      <h2>Form Submission Test</h2>
+      <p>Try typing and submitting a message:</p>
+      
+      <form>
+        <input type="text" class="input-field" placeholder="Type a message...">
+        <!-- No button added here, script should add one -->
+      </form>
+    </div>
+    
+    <div class="console" id="console">
+      <div class="console-entry">Awaiting events...</div>
+    </div>
+  </div>
+  
+  <script>
+    // Override console.log to show messages in our UI
+    (function() {
+      var realConsoleLog = console.log;
+      console.log = function() {
+        // Call the original console.log
+        realConsoleLog.apply(console, arguments);
+        
+        // Add to our console div
+        var consoleDiv = document.getElementById('console');
+        if (consoleDiv) {
+          var entry = document.createElement('div');
+          entry.className = 'console-entry';
+          
+          var args = Array.prototype.slice.call(arguments);
+          entry.textContent = args.map(function(arg) {
+            if (typeof arg === 'object') {
+              try {
+                return JSON.stringify(arg);
+              } catch (e) {
+                return '[Object]';
+              }
+            }
+            return String(arg);
+          }).join(' ');
+          
+          consoleDiv.appendChild(entry);
+          consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+      };
+    })();
+    
+    console.log('Debug page loaded');
+  </script>
+  
+  <!-- Load the direct fix script -->
+  <script src="/direct-fix.js"></script>
+</body>
+</html> 
