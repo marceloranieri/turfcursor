@@ -1,0 +1,86 @@
+/* Interactive elements fixes */
+
+/* Fix for interactive elements */
+.clickable {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* Add this class to all clickable elements */
+.channel, 
+.server-icon, 
+.input-action, 
+.reaction, 
+.member-item,
+.btn, 
+.category-header, 
+.message-actions,
+.header-action,
+button,
+a,
+[role="button"] {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+/* Fix z-index issues */
+.modal-overlay {
+  z-index: 9999 !important;
+}
+
+.modal {
+  z-index: 10000 !important;
+}
+
+/* Fix any pointer-event issues */
+.app-container * {
+  pointer-events: auto;
+}
+
+/* Add hover effects for better UX */
+.channel:hover,
+.reaction:hover,
+.input-action:hover,
+.header-action:hover {
+  filter: brightness(1.1);
+  transition: filter 0.2s ease;
+}
+
+button:hover {
+  filter: brightness(1.1);
+  transition: filter 0.2s ease;
+}
+
+/* Add active effects */
+button:active,
+.channel:active,
+.reaction:active,
+.input-action:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Highlight focused elements */
+button:focus,
+input:focus,
+.input-field:focus {
+  outline: 2px solid rgba(88, 101, 242, 0.5) !important;
+  outline-offset: 2px;
+}
+
+/* Improve focus visibility for accessibility */
+:focus-visible {
+  outline: 2px solid #5865f2 !important;
+  outline-offset: 2px;
+}
+
+/* Fix for any hidden interactive elements */
+button:not([disabled]),
+input:not([disabled]),
+select:not([disabled]),
+textarea:not([disabled]),
+[role="button"]:not([disabled]) {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+} 

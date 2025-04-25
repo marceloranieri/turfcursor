@@ -8,6 +8,8 @@ import MobileNavigation from '@/components/layout/MobileNavigation';
 import GuestModal from '@/components/modals/GuestModal';
 import { createClient } from '@supabase/supabase-js';
 import MainLayout from '@/components/layout/MainLayout';
+import { setupDebugListeners } from '@/lib/debug-helpers';
+import HydrationSafeComponent from '@/components/HydrationSafeComponent';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -354,6 +356,36 @@ export default function ChatPage() {
       makeChannelsClickable();
       enableForm();
     }, 2000);
+  }, []);
+  
+  // Add this inside the component, after your other useEffect hooks
+  useEffect(() => {
+    // Set up debug listeners to help diagnose interaction issues
+    setupDebugListeners();
+    
+    // Log some useful debugging information
+    console.log('Chat page loaded for topic:', topicId);
+    console.log('Authentication status:', isAuthenticated ? 'Logged in' : 'Not logged in');
+    
+    // Test Supabase connection
+    const testSupabase = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .limit(1);
+        
+        if (error) {
+          console.error('Supabase connection error:', error);
+        } else {
+          console.log('Supabase connection successful:', data);
+        }
+      } catch (err) {
+        console.error('Supabase test failed:', err);
+      }
+    };
+    
+    testSupabase();
   }, []);
   
   if (loading) {

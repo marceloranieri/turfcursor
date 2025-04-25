@@ -38,7 +38,13 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/')) {
     response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300');
   }
-  
+
+  // Add security headers
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.vercel.app"
+  );
+
   return response;
 }
 
