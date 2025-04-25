@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import ServerSidebar from '@/components/layout/ServerSidebar';
-import ChannelsSidebar from '@/components/layout/ChannelsSidebar';
 import ChatArea from '@/components/layout/ChatArea';
 import MembersList from '@/components/layout/MembersList';
 import MobileNavigation from '@/components/layout/MobileNavigation';
@@ -364,9 +362,7 @@ export default function ChatPage() {
   
   return (
     <MainLayout enableDebug={true}>
-      <div className="app-container">
-        <ServerSidebar />
-        <ChannelsSidebar topics={topics} />
+      <div className="app-container flex">
         <ChatArea 
           topic={currentTopic} 
           messages={messages} 
@@ -401,4 +397,4 @@ export default function ChatPage() {
       </div>
     </MainLayout>
   );
-} 
+}

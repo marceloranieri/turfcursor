@@ -1,5 +1,6 @@
 import './globals.css';
 import '@/app/styles/discord-theme.css';
+import '@/app/styles/chat-layout.css';
 import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/lib/auth/AuthContext';

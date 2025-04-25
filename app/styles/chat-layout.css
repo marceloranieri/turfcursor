@@ -1,0 +1,89 @@
+/* Custom Chat Layout without Sidebars */
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Chat Area - Full width when sidebars are removed */
+.app-container .chat-area,
+.app-container > div:first-child {
+  flex: 1;
+  border-radius: 8px;
+  margin: 0;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background-color: var(--dark-background, #36393F);
+}
+
+/* Members list positioning */
+.members-list {
+  width: 240px;
+  background-color: var(--channel-bg, #2F3136);
+  padding: 20px 8px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  border-left: 1px solid var(--divider, #40444B);
+}
+
+/* Responsive design - adjust for smaller screens */
+@media (max-width: 1080px) {
+  .members-list {
+    display: none;
+  }
+  
+  .app-container .chat-area,
+  .app-container > div:first-child {
+    width: 100%;
+    border-radius: 0;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+  
+  .mobile-navigation {
+    display: flex;
+  }
+}
+
+/* Message styling */
+.message-group {
+  padding: 2px 16px 10px;
+  display: flex;
+  margin-bottom: 17px;
+  transition: background-color 0.2s;
+}
+
+.message-group:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Input area - ensure it's properly styled */
+.input-container {
+  background-color: var(--input-bg, #40444B);
+  border-radius: 8px;
+  margin: 0 16px 24px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+}
+
+.input-field {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  color: var(--text-normal, #DCDDDE);
+  padding: 14px 0;
+  font-size: 15px;
+  outline: none;
+}
+
+/* Focused input styling */
+.input-field:focus {
+  outline: none;
+} 
