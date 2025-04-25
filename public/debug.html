@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turf App Debug Page</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #36393f;
+      color: #dcddde;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: white;
+    }
+    .button {
+      background-color: #5865f2;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    .channel {
+      padding: 5px 10px;
+      background-color: #2f3136;
+      margin: 5px 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .channel .truncate {
+      display: inline-block;
+    }
+    .debug-section {
+      background-color: #2f3136;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .debug-log {
+      background-color: #202225;
+      padding: 10px;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 10px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Turf App Debug Page</h1>
+    
+    <div class="debug-section">
+      <h2>Channel Navigation Test</h2>
+      <p>Click on any channel to test navigation:</p>
+      <div class="channel">
+        <div class="truncate">Remote Work Debate</div>
+      </div>
+      <div class="channel">
+        <div class="truncate">AI Ethics</div>
+      </div>
+      <div class="channel">
+        <div class="truncate">Climate Solutions</div>
+      </div>
+    </div>
+    
+    <div class="debug-section">
+      <h2>Modal Test</h2>
+      <p>Click the button to test if the auth modal appears:</p>
+      <button class="button reaction">Show Auth Modal</button>
+      <button class="button header-action">Another Test Button</button>
+    </div>
+    
+    <div class="debug-section">
+      <h2>Form Submit Test</h2>
+      <form class="test-form">
+        <input type="text" placeholder="Type something..." style="padding: 8px; width: 300px;">
+        <button type="submit" class="button">Send</button>
+      </form>
+    </div>
+    
+    <div class="debug-section">
+      <h2>Console Logs</h2>
+      <div class="debug-log" id="debug-console"></div>
+    </div>
+  </div>
+  
+  <script>
+    // Override console.log to show in debug panel
+    const oldLog = console.log;
+    console.log = function(...args) {
+      oldLog.apply(console, args);
+      const debugConsole = document.getElementById('debug-console');
+      if (debugConsole) {
+        const line = document.createElement('div');
+        line.textContent = args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg) : arg
+        ).join(' ');
+        debugConsole.appendChild(line);
+        debugConsole.scrollTop = debugConsole.scrollHeight;
+      }
+    };
+    
+    console.log('Debug page loaded');
+  </script>
+  
+  <!-- Load the fix script -->
+  <script src="/fix.js"></script>
+</body>
+</html> 
