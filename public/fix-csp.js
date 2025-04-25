@@ -1,248 +1,210 @@
-// CSP-compliant fix script - no eval() or unsafe functions
+/**
+ * Turf App CSP-Safe Interaction Fix Script
+ * This script fixes interaction problems while being safe for Content Security Policy restrictions
+ */
+
 (function() {
-  console.log('CSP-compliant fix script loaded');
+  console.log('CSP-safe fix script loaded');
   
-  // Simple topic mapping using a regular object (CSP-safe)
-  var topicMap = {
-    'Remote Work Debate': '1',
-    'AI Ethics': '2',
-    'Climate Solutions': '3',
-    'Education Reform': '4',
-    'Cryptocurrency Future': '5'
-  };
-  
-  function setupClickHandlers() {
-    // Make channels clickable
-    var channels = document.querySelectorAll('.channel');
-    console.log('Found', channels.length, 'channels');
+  // Function to apply fixes when DOM is ready
+  function applyFixes() {
+    // Find all clickable elements
+    const clickables = document.querySelectorAll('button, .button, .channel, a, [role="button"], .nav-item, .sidebar-item');
+    console.log(`Found ${clickables.length} clickable elements`);
     
-    for (var i = 0; i < channels.length; i++) {
-      var channel = channels[i];
-      channel.style.cursor = 'pointer';
+    // Add click handlers
+    clickables.forEach(element => {
+      // Skip if already processed
+      if (element._cspFixApplied) return;
       
-      // Use closure to preserve the channel reference
-      (function(ch) {
-        ch.addEventListener('click', function(event) {
-          var nameElement = ch.querySelector('.truncate');
-          if (nameElement && nameElement.textContent) {
-            var name = nameElement.textContent;
-            var id = topicMap[name] || '1';
-            console.log('Channel clicked:', name, '→', id);
+      // Ensure element is visually clickable
+      const computedStyle = window.getComputedStyle(element);
+      if (computedStyle.cursor !== 'pointer') {
+        element.style.cursor = 'pointer';
+      }
+      
+      element.addEventListener('click', function(e) {
+        console.log(`Click captured on: ${element.tagName}`, element);
+        
+        // Visual feedback for click
+        element.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          element.style.transform = '';
+        }, 100);
+        
+        // If it's a channel in the sidebar, handle navigation
+        if (element.classList.contains('channel')) {
+          const nameElement = element.querySelector('.truncate');
+          if (nameElement) {
+            const name = nameElement.textContent;
+            console.log('Channel clicked:', name);
             
-            // Add data attributes for tracking
-            if (event.target) {
-              event.target.setAttribute('data-channel-id', 'channel-' + id);
-              event.target.setAttribute('data-channel-name', 'Channel: ' + name);
+            if (name) {
+              const topics = {
+                'Remote Work Debate': '1',
+                'AI Ethics': '2',
+                'Climate Solutions': '3',
+                'Education Reform': '4',
+                'Cryptocurrency Future': '5'
+              };
+              
+              const id = topics[name] || '1';
+              window.location.href = `/chat/${id}`;
             }
+          }
+        }
+      });
+      
+      element._cspFixApplied = true;
+    });
+    
+    // Handle forms
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      // Skip if already processed
+      if (form._cspFixApplied) return;
+      
+      form.addEventListener('submit', function(e) {
+        console.log('Form submission captured', form);
+        
+        // Add a submit button if missing
+        if (!form.querySelector('button[type="submit"], input[type="submit"]')) {
+          console.log('Adding hidden submit button to form');
+          const submitButton = document.createElement('button');
+          submitButton.type = 'submit';
+          submitButton.style.position = 'absolute';
+          submitButton.style.opacity = '0';
+          submitButton.style.pointerEvents = 'none';
+          form.appendChild(submitButton);
+        }
+      });
+      
+      // Add enter key handling for inputs
+      const inputs = form.querySelectorAll('input[type="text"], input:not([type])');
+      inputs.forEach(input => {
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            console.log('Enter key pressed in input, submitting form');
+            e.preventDefault();
             
-            // Navigate with a slight delay to ensure attributes are processed
-            setTimeout(function() {
-              window.location.href = '/chat/' + id;
-            }, 10);
+            // Try to find a submit button
+            const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (submitButton) {
+              submitButton.click();
+            } else {
+              // If no submit button, submit the form directly
+              form.submit();
+            }
           }
         });
-      })(channel);
-    }
+      });
+      
+      form._cspFixApplied = true;
+    });
     
-    // Make reaction elements clickable
-    var interactiveElements = document.querySelectorAll('.reaction, .input-action, .header-action');
-    console.log('Found', interactiveElements.length, 'interactive elements');
+    // Fix modal interactions
+    const modals = document.querySelectorAll('.modal, .modal-content, [role="dialog"]');
+    const modalOverlays = document.querySelectorAll('.modal-overlay, .modal-backdrop, .overlay');
     
-    for (var i = 0; i < interactiveElements.length; i++) {
-      var element = interactiveElements[i];
-      element.style.cursor = 'pointer';
+    modals.forEach(modal => {
+      if (modal._cspFixApplied) return;
       
-      // Add data attributes for tracking
-      element.setAttribute('data-interaction-id', 'interaction-' + i);
-      
-      // Use closure to preserve element reference
-      (function(el) {
-        el.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('Interactive element clicked');
-          showAuthModal();
-          return false;
-        });
-      })(element);
-    }
-  }
-  
-  function setupFormHandlers() {
-    // Handle form submissions
-    var forms = document.querySelectorAll('form');
-    console.log('Found', forms.length, 'forms');
-    
-    for (var i = 0; i < forms.length; i++) {
-      var form = forms[i];
-      
-      // Add unique ID to the form
-      form.setAttribute('data-form-id', 'form-' + i);
-      
-      // Use closure to preserve form reference
-      (function(f) {
-        f.addEventListener('submit', function(e) {
-          e.preventDefault();
-          console.log('Form submitted:', f.getAttribute('data-form-id'));
-          showAuthModal();
-          return false;
-        });
-      })(form);
-    }
-  }
-  
-  function addSendButton() {
-    // Add a send button to message forms that don't have one
-    var messageForms = document.querySelectorAll('form');
-    
-    for (var i = 0; i < messageForms.length; i++) {
-      var form = messageForms[i];
-      
-      if (!form.querySelector('button[type="submit"]')) {
-        var inputField = form.querySelector('.input-field, input[type="text"]');
-        
-        if (inputField) {
-          console.log('Adding send button to form');
-          var button = document.createElement('button');
-          button.type = 'submit';
-          button.textContent = 'Send';
-          button.style.marginLeft = '10px';
-          button.style.padding = '0 16px';
-          button.style.height = '36px';
-          button.style.backgroundColor = '#5865f2';
-          button.style.color = 'white';
-          button.style.border = 'none';
-          button.style.borderRadius = '4px';
-          button.style.fontWeight = 'bold';
-          button.style.cursor = 'pointer';
+      // Find close buttons
+      const closeButtons = modal.querySelectorAll('.close, .close-button, .modal-close, [aria-label="Close"]');
+      closeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('Modal close button clicked');
           
-          // Add unique ID to the button
-          button.setAttribute('data-button-id', 'send-button-' + i);
-          
-          inputField.insertAdjacentElement('afterend', button);
+          // Find parent overlay to hide
+          let overlay = modal.closest('.modal-overlay, .modal-backdrop, .overlay');
+          if (overlay) {
+            overlay.style.display = 'none';
+          }
+        });
+      });
+      
+      modal._cspFixApplied = true;
+    });
+    
+    // Fix overlays (clicking to close)
+    modalOverlays.forEach(overlay => {
+      if (overlay._cspFixApplied) return;
+      
+      overlay.addEventListener('click', function(e) {
+        // Only close if clicking the overlay itself, not its children
+        if (e.target === overlay) {
+          console.log('Modal overlay clicked');
+          overlay.style.display = 'none';
         }
-      }
-    }
+      });
+      
+      overlay._cspFixApplied = true;
+    });
+    
+    console.log('All CSP-safe event handlers attached');
   }
   
-  // Auth modal function
-  function showAuthModal() {
-    // Remove existing modal if any
-    var existingModal = document.getElementById('auth-modal');
-    if (existingModal) {
-      existingModal.remove();
-    }
-    
-    console.log('Showing auth modal');
-    
-    // Create modal container
-    var modal = document.createElement('div');
-    modal.id = 'auth-modal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.right = '0';
-    modal.style.bottom = '0';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '9999';
-    
-    // Create modal content
-    var modalContent = document.createElement('div');
-    modalContent.style.backgroundColor = '#36393f';
-    modalContent.style.padding = '24px';
-    modalContent.style.borderRadius = '8px';
-    modalContent.style.maxWidth = '400px';
-    modalContent.style.width = '100%';
-    
-    // Create title
-    var title = document.createElement('h2');
-    title.textContent = 'Sign In Required';
-    title.style.color = 'white';
-    title.style.fontSize = '20px';
-    title.style.fontWeight = 'bold';
-    title.style.marginBottom = '16px';
-    
-    // Create message
-    var message = document.createElement('p');
-    message.textContent = 'You need to sign in to interact with the chat.';
-    message.style.color = '#dcddde';
-    message.style.marginBottom = '24px';
-    
-    // Create button container
-    var buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.justifyContent = 'flex-end';
-    buttonContainer.style.gap = '12px';
-    
-    // Create cancel button
-    var cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancel';
-    cancelButton.style.padding = '8px 16px';
-    cancelButton.style.backgroundColor = '#4f545c';
-    cancelButton.style.color = 'white';
-    cancelButton.style.border = 'none';
-    cancelButton.style.borderRadius = '4px';
-    cancelButton.style.cursor = 'pointer';
-    
-    // Create sign in button
-    var signInButton = document.createElement('button');
-    signInButton.textContent = 'Sign In';
-    signInButton.style.padding = '8px 16px';
-    signInButton.style.backgroundColor = '#5865f2';
-    signInButton.style.color = 'white';
-    signInButton.style.border = 'none';
-    signInButton.style.borderRadius = '4px';
-    signInButton.style.cursor = 'pointer';
-    
-    // Add event listeners
-    cancelButton.addEventListener('click', function() {
-      modal.remove();
+  // Setup monitoring for debugging
+  function setupEventMonitoring() {
+    const events = ['click', 'submit', 'input', 'change'];
+    events.forEach(eventType => {
+      document.addEventListener(eventType, (e) => {
+        console.log(`${eventType} event captured on:`, e.target);
+      }, true); // Use capturing phase to see all events
     });
-    
-    signInButton.addEventListener('click', function() {
-      window.location.href = '/auth/signin';
-    });
-    
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        modal.remove();
+    console.log('Event monitoring setup complete');
+  }
+  
+  // Setup a MutationObserver to handle dynamically added content
+  function setupObserver() {
+    const observer = new MutationObserver(mutations => {
+      let shouldReapplyFixes = false;
+      
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          shouldReapplyFixes = true;
+        }
+      });
+      
+      if (shouldReapplyFixes) {
+        console.log('DOM changes detected, reapplying CSP-safe fixes');
+        applyFixes();
       }
     });
     
-    // Build and append the modal
-    buttonContainer.appendChild(cancelButton);
-    buttonContainer.appendChild(signInButton);
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
     
-    modalContent.appendChild(title);
-    modalContent.appendChild(message);
-    modalContent.appendChild(buttonContainer);
+    console.log('CSP-safe mutation observer setup complete');
+  }
+  
+  // Initialize
+  function init() {
+    console.log('Initializing CSP-safe fix script');
     
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
+    // Initial fix application
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        applyFixes();
+        setupObserver();
+        if (location.hostname === 'localhost' || location.search.includes('debug=true')) {
+          setupEventMonitoring();
+        }
+      });
+    } else {
+      applyFixes();
+      setupObserver();
+      if (location.hostname === 'localhost' || location.search.includes('debug=true')) {
+        setupEventMonitoring();
+      }
+    }
+    
+    // Poll for new elements periodically as a fallback
+    setInterval(applyFixes, 1000);
   }
   
-  // Initialize function to run everything
-  function initialize() {
-    setupClickHandlers();
-    setupFormHandlers();
-    addSendButton();
-    console.log('CSP-compliant fix initialized');
-  }
-  
-  // Run initialize when DOM content is loaded
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    // DOM already loaded
-    initialize();
-  }
-  
-  // Add a listener for the window load event (for Next.js)
-  window.addEventListener('load', initialize);
-  
-  // Also run after a small delay to ensure everything is loaded
-  setTimeout(initialize, 1000);
+  // Start initialization
+  init();
 })(); 

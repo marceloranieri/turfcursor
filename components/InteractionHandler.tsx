@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 // Types for props
@@ -17,8 +17,9 @@ interface TopicMap {
  * This component handles all user interactions in a clean, React-friendly way.
  * It attaches event handlers to interactive elements like channels, reactions, etc.
  */
-export const InteractionHandler: React.FC<InteractionHandlerProps> = ({ debug = false }) => {
+export default function InteractionHandler({ debug = false }: InteractionHandlerProps) {
   const router = useRouter();
+  const isInitialized = useRef(false);
   
   // Topic mapping used for navigation
   const topicMap: TopicMap = {
@@ -30,70 +31,203 @@ export const InteractionHandler: React.FC<InteractionHandlerProps> = ({ debug = 
   };
   
   useEffect(() => {
-    if (debug) {
-      console.log('InteractionHandler: Initializing interaction handlers');
-    }
-    
-    // Set up channel click handlers
-    setupChannelHandlers();
-    
-    // Set up reaction buttons
-    setupReactionHandlers();
-    
-    // Set up form handlers
-    setupFormHandlers();
-    
-    // Set up other interactive elements
-    setupMiscInteractions();
-    
-    // Cleanup function
-    return () => {
-      if (debug) {
-        console.log('InteractionHandler: Cleaning up event handlers');
-      }
-      // No need to remove event handlers for React-managed elements
-      // Events on dynamically added elements should be cleaned up here
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    // Load fix script programmatically
+    const loadFixScript = () => {
+      const script = document.createElement('script');
+      script.src = '/direct-fix.js';
+      script.async = true;
+      script.onload = () => console.log('Direct fix script loaded successfully');
+      script.onerror = () => console.error('Failed to load direct fix script');
+      document.body.appendChild(script);
     };
-  }, [router, debug]);
-  
-  // Handle channel clicks for navigation
-  const setupChannelHandlers = () => {
-    const channels = document.querySelectorAll('.channel');
-    
-    if (debug) {
-      console.log(`Found ${channels.length} channel elements`);
-    }
-    
-    channels.forEach((channel) => {
-      // Add visual affordance
-      channel.classList.add('interactive');
+
+    // Load CSP-safe fix script
+    const loadCspFixScript = () => {
+      const script = document.createElement('script');
+      script.src = '/fix-csp.js';
+      script.async = true;
+      script.onload = () => console.log('CSP-safe fix script loaded successfully');
+      script.onerror = () => console.error('Failed to load CSP-safe fix script');
+      document.body.appendChild(script);
+    };
+
+    // Setup event monitoring for debugging
+    const setupEventMonitoring = () => {
+      if (!debug) return;
       
-      // Set cursor style
-      (channel as HTMLElement).style.cursor = 'pointer';
-      
-      // Add click handler
-      channel.addEventListener('click', (event) => {
-        const nameElement = channel.querySelector('.truncate');
-        if (nameElement && nameElement.textContent) {
-          const topicName = nameElement.textContent.trim();
-          const topicId = topicMap[topicName] || '1';
-          
-          if (debug) {
-            console.log(`Channel clicked: ${topicName} → navigating to topic ${topicId}`);
-          }
-          
-          // Add data attributes for analytics
-          if (event.currentTarget) {
-            event.currentTarget.setAttribute('data-interaction', 'channel-click');
-            event.currentTarget.setAttribute('data-target', topicId);
-          }
-          
-          // Use the Next.js router for client-side navigation
-          router.push(`/chat/${topicId}`);
-        }
+      const events = ['click', 'submit', 'input', 'change', 'pointerdown', 'pointerup'];
+      events.forEach(eventType => {
+        document.addEventListener(eventType, (e) => {
+          console.log(`[Debug] ${eventType} event captured on:`, e.target);
+        }, true); // Use capturing phase
       });
-    });
-  };
+      
+      console.log('[Debug] Event monitoring setup complete');
+
+      // Monitor for React synthetic events
+      window.addEventListener('reactevent', (e) => {
+        console.log('[Debug] React synthetic event captured:', (e as CustomEvent).detail);
+      });
+    };
+
+    // Function to make channels clickable
+    const makeChannelsClickable = () => {
+      console.log('Making channels clickable');
+      const channels = document.querySelectorAll('.channel');
+      
+      channels.forEach(channel => {
+        // Skip if already processed
+        if ((channel as any)._clickHandlerApplied) return;
+        
+        // Add visual cue
+        (channel as HTMLElement).style.cursor = 'pointer';
+        
+        channel.addEventListener('click', (e) => {
+          const nameElement = channel.querySelector('.truncate');
+          if (nameElement) {
+            const name = nameElement.textContent;
+            console.log('Channel clicked:', name);
+            
+            if (name) {
+              const topics = {
+                'Remote Work Debate': '1',
+                'AI Ethics': '2',
+                'Climate Solutions': '3',
+                'Education Reform': '4',
+                'Cryptocurrency Future': '5'
+              };
+              
+              const id = topics[name as keyof typeof topics] || '1';
+              window.location.href = `/chat/${id}`;
+            }
+          }
+        });
+
+        (channel as any)._clickHandlerApplied = true;
+      });
+    };
+
+    // Ensure forms work properly
+    const fixForms = () => {
+      console.log('Fixing forms');
+      const forms = document.querySelectorAll('form');
+      
+      forms.forEach(form => {
+        // Skip if already processed
+        if ((form as any)._formHandlerApplied) return;
+        
+        // Add an ID to the form if it doesn't have one
+        if (!form.id) {
+          form.id = 'message-form-' + Math.random().toString(36).substring(2, 9);
+        }
+        
+        // Add submit handler
+        form.addEventListener('submit', (e) => {
+          console.log('Form submitted:', form.id);
+          
+          // Get form data for logging
+          const formData = new FormData(form);
+          const formValues: Record<string, any> = {};
+          for (const [key, value] of formData.entries()) {
+            formValues[key] = value;
+          }
+          
+          console.log('Form data:', formValues);
+          
+          // Dispatch a custom event
+          const submitEvent = new CustomEvent('turfformsubmit', { 
+            detail: { form, values: formValues },
+            bubbles: true 
+          });
+          form.dispatchEvent(submitEvent);
+        });
+        
+        // Add a submit button if missing
+        if (!form.querySelector('button[type="submit"]')) {
+          const inputField = form.querySelector('.input-field, input');
+          if (inputField) {
+            console.log('Adding submit button to form');
+            const button = document.createElement('button');
+            button.type = 'submit';
+            button.textContent = 'Send';
+            button.id = 'send-message-btn';
+            button.className = 'send-button';
+            button.style.marginLeft = '10px';
+            button.style.padding = '0 16px';
+            button.style.height = '36px';
+            button.style.backgroundColor = '#5865f2';
+            button.style.color = 'white';
+            button.style.borderRadius = '4px';
+            button.style.border = 'none';
+            button.style.fontWeight = 'bold';
+            button.style.cursor = 'pointer';
+            
+            inputField.insertAdjacentElement('afterend', button);
+            
+            // Add enter key handler
+            inputField.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                button.click();
+              }
+            });
+          }
+        }
+        
+        (form as any)._formHandlerApplied = true;
+      });
+    };
+
+    // Initialize and apply fixes
+    const init = () => {
+      // Load fix scripts
+      loadFixScript();
+      loadCspFixScript();
+      
+      // Set up debugging
+      setupEventMonitoring();
+      
+      // Apply direct fixes after a short delay
+      setTimeout(() => {
+        makeChannelsClickable();
+        fixForms();
+      }, 500);
+      
+      // Apply again after longer delay for lazy-loaded content
+      setTimeout(() => {
+        makeChannelsClickable();
+        fixForms();
+      }, 2000);
+      
+      // Set up a MutationObserver to handle dynamic content
+      const observer = new MutationObserver(() => {
+        makeChannelsClickable();
+        fixForms();
+      });
+      
+      observer.observe(document.body, { 
+        childList: true, 
+        subtree: true 
+      });
+      
+      // Apply fixes periodically as a fallback
+      setInterval(() => {
+        makeChannelsClickable();
+        fixForms();
+      }, 5000);
+    };
+
+    init();
+
+    // Clean up
+    return () => {
+      // Nothing to clean up here as event listeners will be garbage collected
+      // with their elements when the page unloads
+    };
+  }, [debug]);
   
   // Handle reaction buttons and interactive elements
   const setupReactionHandlers = () => {
@@ -125,108 +259,6 @@ export const InteractionHandler: React.FC<InteractionHandlerProps> = ({ debug = 
         if (event.currentTarget) {
           event.currentTarget.setAttribute('data-interacted', 'true');
           event.currentTarget.setAttribute('data-time', Date.now().toString());
-        }
-        
-        // Show authentication modal if needed
-        showAuthModal();
-      });
-    });
-  };
-  
-  // Handle form submissions
-  const setupFormHandlers = () => {
-    const forms = document.querySelectorAll('form');
-    
-    if (debug) {
-      console.log(`Found ${forms.length} forms`);
-    }
-    
-    forms.forEach((form, index) => {
-      // Add ID and name to form if missing
-      if (!form.id) {
-        form.id = `message-form-${index}`;
-      }
-      
-      // Add IDs and names to form elements if missing
-      const formInputs = form.querySelectorAll('input, textarea');
-      formInputs.forEach((input, inputIndex) => {
-        if (!input.id) {
-          input.id = `input-${index}-${inputIndex}`;
-        }
-        if (!input.getAttribute('name')) {
-          input.setAttribute('name', `field-${inputIndex}`);
-        }
-      });
-      
-      // Add a submit button if missing
-      if (!form.querySelector('button[type="submit"]')) {
-        const inputField = form.querySelector('.input-field, input[type="text"], textarea');
-        
-        if (inputField) {
-          if (debug) {
-            console.log(`Adding submit button to form #${index}`);
-          }
-          
-          const button = document.createElement('button');
-          button.type = 'submit';
-          button.id = `submit-button-${index}`;
-          button.className = 'submit-button';
-          button.textContent = 'Send';
-          button.style.marginLeft = '10px';
-          button.style.padding = '0 16px';
-          button.style.height = '36px';
-          button.style.backgroundColor = '#5865f2';
-          button.style.color = 'white';
-          button.style.border = 'none';
-          button.style.borderRadius = '4px';
-          button.style.fontWeight = 'bold';
-          button.style.cursor = 'pointer';
-          
-          inputField.insertAdjacentElement('afterend', button);
-        }
-      }
-      
-      // Add submit handler
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        
-        if (debug) {
-          console.log(`Form submitted: ${form.id}`);
-        }
-        
-        // Get form data
-        const formData = new FormData(form);
-        const messageValue = formData.get('message') || '';
-        
-        if (debug) {
-          console.log(`Message content: ${messageValue}`);
-        }
-        
-        // Show authentication modal if needed
-        showAuthModal();
-      });
-    });
-  };
-  
-  // Setup other interactive elements
-  const setupMiscInteractions = () => {
-    // Member list items
-    const memberItems = document.querySelectorAll('.member-item');
-    
-    if (debug && memberItems.length > 0) {
-      console.log(`Found ${memberItems.length} member items`);
-    }
-    
-    memberItems.forEach((member) => {
-      // Set cursor style
-      (member as HTMLElement).style.cursor = 'pointer';
-      
-      // Add click handler
-      member.addEventListener('click', (event) => {
-        event.preventDefault();
-        
-        if (debug) {
-          console.log(`Member clicked: ${member.textContent}`);
         }
         
         // Show authentication modal if needed
@@ -369,6 +401,4 @@ export const InteractionHandler: React.FC<InteractionHandlerProps> = ({ debug = 
   
   // This component doesn't render anything visible
   return null;
-};
-
-export default InteractionHandler; 
+} 

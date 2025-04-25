@@ -32,6 +32,20 @@ const nextConfig = {
   // Optimize serverless function
   serverRuntimeConfig: {
     maxMemory: 950, // MB (leaving some buffer from the 1GB limit)
+  },
+  // Add headers to allow scripts to run properly
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.com https://*.vercel.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;"
+          }
+        ]
+      }
+    ];
   }
 };
 
