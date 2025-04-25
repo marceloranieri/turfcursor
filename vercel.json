@@ -1,25 +1,15 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/next",
-      "config": {
-        "cachePattern": ".next/cache/**"
-      }
+      "use": "@vercel/next"
     }
   ],
   "routes": [
-    { 
-      "src": "/(.*)", 
-      "dest": "/$1" 
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://csfdshydwdzexxosevml.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZmRzaHlkd2R6ZXh4b3Nldm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5NzM5NzAsImV4cCI6MjA1NTU0OTk3MH0.2uZvZvZvZvZvZvZvZvZvZvZvZvZvZvZvZvZvZvZvZv",
-    "NEXT_PUBLIC_APP_URL": "https://turf-ruddy.vercel.app",
-    "LANGCHAIN_CALLBACKS_BACKGROUND": "false"
-  }
+  ]
 } 
