@@ -56,13 +56,13 @@ interface ChatAreaProps {
 
 const ChatArea: React.FC<ChatAreaProps> = ({
   topic,
-  messages,
-  pinnedMessage,
+  messages: initialMessages,
+  pinnedMessage: initialPinnedMessage,
   onSendMessage
 }) => {
   const [messageInput, setMessageInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>(messages);
-  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | undefined>(pinnedMessage);
+  const [messagesList, setMessagesList] = useState<Message[]>(initialMessages);
+  const [currentPinnedMessage, setCurrentPinnedMessage] = useState<PinnedMessage | undefined>(initialPinnedMessage);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
@@ -81,18 +81,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   
   // Update messages when the prop changes (e.g. when topic changes)
   useEffect(() => {
-    setMessages(messages);
-  }, [messages]);
+    setMessagesList(initialMessages);
+  }, [initialMessages]);
   
   // Update pinned message when the prop changes
   useEffect(() => {
-    setPinnedMessage(pinnedMessage);
-  }, [pinnedMessage]);
+    setCurrentPinnedMessage(initialPinnedMessage);
+  }, [initialPinnedMessage]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messagesList]);
 
   // Set up real-time message subscription
   useEffect(() => {
@@ -121,7 +121,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           reactions: []
         };
         
-        setMessages(currentMessages => [...currentMessages, formattedMessage]);
+        setMessagesList(currentMessages => [...currentMessages, formattedMessage]);
       })
       .subscribe();
 
@@ -180,7 +180,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       }
       
       // For demo purposes, update reaction count locally first for better UX
-      const updatedMessages = messages.map(message => {
+      const updatedMessages = messagesList.map(message => {
         if (message.id === messageId) {
           let updatedReactions = [...(message.reactions || [])];
           
@@ -226,7 +226,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         return message;
       });
       
-      setMessages(updatedMessages);
+      setMessagesList(updatedMessages);
       
       // In a real app, also save/update reaction in Supabase
       if (isActive) {
@@ -281,7 +281,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       }
       
       // For demo purpose, set the pinned message locally
-      setPinnedMessage({
+      setCurrentPinnedMessage({
         id: message.id,
         content: message.content
       });
@@ -294,7 +294,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       
       // Simulate auto-unpinning after 30 seconds
       setTimeout(async () => {
-        setPinnedMessage(undefined);
+        setCurrentPinnedMessage(undefined);
         // In a real app, also update in Supabase
         await supabase
           .from('messages')
@@ -459,7 +459,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       </div>
       
       {/* Pinned message */}
-      {pinnedMessage && (
+      {currentPinnedMessage && (
         <div className="px-4 py-2 bg-background-secondary/50 border-b border-background-tertiary flex items-start">
           <span className="flex-shrink-0 text-text-secondary mr-2 mt-0.5">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -468,7 +468,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-text-primary">
-              {pinnedMessage.content}
+              {currentPinnedMessage.content}
             </p>
           </div>
         </div>
@@ -476,7 +476,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       
       {/* Messages list */}
       <div className="flex-1 overflow-y-auto p-4">
-        <MessageList messages={messages} />
+        <MessageList messages={messagesList} />
       </div>
       
       {/* Input area */}
