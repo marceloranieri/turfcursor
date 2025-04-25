@@ -1,185 +1,218 @@
-// Log when the script loads
-console.log('CSP-compliant fix script loaded!');
-
-// Function to initialize interactivity
-function initInteractivity() {
-  console.log('Initializing interactivity (CSP-compliant)');
-
-  // Define topic mapping
-  const topicMap = {
+// CSP-compliant fix script - no eval() or unsafe functions
+(function() {
+  console.log('CSP-compliant fix script loaded');
+  
+  // Simple topic mapping using a regular object (CSP-safe)
+  var topicMap = {
     'Remote Work Debate': '1',
     'AI Ethics': '2',
     'Climate Solutions': '3',
     'Education Reform': '4',
     'Cryptocurrency Future': '5'
   };
-
-  // Make all buttons and clickable elements interactive
+  
   function setupClickHandlers() {
-    // Channel elements
-    document.querySelectorAll('.channel').forEach(function(channel) {
+    // Make channels clickable
+    var channels = document.querySelectorAll('.channel');
+    console.log('Found', channels.length, 'channels');
+    
+    for (var i = 0; i < channels.length; i++) {
+      var channel = channels[i];
       channel.style.cursor = 'pointer';
-      channel.addEventListener('click', function() {
-        const nameElement = this.querySelector('.truncate');
-        if (nameElement) {
-          const channelName = nameElement.textContent;
-          if (channelName && topicMap[channelName]) {
-            const topicId = topicMap[channelName];
-            console.log('Channel clicked:', channelName, '-> navigating to:', topicId);
-            window.location.href = '/chat/' + topicId;
+      
+      // Use closure to preserve the channel reference
+      (function(ch) {
+        ch.addEventListener('click', function(event) {
+          var nameElement = ch.querySelector('.truncate');
+          if (nameElement && nameElement.textContent) {
+            var name = nameElement.textContent;
+            var id = topicMap[name] || '1';
+            console.log('Channel clicked:', name, '→', id);
+            
+            // Add data attributes for tracking
+            if (event.target) {
+              event.target.setAttribute('data-channel-id', 'channel-' + id);
+              event.target.setAttribute('data-channel-name', 'Channel: ' + name);
+            }
+            
+            // Navigate with a slight delay to ensure attributes are processed
+            setTimeout(function() {
+              window.location.href = '/chat/' + id;
+            }, 10);
           }
-        }
-      });
-    });
-
-    // Reaction elements
-    document.querySelectorAll('.reaction').forEach(function(reaction) {
-      reaction.style.cursor = 'pointer';
-      reaction.addEventListener('click', function(e) {
-        console.log('Reaction clicked');
-        showAuthModal();
-        e.preventDefault();
-      });
-    });
-
-    // Input action elements
-    document.querySelectorAll('.input-action').forEach(function(action) {
-      action.style.cursor = 'pointer';
-      action.addEventListener('click', function(e) {
-        console.log('Input action clicked');
-        showAuthModal();
-        e.preventDefault();
-      });
-    });
-
-    // Header action elements
-    document.querySelectorAll('.header-action').forEach(function(action) {
-      action.style.cursor = 'pointer';
-      action.addEventListener('click', function(e) {
-        console.log('Header action clicked');
-        showAuthModal();
-        e.preventDefault();
-      });
-    });
-
-    // Member elements
-    document.querySelectorAll('.member').forEach(function(member) {
-      member.style.cursor = 'pointer';
-      member.addEventListener('click', function(e) {
-        console.log('Member clicked');
-        showAuthModal();
-        e.preventDefault();
-      });
-    });
-
-    // User avatar
-    document.querySelectorAll('.user-avatar').forEach(function(avatar) {
-      avatar.style.cursor = 'pointer';
-      avatar.addEventListener('click', function(e) {
-        console.log('Avatar clicked');
-        showAuthModal();
-        e.preventDefault();
-      });
-    });
+        });
+      })(channel);
+    }
+    
+    // Make reaction elements clickable
+    var interactiveElements = document.querySelectorAll('.reaction, .input-action, .header-action');
+    console.log('Found', interactiveElements.length, 'interactive elements');
+    
+    for (var i = 0; i < interactiveElements.length; i++) {
+      var element = interactiveElements[i];
+      element.style.cursor = 'pointer';
+      
+      // Add data attributes for tracking
+      element.setAttribute('data-interaction-id', 'interaction-' + i);
+      
+      // Use closure to preserve element reference
+      (function(el) {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Interactive element clicked');
+          showAuthModal();
+          return false;
+        });
+      })(element);
+    }
   }
-
-  // Handle form submissions
+  
   function setupFormHandlers() {
-    document.querySelectorAll('form').forEach(function(form) {
-      form.addEventListener('submit', function(e) {
-        console.log('Form submitted');
-        e.preventDefault();
-        showAuthModal();
-        return false;
-      });
-    });
+    // Handle form submissions
+    var forms = document.querySelectorAll('form');
+    console.log('Found', forms.length, 'forms');
+    
+    for (var i = 0; i < forms.length; i++) {
+      var form = forms[i];
+      
+      // Add unique ID to the form
+      form.setAttribute('data-form-id', 'form-' + i);
+      
+      // Use closure to preserve form reference
+      (function(f) {
+        f.addEventListener('submit', function(e) {
+          e.preventDefault();
+          console.log('Form submitted:', f.getAttribute('data-form-id'));
+          showAuthModal();
+          return false;
+        });
+      })(form);
+    }
   }
-
-  // Add Send button if missing
+  
   function addSendButton() {
-    const messageForm = document.querySelector('.input-container');
-    if (messageForm && !messageForm.querySelector('button[type="submit"]')) {
-      console.log('Adding send button');
-      const inputField = messageForm.querySelector('.input-field');
-      if (inputField) {
-        const sendButton = document.createElement('button');
-        sendButton.type = 'submit';
-        sendButton.className = 'ml-2 px-6 py-2 bg-accent-primary text-white font-semibold rounded-md hover:bg-gold transition-colors';
-        sendButton.textContent = 'Send';
-        sendButton.style.cursor = 'pointer';
+    // Add a send button to message forms that don't have one
+    var messageForms = document.querySelectorAll('form');
+    
+    for (var i = 0; i < messageForms.length; i++) {
+      var form = messageForms[i];
+      
+      if (!form.querySelector('button[type="submit"]')) {
+        var inputField = form.querySelector('.input-field, input[type="text"]');
         
-        inputField.insertAdjacentElement('afterend', sendButton);
+        if (inputField) {
+          console.log('Adding send button to form');
+          var button = document.createElement('button');
+          button.type = 'submit';
+          button.textContent = 'Send';
+          button.style.marginLeft = '10px';
+          button.style.padding = '0 16px';
+          button.style.height = '36px';
+          button.style.backgroundColor = '#5865f2';
+          button.style.color = 'white';
+          button.style.border = 'none';
+          button.style.borderRadius = '4px';
+          button.style.fontWeight = 'bold';
+          button.style.cursor = 'pointer';
+          
+          // Add unique ID to the button
+          button.setAttribute('data-button-id', 'send-button-' + i);
+          
+          inputField.insertAdjacentElement('afterend', button);
+        }
       }
     }
   }
-
+  
   // Auth modal function
   function showAuthModal() {
-    if (document.getElementById('auth-modal')) {
-      console.log('Modal already exists');
-      return;
+    // Remove existing modal if any
+    var existingModal = document.getElementById('auth-modal');
+    if (existingModal) {
+      existingModal.remove();
     }
     
-    console.log('Creating auth modal');
+    console.log('Showing auth modal');
     
-    const modal = document.createElement('div');
+    // Create modal container
+    var modal = document.createElement('div');
     modal.id = 'auth-modal';
     modal.style.position = 'fixed';
     modal.style.top = '0';
     modal.style.left = '0';
     modal.style.right = '0';
     modal.style.bottom = '0';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
     modal.style.display = 'flex';
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
     modal.style.zIndex = '9999';
     
-    const modalContent = document.createElement('div');
-    modalContent.style.backgroundColor = '#2f3136';
+    // Create modal content
+    var modalContent = document.createElement('div');
+    modalContent.style.backgroundColor = '#36393f';
     modalContent.style.padding = '24px';
     modalContent.style.borderRadius = '8px';
-    modalContent.style.width = '100%';
     modalContent.style.maxWidth = '400px';
+    modalContent.style.width = '100%';
     
-    const title = document.createElement('h2');
+    // Create title
+    var title = document.createElement('h2');
     title.textContent = 'Sign In Required';
-    title.style.fontSize = '20px';
-    title.style.fontWeight = '600';
-    title.style.marginBottom = '16px';
     title.style.color = 'white';
+    title.style.fontSize = '20px';
+    title.style.fontWeight = 'bold';
+    title.style.marginBottom = '16px';
     
-    const message = document.createElement('p');
-    message.textContent = 'You need to sign in to send messages and interact with the debate.';
-    message.style.marginBottom = '24px';
+    // Create message
+    var message = document.createElement('p');
+    message.textContent = 'You need to sign in to interact with the chat.';
     message.style.color = '#dcddde';
+    message.style.marginBottom = '24px';
     
-    const buttonContainer = document.createElement('div');
+    // Create button container
+    var buttonContainer = document.createElement('div');
     buttonContainer.style.display = 'flex';
     buttonContainer.style.justifyContent = 'flex-end';
-    buttonContainer.style.gap = '16px';
+    buttonContainer.style.gap = '12px';
     
-    const cancelButton = document.createElement('button');
-    cancelButton.className = 'cancel-btn';
+    // Create cancel button
+    var cancelButton = document.createElement('button');
     cancelButton.textContent = 'Cancel';
     cancelButton.style.padding = '8px 16px';
-    cancelButton.style.backgroundColor = '#36393f';
-    cancelButton.style.color = '#dcddde';
+    cancelButton.style.backgroundColor = '#4f545c';
+    cancelButton.style.color = 'white';
+    cancelButton.style.border = 'none';
     cancelButton.style.borderRadius = '4px';
     cancelButton.style.cursor = 'pointer';
-    cancelButton.style.border = 'none';
     
-    const signInButton = document.createElement('button');
-    signInButton.className = 'signin-btn';
+    // Create sign in button
+    var signInButton = document.createElement('button');
     signInButton.textContent = 'Sign In';
     signInButton.style.padding = '8px 16px';
     signInButton.style.backgroundColor = '#5865f2';
     signInButton.style.color = 'white';
+    signInButton.style.border = 'none';
     signInButton.style.borderRadius = '4px';
     signInButton.style.cursor = 'pointer';
-    signInButton.style.border = 'none';
     
-    // Build the modal
+    // Add event listeners
+    cancelButton.addEventListener('click', function() {
+      modal.remove();
+    });
+    
+    signInButton.addEventListener('click', function() {
+      window.location.href = '/auth/signin';
+    });
+    
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+    
+    // Build and append the modal
     buttonContainer.appendChild(cancelButton);
     buttonContainer.appendChild(signInButton);
     
@@ -189,47 +222,27 @@ function initInteractivity() {
     
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
-    
-    // Add event listeners
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        modal.remove();
-      }
-    });
-    
-    cancelButton.addEventListener('click', function() {
-      modal.remove();
-    });
-    
-    signInButton.addEventListener('click', function() {
-      alert('Sign-in functionality would open here');
-      modal.remove();
-    });
   }
-
-  // Run all setup functions
-  setupClickHandlers();
-  setupFormHandlers();
-  addSendButton();
-}
-
-// Run initialization immediately
-initInteractivity();
-
-// Also run on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM loaded, initializing interactivity');
-  initInteractivity();
-});
-
-// For Next.js - also run when the window loads
-window.addEventListener('load', function() {
-  console.log('Window loaded, initializing interactivity');
-  initInteractivity();
-});
-
-// Set a timeout to make sure it runs in case other events don't trigger
-setTimeout(function() {
-  console.log('Timeout reached, initializing interactivity');
-  initInteractivity();
-}, 2000); 
+  
+  // Initialize function to run everything
+  function initialize() {
+    setupClickHandlers();
+    setupFormHandlers();
+    addSendButton();
+    console.log('CSP-compliant fix initialized');
+  }
+  
+  // Run initialize when DOM content is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    // DOM already loaded
+    initialize();
+  }
+  
+  // Add a listener for the window load event (for Next.js)
+  window.addEventListener('load', initialize);
+  
+  // Also run after a small delay to ensure everything is loaded
+  setTimeout(initialize, 1000);
+})(); 

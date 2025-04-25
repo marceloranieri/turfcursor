@@ -295,6 +295,25 @@ export default function ChatPage() {
       if (form) {
         console.log('Found form');
         
+        // Add an ID to the form if it doesn't have one
+        if (!form.id) {
+          form.id = 'message-form';
+        }
+        
+        // Check for input field and add ID/name if missing
+        const inputField = form.querySelector('.input-field');
+        if (inputField) {
+          // Add ID and name attributes if missing
+          if (!inputField.id) {
+            inputField.id = 'message-input';
+          }
+          if (!inputField.getAttribute('name')) {
+            inputField.setAttribute('name', 'message');
+          }
+          
+          console.log('Added accessibility attributes to form fields');
+        }
+        
         // Add a submit button if missing
         if (!form.querySelector('button[type="submit"]')) {
           const inputField = form.querySelector('.input-field');
@@ -303,6 +322,8 @@ export default function ChatPage() {
             const button = document.createElement('button');
             button.type = 'submit';
             button.textContent = 'Send';
+            button.id = 'send-button';
+            button.name = 'send';
             button.style.marginLeft = '10px';
             button.style.padding = '0 16px';
             button.style.height = '36px';

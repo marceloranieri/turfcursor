@@ -12,6 +12,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Turf - Social Debate Platform',
   description: 'Join daily debates and connect with others through meaningful discussions.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
 };
 
 export default function RootLayout({
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
+        <meta httpEquiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://vercel.com https://*.vercel.com;" />
         <script dangerouslySetInnerHTML={{ __html: `
           console.log('Basic inline script loaded');
           function addBasicInteractivity() {
@@ -54,9 +56,20 @@ export default function RootLayout({
           }
           // Try again after a short delay
           setTimeout(addBasicInteractivity, 1000);
+          
+          // Use modern page lifecycle events instead of unload
+          window.addEventListener('pagehide', function(event) {
+            console.log('Page is being hidden, saving state if needed');
+            // Any cleanup or state saving can go here
+          });
+          
+          window.addEventListener('beforeunload', function(event) {
+            console.log('Page is about to unload, performing final tasks');
+            // Final cleanup tasks can go here
+          });
         ` }} />
-        {/* Load direct fix script in the head with defer for reliability */}
-        <script src="/direct-fix.js" defer></script>
+        {/* Load CSP-compliant fix script in the head with defer for reliability */}
+        <script src="/fix-csp.js" defer></script>
         {/* Add interaction timing debug script */}
         <script src="/interaction-debug.js" defer></script>
       </head>
@@ -65,8 +78,8 @@ export default function RootLayout({
           {children}
           <Toaster position="top-right" />
           <SpeedInsights />
-          {/* Fallback loading of fix script */}
-          <Script src="/direct-fix.js" strategy="afterInteractive" />
+          {/* Fallback loading of CSP-compliant fix script */}
+          <Script src="/fix-csp.js" strategy="afterInteractive" />
           {/* Fallback loading of debug script */}
           <Script src="/interaction-debug.js" strategy="afterInteractive" />
         </AuthProvider>
