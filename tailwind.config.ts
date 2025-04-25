@@ -26,7 +26,12 @@ const config: Config = {
     'fixed', 'bottom-0', 'left-0', 'right-0',
     
     // Visual utilities
-    'transition-colors', 'brightness-90', 'overflow-y-auto', 'overflow-hidden'
+    'transition-colors', 'brightness-90', 'overflow-y-auto', 'overflow-hidden',
+
+    // Discord UI specific classes
+    'server-sidebar', 'channels-sidebar', 'chat-container', 'members-list', 'mobile-nav',
+    'server-icon', 'channel', 'active', 'message-group', 'message-avatar', 'message-content',
+    'pinned-message', 'mobile-nav-item', 'mobile-nav-icon'
   ],
   theme: {
     extend: {
@@ -52,9 +57,9 @@ const config: Config = {
         warning: '#FEE75C', // Discord yellow
       },
       screens: {
-        'mobile': {'max': '767px'},
-        'tablet': {'min': '768px', 'max': '1279px'},
-        'desktop': {'min': '1280px'},
+        'mobile': {'max': '768px'},
+        'tablet': {'min': '769px', 'max': '1280px'},
+        'desktop': {'min': '1281px'},
       },
       fontFamily: {
         sans: ['Inter', 'Roboto', 'SF Pro', 'system-ui', 'sans-serif'],

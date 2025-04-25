@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import { Metadata } from 'next';
-import { SpeedInsights } from '@vercel/speed-insights/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           {children}
-          <Toaster />
+          <Toaster position="top-right" />
           <SpeedInsights />
         </AuthProvider>
       </body>

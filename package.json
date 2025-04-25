@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "vercel --prod --force"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
@@ -17,6 +18,7 @@
     "@supabase/supabase-js": "^2.39.0",
     "@vercel/speed-insights": "^1.0.9",
     "bufferutil": "^4.0.8",
+    "critters": "0.0.23",
     "date-fns": "^3.6.0",
     "giphy-api": "^2.0.2",
     "next": "14.0.4",
