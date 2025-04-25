@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Notification } from '@/lib/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
 

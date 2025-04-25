@@ -27,7 +27,19 @@ export function middleware(request: NextRequest) {
   // For all other routes, check for authentication
   // For now, we'll just pass through all requests
   // In a real implementation, you would check for a session token
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  // Cache static assets for 1 year
+  if (pathname.startsWith('/_next/static')) {
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  
+  // Cache API responses for 5 minutes
+  if (pathname.startsWith('/api/')) {
+    response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+  }
+  
+  return response;
 }
 
 // Only run middleware on specific paths

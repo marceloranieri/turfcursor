@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabase/client';
 import { useAuth } from '../lib/auth/AuthContext';
 import toast from 'react-hot-toast';
 import DiscordLayout from './layout/DiscordLayout';
@@ -25,8 +25,9 @@ interface TopicMessage {
 
 interface Circle {
   id: string;
-  name: string;
-  icon: string;
+  topic: string;
+  created_at: string;
+  is_active: boolean;
 }
 
 export default function Topic() {

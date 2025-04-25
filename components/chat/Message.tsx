@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Message as MessageType, ReactionType } from '@/lib/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 import { EmojiPicker } from '@/components/ui/EmojiPicker';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
@@ -104,7 +104,7 @@ export const Message: React.FC<MessageProps> = ({ message, onReply }) => {
               onClick={handleDownvote}
               className="!p-1"
             >
-              👎
+              ��
             </DiscordButton>
             <DiscordButton
               variant="secondary"

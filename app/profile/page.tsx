@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DiscordInput } from '@/components/ui/DiscordInput';
 import { DiscordButton } from '@/components/ui/DiscordButton';

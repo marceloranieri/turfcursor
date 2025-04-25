@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabase/client';
 import { toast } from 'react-hot-toast';
 
 type AuthState = {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Topic } from '@/lib/types';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 
 export const TopicList: React.FC = () => {

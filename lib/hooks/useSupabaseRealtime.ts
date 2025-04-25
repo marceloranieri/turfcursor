@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 import { Message, Reaction, Notification } from '@/lib/types';
 
 interface UseSupabaseRealtimeProps {

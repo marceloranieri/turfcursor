@@ -5,7 +5,7 @@ import { Message as MessageComponent } from './Message';
 import { Message, Topic } from '@/lib/types';
 import { useSupabaseRealtime } from '@/lib/hooks/useSupabaseRealtime';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase/client';
 import { DiscordInput } from '@/components/ui/DiscordInput';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 

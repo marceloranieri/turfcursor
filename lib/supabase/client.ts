@@ -2,28 +2,37 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
 
 // Initialize the Supabase client with environment variables
-// These should be set in your Vercel deployment environment
-// For local development, use .env.local file
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Validate environment variables
-if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
-  console.error('Missing Supabase environment variables. Please check your .env file.');
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
+  );
 }
 
 // Create a single supabase client for interacting with your database
 export const supabase: SupabaseClient<Database> = createClient<Database>(
-  supabaseUrl, 
-  supabaseAnonKey, 
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      detectSessionInUrl: true,
     },
     global: {
       headers: {
         'x-application-name': 'turf-app',
+      },
+    },
+    db: {
+      schema: 'public',
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
       },
     },
   }
