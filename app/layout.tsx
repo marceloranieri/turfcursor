@@ -55,13 +55,20 @@ export default function RootLayout({
           // Try again after a short delay
           setTimeout(addBasicInteractivity, 1000);
         ` }} />
+        {/* Load direct fix script in the head with defer for reliability */}
+        <script src="/direct-fix.js" defer></script>
+        {/* Add interaction timing debug script */}
+        <script src="/interaction-debug.js" defer></script>
       </head>
       <body className={inter.className}>
         <AuthProvider>
           {children}
           <Toaster position="top-right" />
           <SpeedInsights />
-          <Script src="/fix-csp.js" strategy="afterInteractive" />
+          {/* Fallback loading of fix script */}
+          <Script src="/direct-fix.js" strategy="afterInteractive" />
+          {/* Fallback loading of debug script */}
+          <Script src="/interaction-debug.js" strategy="afterInteractive" />
         </AuthProvider>
       </body>
     </html>

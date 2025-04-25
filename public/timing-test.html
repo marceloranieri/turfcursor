@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interaction Timing Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #36393f;
+      color: #dcddde;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #2f3136;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    h1 {
+      color: white;
+      margin-top: 0;
+    }
+    .info {
+      margin-bottom: 20px;
+      border-left: 4px solid #5865f2;
+      padding-left: 15px;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 15px;
+      background-color: #202225;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      background-color: #5865f2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #4752c4;
+    }
+    .delayed-button {
+      background-color: #d83c3e;
+    }
+    input {
+      padding: 10px;
+      background-color: #40444b;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      margin: 5px;
+      width: 200px;
+    }
+    .channel {
+      padding: 8px 12px;
+      background-color: #40444b;
+      margin: 8px 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .log {
+      margin-top: 20px;
+      background-color: #202225;
+      color: #5de948;
+      font-family: monospace;
+      padding: 15px;
+      border-radius: 4px;
+      height: 150px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Interaction Timing Test Page</h1>
+    
+    <div class="info">
+      <p>This page helps test and debug interaction timing issues. Try different interactions to see how they're detected and timed.</p>
+    </div>
+    
+    <div class="test-section">
+      <h2>Immediate Interactions</h2>
+      <p>These buttons respond immediately:</p>
+      <button id="immediate-button-1">Immediate Button 1</button>
+      <button id="immediate-button-2">Immediate Button 2</button>
+      <input type="text" placeholder="Type something...">
+    </div>
+    
+    <div class="test-section">
+      <h2>Delayed Interactions</h2>
+      <p>These buttons have artificial delays:</p>
+      <button id="delayed-button-1" class="delayed-button">Slow Button (100ms)</button>
+      <button id="delayed-button-2" class="delayed-button">Very Slow Button (500ms)</button>
+    </div>
+    
+    <div class="test-section">
+      <h2>Channel-like Elements</h2>
+      <p>Similar to the app's channel elements:</p>
+      <div class="channel" id="channel-1">Remote Work Debate</div>
+      <div class="channel" id="channel-2">AI Ethics</div>
+    </div>
+    
+    <div class="log" id="log">
+      Interaction log will appear here...
+    </div>
+  </div>
+  
+  <script>
+    // Simple logging function
+    function log(message) {
+      const logElement = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.textContent = `${new Date().toISOString().substr(11, 8)} - ${message}`;
+      logElement.appendChild(entry);
+      logElement.scrollTop = logElement.scrollHeight;
+      console.log(message);
+    }
+    
+    // Set up immediate buttons
+    document.getElementById('immediate-button-1').addEventListener('click', function() {
+      log('Immediate button 1 clicked');
+    });
+    
+    document.getElementById('immediate-button-2').addEventListener('click', function() {
+      log('Immediate button 2 clicked');
+    });
+    
+    // Set up delayed buttons
+    document.getElementById('delayed-button-1').addEventListener('click', function() {
+      log('Slow button clicked - starting 100ms operation');
+      const start = performance.now();
+      
+      // Simulate a blocking operation
+      setTimeout(() => {
+        // Simulate some work
+        let result = 0;
+        for (let i = 0; i < 100000; i++) {
+          result += Math.random();
+        }
+        const end = performance.now();
+        log(`Slow operation completed in ${Math.round(end - start)}ms, result: ${result.toFixed(2)}`);
+      }, 100);
+    });
+    
+    document.getElementById('delayed-button-2').addEventListener('click', function() {
+      log('Very slow button clicked - starting 500ms operation');
+      
+      // Block the main thread for ~500ms
+      const start = performance.now();
+      setTimeout(() => {
+        // Heavy calculation
+        let result = 0;
+        for (let i = 0; i < 1000000; i++) {
+          result += Math.random() * Math.sqrt(i);
+        }
+        const end = performance.now();
+        log(`Very slow operation completed in ${Math.round(end - start)}ms, result: ${result.toFixed(2)}`);
+      }, 500);
+    });
+    
+    // Set up channel elements
+    const channels = document.querySelectorAll('.channel');
+    channels.forEach(channel => {
+      channel.addEventListener('click', function() {
+        log(`Channel clicked: ${this.textContent}`);
+      });
+    });
+    
+    // Track input events
+    document.querySelector('input').addEventListener('input', function() {
+      log(`Input changed: "${this.value}"`);
+    });
+    
+    // Log when the page is fully loaded
+    window.addEventListener('load', function() {
+      log('Page fully loaded');
+    });
+    
+    log('Script initialized');
+  </script>
+  
+  <!-- Load our debugging scripts -->
+  <script src="/interaction-debug.js"></script>
+  <script src="/direct-fix.js"></script>
+</body>
+</html> 
