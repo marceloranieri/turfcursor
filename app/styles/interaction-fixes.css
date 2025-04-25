@@ -83,4 +83,96 @@ textarea:not([disabled]),
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
+}
+
+/* Interaction fixes CSS */
+
+/* Make sure all interactive elements have correct cursor */
+button, 
+.button, 
+a, 
+[role="button"], 
+.channel, 
+input[type="submit"],
+.sidebar-item,
+.nav-item {
+  cursor: pointer !important;
+}
+
+/* Ensure elements are positioned so z-index works */
+button, 
+.button, 
+a, 
+[role="button"], 
+.channel, 
+input[type="submit"],
+.sidebar-item,
+.nav-item {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fix for modals to ensure they're on top */
+.modal, 
+.modal-overlay, 
+.modal-backdrop, 
+[role="dialog"] {
+  z-index: 100 !important;
+}
+
+/* Visual feedback for clicks */
+button:active, 
+.button:active, 
+a:active, 
+[role="button"]:active, 
+.channel:active, 
+input[type="submit"]:active,
+.sidebar-item:active,
+.nav-item:active {
+  transform: scale(0.98);
+  transition: transform 0.1s;
+}
+
+/* Ensure forms are positioned correctly */
+form {
+  position: relative;
+  z-index: 2;
+}
+
+/* Style for form input fields */
+.input-field,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  position: relative;
+  z-index: 1;
+}
+
+/* Make sure submit buttons are visible and positioned correctly */
+button[type="submit"],
+input[type="submit"] {
+  position: relative;
+  z-index: 2;
+}
+
+/* Prevent overlapping elements from blocking interactions */
+.overlay-container * {
+  pointer-events: none;
+}
+.overlay-container button,
+.overlay-container a,
+.overlay-container [role="button"],
+.overlay-container input,
+.overlay-container .clickable {
+  pointer-events: auto;
+}
+
+/* Proper focus styles for keyboard navigation */
+button:focus-visible,
+.button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible {
+  outline: 2px solid #5865f2;
+  outline-offset: 2px;
 } 
