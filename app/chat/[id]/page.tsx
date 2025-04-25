@@ -253,6 +253,90 @@ export default function ChatPage() {
     setShowGuestModal(false);
   };
   
+  // Add a useEffect hook at the top of the component to directly attach event handlers
+  useEffect(() => {
+    console.log('ChatPage: Adding click handlers directly');
+    
+    // Function to make channels clickable
+    const makeChannelsClickable = () => {
+      const channels = document.querySelectorAll('.channel');
+      console.log('Found channels:', channels.length);
+      
+      channels.forEach(channel => {
+        // Add visual cue
+        (channel as HTMLElement).style.cursor = 'pointer';
+        
+        channel.addEventListener('click', (e) => {
+          const nameElement = channel.querySelector('.truncate');
+          if (nameElement) {
+            const name = nameElement.textContent;
+            console.log('Channel clicked:', name);
+            
+            if (name) {
+              const topics = {
+                'Remote Work Debate': '1',
+                'AI Ethics': '2',
+                'Climate Solutions': '3',
+                'Education Reform': '4',
+                'Cryptocurrency Future': '5'
+              };
+              
+              const id = topics[name as keyof typeof topics] || '1';
+              router.push(`/chat/${id}`);
+            }
+          }
+        });
+      });
+    };
+    
+    // Function to make the form work
+    const enableForm = () => {
+      const form = document.querySelector('form');
+      if (form) {
+        console.log('Found form');
+        
+        // Add a submit button if missing
+        if (!form.querySelector('button[type="submit"]')) {
+          const inputField = form.querySelector('.input-field');
+          if (inputField) {
+            console.log('Adding submit button');
+            const button = document.createElement('button');
+            button.type = 'submit';
+            button.textContent = 'Send';
+            button.style.marginLeft = '10px';
+            button.style.padding = '0 16px';
+            button.style.height = '36px';
+            button.style.backgroundColor = '#5865f2';
+            button.style.color = 'white';
+            button.style.borderRadius = '4px';
+            button.style.fontWeight = 'bold';
+            button.style.cursor = 'pointer';
+            
+            inputField.insertAdjacentElement('afterend', button);
+          }
+        }
+        
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          console.log('Form submitted');
+          handleSendMessage();
+        });
+      }
+    };
+    
+    // Run the handlers with a delay to ensure DOM is ready
+    setTimeout(() => {
+      makeChannelsClickable();
+      enableForm();
+    }, 500);
+    
+    // Run again after a longer delay just to be sure
+    setTimeout(() => {
+      makeChannelsClickable();
+      enableForm();
+    }, 2000);
+  }, []);
+  
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
