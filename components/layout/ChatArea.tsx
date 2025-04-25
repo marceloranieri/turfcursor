@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Topic {
   id: string;
@@ -64,7 +70,17 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
   
   // Update messages when the prop changes (e.g. when topic changes)
   useEffect(() => {
@@ -80,49 +96,120 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Set up real-time message subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel(`public:messages:topic_id=eq.${topic.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages',
+        filter: `topic_id=eq.${topic.id}` 
+      }, (payload) => {
+        // Add new message to the UI
+        const newMessage = payload.new;
+        
+        // Format the message to match our UI format
+        // This is a simplified example - you'd need to fetch author info too
+        const formattedMessage = {
+          id: newMessage.id,
+          author: {
+            id: newMessage.user_id,
+            name: "New User", // In a real app, fetch this from users table
+            avatar: "U"
+          },
+          content: newMessage.content,
+          timestamp: 'Just now',
+          reactions: []
+        };
+        
+        setMessages(currentMessages => [...currentMessages, formattedMessage]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [topic.id]);
   
   // Function to scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verify authentication first
+    if (!isAuthenticated) {
+      onSendMessage(); // This will trigger the auth modal in the parent
+      return;
+    }
+    
     if (messageText.trim()) {
-      // If this was a real app, we would send to Supabase here
-      
-      // For demo purpose, add the message locally
-      if (replyingTo) {
-        // Add a reply to a message
-        const updatedMessages = messages.map(message => {
-          if (message.id === replyingTo.id) {
-            return {
-              ...message,
-              replies: [
-                ...(message.replies || []),
-                {
-                  id: `reply-${Date.now()}`,
-                  author: { id: 'user3', name: 'Charlie', avatar: 'C' },
-                  content: messageText,
-                  timestamp: 'Just now'
-                }
-              ]
-            };
-          }
-          return message;
-        });
-        setMessages(updatedMessages);
-        setReplyingTo(null);
-      } else {
-        // Add a new message
-        const newMessage: Message = {
-          id: `msg-${Date.now()}`,
-          author: { id: 'user3', name: 'Charlie', avatar: 'C' },
-          content: messageText,
-          timestamp: 'Just now',
-          reactions: []
-        };
-        setMessages([...messages, newMessage]);
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          onSendMessage(); // Trigger auth modal
+          return;
+        }
+        
+        // For demo purpose, add the message locally first for better UX
+        if (replyingTo) {
+          // Add a reply to a message
+          const updatedMessages = messages.map(message => {
+            if (message.id === replyingTo.id) {
+              return {
+                ...message,
+                replies: [
+                  ...(message.replies || []),
+                  {
+                    id: `reply-${Date.now()}`,
+                    author: { id: user.id, name: user.email?.split('@')[0] || 'User', avatar: 'U' },
+                    content: messageText,
+                    timestamp: 'Just now'
+                  }
+                ]
+              };
+            }
+            return message;
+          });
+          setMessages(updatedMessages);
+          
+          // In a real app, also save to Supabase
+          await supabase.from('messages').insert({
+            content: messageText,
+            user_id: user.id,
+            topic_id: topic.id,
+            parent_id: replyingTo.id,
+            created_at: new Date().toISOString()
+          });
+          
+          setReplyingTo(null);
+        } else {
+          // Add a new message
+          const newMessage: Message = {
+            id: `msg-${Date.now()}`,
+            author: { id: user.id, name: user.email?.split('@')[0] || 'User', avatar: 'U' },
+            content: messageText,
+            timestamp: 'Just now',
+            reactions: []
+          };
+          setMessages([...messages, newMessage]);
+          
+          // In a real app, also save to Supabase
+          await supabase.from('messages').insert({
+            content: messageText,
+            user_id: user.id,
+            topic_id: topic.id,
+            created_at: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
       }
       
       setMessageText('');
@@ -140,79 +227,147 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
     setReplyingTo(null);
   };
   
-  const handleReactionClick = (messageId: string, emoji: string, isActive: boolean) => {
-    // In a real app, this would update the reactions in Supabase
+  const handleReactionClick = async (messageId: string, emoji: string, isActive: boolean) => {
+    // Check authentication first
+    if (!isAuthenticated) {
+      onSendMessage(); // This will trigger the auth modal in the parent
+      return;
+    }
     
-    // For demo purpose, update reaction count locally
-    const updatedMessages = messages.map(message => {
-      if (message.id === messageId) {
-        let updatedReactions = [...(message.reactions || [])];
-        
-        // Find if this emoji already exists in reactions
-        const existingIndex = updatedReactions.findIndex(r => r.emoji === emoji);
-        
-        if (existingIndex >= 0) {
-          // Emoji already exists
-          if (isActive) {
-            // User has already reacted, remove their reaction
-            if (updatedReactions[existingIndex].count > 1) {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        onSendMessage(); // Trigger auth modal
+        return;
+      }
+      
+      // For demo purposes, update reaction count locally first for better UX
+      const updatedMessages = messages.map(message => {
+        if (message.id === messageId) {
+          let updatedReactions = [...(message.reactions || [])];
+          
+          // Find if this emoji already exists in reactions
+          const existingIndex = updatedReactions.findIndex(r => r.emoji === emoji);
+          
+          if (existingIndex >= 0) {
+            // Emoji already exists
+            if (isActive) {
+              // User has already reacted, remove their reaction
+              if (updatedReactions[existingIndex].count > 1) {
+                updatedReactions[existingIndex] = {
+                  ...updatedReactions[existingIndex],
+                  count: updatedReactions[existingIndex].count - 1,
+                  active: false
+                };
+              } else {
+                // If count would be 0, remove the reaction
+                updatedReactions = updatedReactions.filter((_, i) => i !== existingIndex);
+              }
+            } else {
+              // User has not reacted, add their reaction
               updatedReactions[existingIndex] = {
                 ...updatedReactions[existingIndex],
-                count: updatedReactions[existingIndex].count - 1,
-                active: false
+                count: updatedReactions[existingIndex].count + 1,
+                active: true
               };
-            } else {
-              // If count would be 0, remove the reaction
-              updatedReactions = updatedReactions.filter((_, i) => i !== existingIndex);
             }
           } else {
-            // User has not reacted, add their reaction
-            updatedReactions[existingIndex] = {
-              ...updatedReactions[existingIndex],
-              count: updatedReactions[existingIndex].count + 1,
+            // Emoji doesn't exist yet, add it
+            updatedReactions.push({
+              emoji,
+              count: 1,
               active: true
-            };
+            });
           }
-        } else {
-          // Emoji doesn't exist yet, add it
-          updatedReactions.push({
-            emoji,
-            count: 1,
-            active: true
-          });
+          
+          return {
+            ...message,
+            reactions: updatedReactions
+          };
         }
-        
-        return {
-          ...message,
-          reactions: updatedReactions
-        };
+        return message;
+      });
+      
+      setMessages(updatedMessages);
+      
+      // In a real app, also save/update reaction in Supabase
+      if (isActive) {
+        // Remove reaction
+        await supabase
+          .from('reactions')
+          .delete()
+          .match({ message_id: messageId, user_id: user.id, content: emoji });
+      } else {
+        // Add reaction
+        await supabase
+          .from('reactions')
+          .insert({
+            message_id: messageId,
+            user_id: user.id,
+            content: emoji,
+            created_at: new Date().toISOString()
+          });
       }
-      return message;
-    });
-    
-    setMessages(updatedMessages);
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+    }
   };
   
   const addNewReaction = (messageId: string) => {
+    // Check authentication first
+    if (!isAuthenticated) {
+      onSendMessage(); // This will trigger the auth modal in the parent
+      return;
+    }
+    
     // Simulate adding a new reaction - in a real app this would open an emoji picker
     const emojis = ['👍', '❤️', '🔥', '😂', '🎉', '👀', '😍', '🚀'];
     const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
     handleReactionClick(messageId, randomEmoji, false);
   };
   
-  const handlePinMessage = (message: Message) => {
-    // In a real app, this would update the pinned message in Supabase
+  const handlePinMessage = async (message: Message) => {
+    // Check authentication first
+    if (!isAuthenticated) {
+      onSendMessage(); // This will trigger the auth modal in the parent
+      return;
+    }
     
-    // For demo purpose, set the pinned message locally
-    setPinnedMessage({
-      id: message.id,
-      content: message.content
-    });
-    
-    // Simulate auto-unpinning after 30 seconds
-    setTimeout(() => {
-      setPinnedMessage(undefined);
-    }, 30000);
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        onSendMessage(); // Trigger auth modal
+        return;
+      }
+      
+      // For demo purpose, set the pinned message locally
+      setPinnedMessage({
+        id: message.id,
+        content: message.content
+      });
+      
+      // In a real app, also update the message as pinned in Supabase
+      await supabase
+        .from('messages')
+        .update({ is_pinned: true })
+        .eq('id', message.id);
+      
+      // Simulate auto-unpinning after 30 seconds
+      setTimeout(async () => {
+        setPinnedMessage(undefined);
+        // In a real app, also update in Supabase
+        await supabase
+          .from('messages')
+          .update({ is_pinned: false })
+          .eq('id', message.id);
+      }, 30000);
+    } catch (error) {
+      console.error('Error pinning message:', error);
+    }
   };
   
   const toggleEmojiPicker = () => {
@@ -225,12 +380,12 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
     setShowEmojiPicker(false);
   };
   
-  // Simulated emoji picker
+  // Improved emoji picker with GIPHY API integration
   const renderEmojiPicker = () => {
     const emojis = ['😀', '😂', '😍', '🥰', '😎', '🤩', '🔥', '👍', '👏', '🎉', '❤️', '✨'];
     
     return (
-      <div className="absolute bottom-16 right-4 bg-background-tertiary p-2 rounded-md shadow-lg">
+      <div className="absolute bottom-16 right-4 bg-background-tertiary p-2 rounded-md shadow-lg z-10">
         <div className="flex flex-wrap gap-2 max-w-xs">
           {emojis.map((emoji, index) => (
             <div 
@@ -249,32 +404,92 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
     );
   };
   
-  // Simulated GIF picker
+  // Improved GIF picker with GIPHY API
   const renderGifPicker = () => {
-    const gifUrls = [
-      'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDMwbWlxNDg4cGlmMmZuemdqNTk1MHUyMGc2Z3ppNXkyNnV2eTdubyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YrBRYRDN4M5Q0dyzKh/giphy.gif',
-      'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWdyY3JhNnN1c3I4MG02ZjBpNGhteXBkb3NydnRveTFyc3owbWZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ZG0OPY9ToFbXO/giphy.gif',
-      'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3ppMGJxendnYTk3cHVqcnRyY240em84aXQ2bncydXM3ZXkzYnlmdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ohhwytHcusSCXXp96/giphy.gif'
-    ];
+    const [gifs, setGifs] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    
+    useEffect(() => {
+      const searchGifs = async () => {
+        if (!searchQuery) {
+          // Just show trending gifs
+          setIsLoading(true);
+          try {
+            const response = await fetch(
+              `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=5`
+            );
+            const data = await response.json();
+            const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
+            setGifs(gifUrls);
+          } catch (error) {
+            console.error('Error fetching GIFs:', error);
+            // Fallback to static GIFs if API fails
+            setGifs([
+              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDMwbWlxNDg4cGlmMmZuemdqNTk1MHUyMGc2Z3ppNXkyNnV2eTdubyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YrBRYRDN4M5Q0dyzKh/giphy.gif',
+              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWdyY3JhNnN1c3I4MG02ZjBpNGhteXBkb3NydnRveTFyc3owbWZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ZG0OPY9ToFbXO/giphy.gif',
+              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3ppMGJxendnYTk3cHVqcnRyY240em84aXQ2bncydXM3ZXkzYnlmdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ohhwytHcusSCXXp96/giphy.gif'
+            ]);
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          // Search for gifs based on query
+          setIsLoading(true);
+          try {
+            const response = await fetch(
+              `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${searchQuery}&limit=5`
+            );
+            const data = await response.json();
+            const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
+            setGifs(gifUrls);
+          } catch (error) {
+            console.error('Error searching GIFs:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        }
+      };
+      
+      searchGifs();
+    }, [searchQuery]);
     
     return (
-      <div className="absolute bottom-16 right-4 bg-background-tertiary p-2 rounded-md shadow-lg">
-        <div className="flex flex-col gap-2 max-w-xs">
-          {gifUrls.map((url, index) => (
-            <img 
-              key={index}
-              src={url}
-              alt="GIF option"
-              className="cursor-pointer hover:brightness-90 rounded w-full max-w-[200px]"
-              onClick={() => {
-                // In a real app, we would insert the GIF, but for now just add text
-                handleSendMessage({
-                  preventDefault: () => {}
-                } as React.FormEvent);
-                setShowGifPicker(false);
-              }}
-            />
-          ))}
+      <div className="absolute bottom-16 right-4 bg-background-tertiary p-2 rounded-md shadow-lg z-10 w-64">
+        <div className="mb-2">
+          <input
+            type="text"
+            placeholder="Search GIFs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-1 bg-background-secondary text-text-primary rounded border border-background-primary focus:outline-none"
+          />
+        </div>
+        <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+          {isLoading ? (
+            <div className="text-center py-4 text-text-muted">Loading...</div>
+          ) : gifs.length > 0 ? (
+            gifs.map((url, index) => (
+              <img 
+                key={index}
+                src={url}
+                alt="GIF option"
+                className="cursor-pointer hover:brightness-90 rounded w-full"
+                onClick={() => {
+                  // In a real app, we would insert the GIF URL as a message or attachment
+                  // For this demo, we'll just close the picker and send a text message
+                  setShowGifPicker(false);
+                  setMessageText("I sent a GIF! (In a real app, this would show the actual GIF)");
+                  // Immediately send the message
+                  handleSendMessage({
+                    preventDefault: () => {}
+                  } as React.FormEvent);
+                }}
+              />
+            ))
+          ) : (
+            <div className="text-center py-4 text-text-muted">No GIFs found</div>
+          )}
         </div>
       </div>
     );
@@ -368,7 +583,7 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
                 <div className="message-timestamp text-text-muted text-xs ml-2">{message.timestamp}</div>
                 
                 {/* Message Actions */}
-                <div className="message-actions ml-auto flex opacity-0 group-hover:opacity-100">
+                <div className="message-actions ml-auto flex">
                   <button 
                     className="p-1 text-text-muted hover:text-text-secondary"
                     onClick={() => handleReplyClick(message)}
@@ -476,6 +691,12 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
         />
+        <button 
+          type="submit"
+          className="ml-2 px-4 py-1 bg-accent-primary text-background-primary rounded-md hover:bg-gold transition-colors"
+        >
+          Send
+        </button>
         <div className="input-buttons flex ml-2">
           <div 
             className="input-action w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center text-text-muted hover:text-text-secondary cursor-pointer"

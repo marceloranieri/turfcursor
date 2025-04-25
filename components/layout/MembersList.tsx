@@ -1,4 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Member {
   id: string;
@@ -11,10 +18,132 @@ interface Member {
 
 interface MembersListProps {
   members: Member[];
+  topicId?: string;
 }
 
-const MembersList = ({ members }: MembersListProps) => {
+const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => {
+  const router = useRouter();
   const [activeProfile, setActiveProfile] = useState<string | null>(null);
+  const [members, setMembers] = useState<Member[]>(initialMembers);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Check current user and fetch online members
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    
+    checkAuth();
+    setMembers(initialMembers);
+    
+    if (topicId) {
+      fetchOnlineMembers();
+    }
+    
+    // Set up presence channel for real-time online status
+    const channel = supabase.channel('online-users');
+    
+    // Track when users come online or go offline
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        updateMembersStatus(state);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        // User came online, update their status
+        updateMemberStatus(key, 'online');
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        // User went offline, update their status
+        updateMemberStatus(key, 'offline');
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && currentUser) {
+          // When successfully subscribed, track our own presence
+          await channel.track({
+            user_id: currentUser.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [initialMembers, topicId]);
+  
+  // Fetch online members from Supabase
+  const fetchOnlineMembers = async () => {
+    if (!topicId) return;
+    
+    try {
+      // In a real app, you'd query for users in this topic/circle
+      const { data, error } = await supabase
+        .from('topic_members')
+        .select('user_id, users(id, full_name, avatar_url, user_metadata)')
+        .eq('topic_id', topicId);
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Transform users to member format
+        const onlineMembers = data.map(record => {
+          const user = record.users;
+          return {
+            id: user.id,
+            name: user.full_name || 'Anonymous',
+            avatar: user.avatar_url || user.full_name?.charAt(0) || 'A',
+            status: 'online',
+            role: user.user_metadata?.role || 'member'
+          };
+        });
+        
+        // Combine with existing members, prioritizing online status
+        const combinedMembers = [...initialMembers];
+        
+        onlineMembers.forEach(onlineMember => {
+          const existingIndex = combinedMembers.findIndex(m => m.id === onlineMember.id);
+          if (existingIndex >= 0) {
+            combinedMembers[existingIndex] = {
+              ...combinedMembers[existingIndex],
+              status: 'online'
+            };
+          } else {
+            combinedMembers.push(onlineMember);
+          }
+        });
+        
+        setMembers(combinedMembers);
+      }
+    } catch (error) {
+      console.error('Error fetching online members:', error);
+    }
+  };
+  
+  // Update members status from presence state
+  const updateMembersStatus = (state: any) => {
+    const updatedMembers = [...members];
+    
+    // For each user in the presence state
+    Object.keys(state).forEach(userId => {
+      updateMemberStatus(userId, 'online');
+    });
+    
+    setMembers(updatedMembers);
+  };
+  
+  // Update a single member's status
+  const updateMemberStatus = (userId: string, status: 'online' | 'idle' | 'dnd' | 'offline') => {
+    setMembers(currentMembers => {
+      return currentMembers.map(member => {
+        if (member.id === userId) {
+          return { ...member, status };
+        }
+        return member;
+      });
+    });
+  };
   
   // Group members by role
   const groupedMembers = members.reduce((groups, member) => {
@@ -34,18 +163,70 @@ const MembersList = ({ members }: MembersListProps) => {
     setActiveProfile(activeProfile === memberId ? null : memberId);
   };
   
-  const handleSendMessage = (memberId: string) => {
-    alert(`Private message would be sent to member ${memberId}`);
+  const handleSendMessage = async (memberId: string) => {
+    if (!currentUser) {
+      alert('You need to sign in to send direct messages');
+      return;
+    }
+    
+    try {
+      // Check if a DM channel already exists
+      const { data: existingChannel, error: channelError } = await supabase
+        .from('dm_channels')
+        .select('*')
+        .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
+        .or(`user1_id.eq.${memberId},user2_id.eq.${memberId}`)
+        .maybeSingle();
+      
+      if (channelError) throw channelError;
+      
+      let channelId;
+      
+      if (existingChannel) {
+        channelId = existingChannel.id;
+      } else {
+        // Create a new DM channel
+        const { data: newChannel, error: createError } = await supabase
+          .from('dm_channels')
+          .insert({
+            user1_id: currentUser.id,
+            user2_id: memberId,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+        
+        if (createError) throw createError;
+        channelId = newChannel.id;
+      }
+      
+      // Navigate to the DM channel
+      router.push(`/messages/${channelId}`);
+    } catch (error) {
+      console.error('Error setting up direct message:', error);
+      alert('Failed to open direct message. Please try again.');
+    }
+    
     setActiveProfile(null);
   };
   
   const handleViewProfile = (memberId: string) => {
-    alert(`View profile of member ${memberId}`);
+    router.push(`/profile/${memberId}`);
     setActiveProfile(null);
   };
   
   const handleMention = (memberId: string, name: string) => {
-    alert(`@${name} would be inserted into the message input`);
+    // Create a custom event to notify the chat area
+    const mentionEvent = new CustomEvent('user-mention', { 
+      detail: { userId: memberId, username: name }
+    });
+    document.dispatchEvent(mentionEvent);
+    
+    // Also copy to clipboard as a fallback
+    navigator.clipboard.writeText(`@${name}`).catch(err => {
+      console.error('Failed to copy mention to clipboard:', err);
+    });
+    
     setActiveProfile(null);
   };
   

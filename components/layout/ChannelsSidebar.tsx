@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Topic {
   id: string;
@@ -18,6 +24,73 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showServerDropdown, setShowServerDropdown] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [availableTopics, setAvailableTopics] = useState<Topic[]>(topics);
+  
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+  }, []);
+  
+  // Subscribe to topic changes
+  useEffect(() => {
+    setAvailableTopics(topics);
+    
+    const channel = supabase
+      .channel('public:topics')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'topics'
+      }, (payload) => {
+        // Refresh topics
+        fetchTopics();
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [topics]);
+  
+  // Fetch topics from Supabase
+  const fetchTopics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('topics')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        // Transform to match our Topic interface
+        const transformedTopics = data.map(topic => ({
+          id: topic.id,
+          name: topic.name,
+          description: topic.description || '',
+          isActive: false // Will be set by the parent component
+        }));
+        
+        // Preserve the active state from the current topics
+        const updatedTopics = transformedTopics.map(newTopic => {
+          const matchingTopic = availableTopics.find(t => t.id === newTopic.id);
+          return {
+            ...newTopic,
+            isActive: matchingTopic ? matchingTopic.isActive : false
+          };
+        });
+        
+        setAvailableTopics(updatedTopics);
+      }
+    } catch (error) {
+      console.error('Error fetching topics:', error);
+    }
+  };
   
   const handleTopicClick = (id: string) => {
     router.push(`/chat/${id}`);
@@ -38,9 +111,42 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
     setShowServerDropdown(!showServerDropdown);
   };
   
-  const handleAddTopic = () => {
-    // In a real app, this would open a modal to add a new topic
-    alert('Add topic functionality would open a form here');
+  const handleAddTopic = async () => {
+    if (!isAuthenticated) {
+      alert('Please sign in to add a topic');
+      return;
+    }
+    
+    // Get a simple topic name from the user
+    const topicName = prompt('Enter a topic name:');
+    if (!topicName || !topicName.trim()) return;
+    
+    const topicDescription = prompt('Enter a topic description:');
+    
+    try {
+      // Create the topic in Supabase
+      const { data, error } = await supabase
+        .from('topics')
+        .insert([
+          { 
+            name: topicName.trim(), 
+            description: topicDescription?.trim() || '',
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+            created_at: new Date().toISOString()
+          }
+        ])
+        .select();
+      
+      if (error) throw error;
+      
+      if (data && data[0]) {
+        // Navigate to the new topic
+        router.push(`/chat/${data[0].id}`);
+      }
+    } catch (error) {
+      console.error('Error creating topic:', error);
+      alert('Failed to create topic. Please try again.');
+    }
   };
   
   const handleAddChannel = () => {
@@ -48,12 +154,13 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
     alert('Add channel functionality would open a form here');
   };
   
+  // Filter topics based on search query
   const filteredTopics = searchQuery
-    ? topics.filter(topic => 
+    ? availableTopics.filter(topic => 
         topic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         topic.description.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : topics;
+    : availableTopics;
   
   return (
     <div className="channels-sidebar bg-background-secondary w-60 h-screen overflow-y-auto fixed left-[72px] top-0">
@@ -71,13 +178,13 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
       {/* Server Dropdown */}
       {showServerDropdown && (
         <div className="absolute z-10 top-14 right-2 bg-background-tertiary rounded-md shadow-lg py-2 w-48">
-          <div className="px-4 py-2 text-text-primary hover:bg-background-secondary cursor-pointer">
+          <div className="px-4 py-2 text-text-primary hover:bg-background-secondary cursor-pointer" onClick={() => alert('Server Settings would open here')}>
             Server Settings
           </div>
-          <div className="px-4 py-2 text-text-primary hover:bg-background-secondary cursor-pointer">
+          <div className="px-4 py-2 text-text-primary hover:bg-background-secondary cursor-pointer" onClick={() => alert('Create Invitation link would be generated')}>
             Create Invitation
           </div>
-          <div className="px-4 py-2 text-danger hover:bg-background-secondary cursor-pointer">
+          <div className="px-4 py-2 text-danger hover:bg-background-secondary cursor-pointer" onClick={() => alert('Leave Server functionality would be implemented')}>
             Leave Server
           </div>
         </div>
@@ -119,18 +226,24 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
           </div>
           
           {/* Channels in this category */}
-          {filteredTopics.map(topic => (
-            <div 
-              key={topic.id} 
-              className={`channel px-2 py-1.5 mx-2 rounded flex items-center cursor-pointer ${
-                topic.isActive ? 'bg-background-tertiary text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-background-tertiary/50'
-              }`}
-              onClick={() => handleTopicClick(topic.id)}
-            >
-              <div className="channel-icon mr-2 text-text-muted">#</div>
-              <div className="truncate">{topic.name}</div>
+          {filteredTopics.length > 0 ? (
+            filteredTopics.map(topic => (
+              <div 
+                key={topic.id} 
+                className={`channel px-2 py-1.5 mx-2 rounded flex items-center cursor-pointer ${
+                  topic.isActive ? 'bg-background-tertiary text-text-primary' : 'text-text-muted hover:text-text-secondary hover:bg-background-tertiary/50'
+                }`}
+                onClick={() => handleTopicClick(topic.id)}
+              >
+                <div className="channel-icon mr-2 text-text-muted">#</div>
+                <div className="truncate">{topic.name}</div>
+              </div>
+            ))
+          ) : (
+            <div className="px-2 py-1.5 mx-2 text-text-muted text-center text-sm">
+              {searchQuery ? 'No topics found' : 'Loading topics...'}
             </div>
-          ))}
+          )}
         </div>
         
         {/* Information Category */}
@@ -151,7 +264,7 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
           {/* Static channels */}
           <div 
             className="channel px-2 py-1.5 mx-2 rounded flex items-center cursor-pointer text-text-muted hover:text-text-secondary hover:bg-background-tertiary/50"
-            onClick={() => alert('General channel would show different content')}
+            onClick={() => router.push('/general')}
           >
             <div className="channel-icon mr-2 text-text-muted">#</div>
             <div>general</div>
@@ -159,7 +272,7 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
           
           <div 
             className="channel px-2 py-1.5 mx-2 rounded flex items-center cursor-pointer text-text-muted hover:text-text-secondary hover:bg-background-tertiary/50"
-            onClick={() => alert('Discussion channel would show different content')}
+            onClick={() => router.push('/discussion')}
           >
             <div className="channel-icon mr-2 text-text-muted">#</div>
             <div>discussion</div>
@@ -167,7 +280,7 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
           
           <div 
             className="channel px-2 py-1.5 mx-2 rounded flex items-center cursor-pointer text-text-muted hover:text-text-secondary hover:bg-background-tertiary/50"
-            onClick={() => alert('Work-report channel would show different content')}
+            onClick={() => router.push('/work-report')}
           >
             <div className="channel-icon mr-2 text-text-muted">#</div>
             <div>work-report</div>
@@ -181,10 +294,12 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
           className="user-avatar bg-accent-secondary w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold mr-2 cursor-pointer"
           onClick={() => router.push('/profile')}
         >
-          C
+          {isAuthenticated ? 'U' : 'G'}
         </div>
         <div className="user-info flex-1 min-w-0 cursor-pointer" onClick={() => router.push('/profile')}>
-          <div className="user-name text-white font-medium text-sm truncate">CharlieDebate</div>
+          <div className="user-name text-white font-medium text-sm truncate">
+            {isAuthenticated ? 'User' : 'Guest'}
+          </div>
           <div className="user-status text-text-muted text-xs">Online</div>
         </div>
         <div className="user-actions flex">

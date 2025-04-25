@@ -20,175 +20,131 @@ interface GiphyResult {
   };
 }
 
-export default function GiphySearch({ onSelect, onClose }: GiphySearchProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [results, setResults] = useState<GiphyResult[]>([]);
+const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [gifs, setGifs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  
-  // In a real app, this would come from an environment variable
-  const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY';
-  
+  const [error, setError] = useState<string | null>(null);
+
+  // Load trending GIFs by default
   useEffect(() => {
-    // Load trending GIFs by default
-    fetchTrendingGifs();
+    fetchGifs();
   }, []);
-  
-  const fetchTrendingGifs = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=15`
-      );
-      
-      const data = await response.json();
-      setResults(data.data);
-    } catch (error) {
-      console.error('Error fetching trending GIFs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const searchGifs = async () => {
-    if (!searchTerm.trim()) {
-      fetchTrendingGifs();
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(
-          searchTerm
-        )}&limit=15`
-      );
-      
-      const data = await response.json();
-      setResults(data.data);
-    } catch (error) {
-      console.error('Error searching GIFs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    searchGifs();
-  };
-  
-  // Function for mocking GIF results since we don't have a real API key
-  const getMockGifs = () => {
-    return [
-      {
-        id: '1',
-        title: 'Happy Cat',
-        images: {
-          fixed_height: {
-            url: 'https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif'
-          },
-          original: {
-            url: 'https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif'
-          }
-        }
-      },
-      {
-        id: '2',
-        title: 'Thumbs Up',
-        images: {
-          fixed_height: {
-            url: 'https://media.giphy.com/media/9g8PH1MbwTy4o/giphy.gif'
-          },
-          original: {
-            url: 'https://media.giphy.com/media/9g8PH1MbwTy4o/giphy.gif'
-          }
-        }
-      },
-      {
-        id: '3',
-        title: 'Mind Blown',
-        images: {
-          fixed_height: {
-            url: 'https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif'
-          },
-          original: {
-            url: 'https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif'
-          }
-        }
-      },
-      {
-        id: '4',
-        title: 'Dancing',
-        images: {
-          fixed_height: {
-            url: 'https://media.giphy.com/media/DGWAx8d3IkICs/giphy.gif'
-          },
-          original: {
-            url: 'https://media.giphy.com/media/DGWAx8d3IkICs/giphy.gif'
-          }
-        }
-      }
-    ];
-  };
-  
-  // For demo purposes, use mock data instead of real API calls
+
+  // Search for GIFs when query changes
   useEffect(() => {
-    setResults(getMockGifs());
-  }, [searchTerm]);
-  
+    if (searchQuery) {
+      const debounceTimer = setTimeout(() => {
+        fetchGifs();
+      }, 500);
+
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [searchQuery]);
+
+  const fetchGifs = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const endpoint = searchQuery
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${encodeURIComponent(searchQuery)}&limit=10&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=10&rating=g`;
+      
+      const response = await fetch(endpoint);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch GIFs');
+      }
+      
+      const data = await response.json();
+      setGifs(data.data);
+    } catch (err) {
+      console.error('Error fetching GIFs:', err);
+      setError('Failed to load GIFs. Please try again.');
+      
+      // Fallback to static GIFs if API fails
+      setGifs([
+        {
+          id: '1',
+          images: {
+            fixed_height: {
+              url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDMwbWlxNDg4cGlmMmZuemdqNTk1MHUyMGc2Z3ppNXkyNnV2eTdubyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YrBRYRDN4M5Q0dyzKh/giphy.gif'
+            }
+          }
+        },
+        {
+          id: '2',
+          images: {
+            fixed_height: {
+              url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWdyY3JhNnN1c3I4MG02ZjBpNGhteXBkb3NydnRveTFyc3owbWZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ZG0OPY9ToFbXO/giphy.gif'
+            }
+          }
+        },
+        {
+          id: '3',
+          images: {
+            fixed_height: {
+              url: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3ppMGJxendnYTk3cHVqcnRyY240em84aXQ2bncydXM3ZXkzYnlmdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ohhwytHcusSCXXp96/giphy.gif'
+            }
+          }
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="p-2">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-text-primary font-semibold">GIF Search</h3>
+    <div className="giphy-search w-full max-h-60 overflow-y-auto">
+      <div className="giphy-search-header flex justify-between items-center mb-2">
+        <input
+          type="text"
+          placeholder="Search for GIFs..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="bg-background-tertiary text-text-primary border border-background-primary rounded px-2 py-1 flex-1 mr-2"
+        />
         <button 
-          className="p-1 rounded-full hover:bg-background-secondary text-text-muted hover:text-text-primary"
           onClick={onClose}
+          className="text-text-muted hover:text-text-primary"
         >
-          <XMarkIcon className="h-5 w-5" />
+          ✕
         </button>
       </div>
       
-      <form onSubmit={handleSearch} className="flex mb-4">
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MagnifyingGlassIcon className="h-5 w-5 text-text-muted" />
-          </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search GIFs..."
-            className="input-field pl-10"
-          />
-        </div>
-        <button type="submit" className="button-primary ml-2">
-          Search
-        </button>
-      </form>
+      {error && (
+        <div className="text-danger text-center py-2">{error}</div>
+      )}
       
       {loading ? (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-accent-primary"></div>
+        <div className="flex justify-center items-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
-          {results.map(gif => (
+        <div className="giphy-results grid grid-cols-2 gap-2">
+          {gifs.map((gif) => (
             <div 
               key={gif.id}
-              className="cursor-pointer rounded-md overflow-hidden hover:ring-2 hover:ring-accent-primary"
-              onClick={() => onSelect(gif.images.original.url)}
+              className="giphy-result cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => onSelect(gif.images.fixed_height.url)}
             >
-              <Image 
-                src={gif.images.fixed_height.url} 
-                alt={gif.title} 
-                width={200}
-                height={96}
-                className="w-full h-24 object-cover"
+              <img 
+                src={gif.images.fixed_height.url}
+                alt="GIF"
+                className="w-full h-auto rounded"
+                loading="lazy"
               />
             </div>
           ))}
         </div>
       )}
+      
+      <div className="giphy-attribution text-xs text-text-muted text-center mt-2">
+        Powered by GIPHY
+      </div>
     </div>
   );
-} 
+};
+
+export default GiphySearch; 
