@@ -1,5 +1,6 @@
 import React from 'react';
 import Head from 'next/head';
+import InteractionHandler from '@/components/InteractionHandler';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,7 +16,12 @@ export default function MainLayout({ children, enableDebug = true }: MainLayoutP
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {enableDebug && <script src="/debug.js" />}
       </Head>
+      
+      {/* Main content */}
       {children}
+      
+      {/* Add the interaction handler component */}
+      <InteractionHandler debug={enableDebug} />
     </>
   );
 } 

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import Image from 'next/image';
 import { createClient } from '@supabase/supabase-js';
+import MessageList from '@/components/MessageList';
+import { Message } from '@/lib/types';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -40,17 +42,6 @@ interface Attachment {
   alt: string;
 }
 
-interface Message {
-  id: string;
-  author: Author;
-  content: string;
-  timestamp: string;
-  reactions?: Reaction[];
-  replies?: Reply[];
-  attachment?: Attachment;
-  isBot?: boolean;
-}
-
 interface PinnedMessage {
   id: string;
   content: string;
@@ -60,18 +51,24 @@ interface ChatAreaProps {
   topic: Topic;
   messages: Message[];
   pinnedMessage?: PinnedMessage;
-  onSendMessage: () => void;
+  onSendMessage: (content: string) => void;
 }
 
-const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinnedMessage, onSendMessage }: ChatAreaProps) => {
-  const [messageText, setMessageText] = useState('');
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | undefined>(initialPinnedMessage);
+const ChatArea: React.FC<ChatAreaProps> = ({
+  topic,
+  messages,
+  pinnedMessage,
+  onSendMessage
+}) => {
+  const [messageInput, setMessageInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>(messages);
+  const [pinnedMessage, setPinnedMessage] = useState<PinnedMessage | undefined>(pinnedMessage);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Check authentication
   useEffect(() => {
@@ -84,13 +81,13 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   
   // Update messages when the prop changes (e.g. when topic changes)
   useEffect(() => {
-    setMessages(initialMessages);
-  }, [initialMessages]);
+    setMessages(messages);
+  }, [messages]);
   
   // Update pinned message when the prop changes
   useEffect(() => {
-    setPinnedMessage(initialPinnedMessage);
-  }, [initialPinnedMessage]);
+    setPinnedMessage(pinnedMessage);
+  }, [pinnedMessage]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -138,111 +135,21 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
-  const handleSendMessage = async (e: React.FormEvent) => {
-    console.log("handleSendMessage triggered", { messageText, isAuthenticated });
+  // Handle form submission
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
-    // Verify authentication first
-    if (!isAuthenticated) {
-      console.log("Not authenticated, calling onSendMessage to trigger auth modal");
-      onSendMessage(); // This will trigger the auth modal in the parent
-      return;
-    }
-    
-    if (messageText.trim()) {
-      console.log("Sending message:", messageText);
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        console.log("Current user:", user);
-        
-        if (!user) {
-          console.log("No user found despite isAuthenticated=true, triggering auth modal");
-          onSendMessage(); // Trigger auth modal
-          return;
-        }
-        
-        // For demo purpose, add the message locally first for better UX
-        if (replyingTo) {
-          console.log("Adding reply to message:", replyingTo.id);
-          // Add a reply to a message
-          const updatedMessages = messages.map(message => {
-            if (message.id === replyingTo.id) {
-              return {
-                ...message,
-                replies: [
-                  ...(message.replies || []),
-                  {
-                    id: `reply-${Date.now()}`,
-                    author: { id: user.id, name: user.email?.split('@')[0] || 'User', avatar: 'U' },
-                    content: messageText,
-                    timestamp: 'Just now'
-                  }
-                ]
-              };
-            }
-            return message;
-          });
-          setMessages(updatedMessages);
-          
-          // In a real app, also save to Supabase
-          try {
-            const { data, error } = await supabase.from('messages').insert({
-              content: messageText,
-              user_id: user.id,
-              topic_id: topic.id,
-              parent_id: replyingTo.id,
-              created_at: new Date().toISOString()
-            });
-            
-            if (error) {
-              console.error("Supabase insert error:", error);
-            } else {
-              console.log("Message saved to Supabase:", data);
-            }
-          } catch (supabaseError) {
-            console.error("Supabase operation failed:", supabaseError);
-          }
-          
-          setReplyingTo(null);
-        } else {
-          console.log("Adding new message");
-          // Add a new message
-          const newMessage: Message = {
-            id: `msg-${Date.now()}`,
-            author: { id: user.id, name: user.email?.split('@')[0] || 'User', avatar: 'U' },
-            content: messageText,
-            timestamp: 'Just now',
-            reactions: []
-          };
-          setMessages([...messages, newMessage]);
-          
-          // In a real app, also save to Supabase
-          try {
-            const { data, error } = await supabase.from('messages').insert({
-              content: messageText,
-              user_id: user.id,
-              topic_id: topic.id,
-              created_at: new Date().toISOString()
-            });
-            
-            if (error) {
-              console.error("Supabase insert error:", error);
-            } else {
-              console.log("Message saved to Supabase:", data);
-            }
-          } catch (supabaseError) {
-            console.error("Supabase operation failed:", supabaseError);
-          }
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
+    if (messageInput.trim()) {
+      // Call the parent handler with the message content
+      onSendMessage(messageInput.trim());
       
-      setMessageText('');
-      onSendMessage(); // Notify parent
-    } else {
-      console.log("Message text is empty, not sending");
+      // Clear the input field
+      setMessageInput('');
+      
+      // Focus back on the input field
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   };
   
@@ -259,7 +166,7 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   const handleReactionClick = async (messageId: string, emoji: string, isActive: boolean) => {
     // Check authentication first
     if (!isAuthenticated) {
-      onSendMessage(); // This will trigger the auth modal in the parent
+      onSendMessage(''); // This will trigger the auth modal in the parent
       return;
     }
     
@@ -268,7 +175,7 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        onSendMessage(); // Trigger auth modal
+        onSendMessage(''); // Trigger auth modal
         return;
       }
       
@@ -347,7 +254,7 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   const addNewReaction = (messageId: string) => {
     // Check authentication first
     if (!isAuthenticated) {
-      onSendMessage(); // This will trigger the auth modal in the parent
+      onSendMessage(''); // This will trigger the auth modal in the parent
       return;
     }
     
@@ -360,7 +267,7 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   const handlePinMessage = async (message: Message) => {
     // Check authentication first
     if (!isAuthenticated) {
-      onSendMessage(); // This will trigger the auth modal in the parent
+      onSendMessage(''); // This will trigger the auth modal in the parent
       return;
     }
     
@@ -369,7 +276,7 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        onSendMessage(); // Trigger auth modal
+        onSendMessage(''); // Trigger auth modal
         return;
       }
       
@@ -421,7 +328,7 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
               key={index}
               className="cursor-pointer hover:bg-background-secondary p-1 rounded text-lg"
               onClick={() => {
-                setMessageText(messageText + emoji);
+                setMessageInput(messageInput + emoji);
                 setShowEmojiPicker(false);
               }}
             >
@@ -508,9 +415,9 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
                   // In a real app, we would insert the GIF URL as a message or attachment
                   // For this demo, we'll just close the picker and send a text message
                   setShowGifPicker(false);
-                  setMessageText("I sent a GIF! (In a real app, this would show the actual GIF)");
+                  setMessageInput("I sent a GIF! (In a real app, this would show the actual GIF)");
                   // Immediately send the message
-                  handleSendMessage({
+                  handleSubmit({
                     preventDefault: () => {}
                   } as React.FormEvent);
                 }}
@@ -525,223 +432,87 @@ const ChatArea = ({ topic, messages: initialMessages, pinnedMessage: initialPinn
   };
   
   return (
-    <div className="chat-container bg-background-primary flex-1 flex flex-col h-screen ml-[calc(72px+240px)] mr-[240px] relative">
-      {/* Chat Header */}
-      <div className="chat-header border-b border-background-tertiary py-3 px-4 flex items-center">
-        <div className="chat-header-hash text-text-muted text-2xl mr-2">#</div>
-        <div className="chat-header-topic flex-1">
-          <div className="font-bold text-text-primary">{topic.name}</div>
-          <div className="text-text-muted text-xs">{topic.description}</div>
+    <div className="flex flex-col flex-1 bg-background min-w-0">
+      {/* Chat header */}
+      <div className="flex items-center px-4 py-3 border-b border-background-tertiary">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-bold text-text-primary truncate">
+            {topic.name}
+          </h2>
+          <p className="text-sm text-text-secondary truncate">
+            {topic.description}
+          </p>
         </div>
-        <div className="chat-header-actions flex">
-          <div 
-            className="header-action text-text-muted hover:text-text-secondary cursor-pointer mx-2"
-            onClick={() => alert('Notification settings would open here')}
-          >
-            🔔
-          </div>
-          <div 
-            className="header-action text-text-muted hover:text-text-secondary cursor-pointer mx-2"
-            onClick={() => alert('Pinned messages would show here')}
-          >
-            📌
-          </div>
-          <div 
-            className="header-action text-text-muted hover:text-text-secondary cursor-pointer mx-2"
-            onClick={() => alert('Member list would toggle on mobile')}
-          >
-            👥
-          </div>
-          <div 
-            className="header-action text-text-muted hover:text-text-secondary cursor-pointer mx-2"
-            onClick={() => alert('Search messages would open here')}
-          >
-            🔍
-          </div>
-        </div>
-      </div>
-      
-      {/* Pinned Message */}
-      {pinnedMessage && (
-        <div className="pinned-message mx-4 my-2 p-2 bg-background-tertiary/30 rounded border-l-4 border-gold">
-          <div className="pinned-header flex items-center mb-1">
-            <div className="pin-icon text-gold mr-1">📌</div>
-            <div className="pin-title text-gold text-sm font-semibold">Pincredible!</div>
-          </div>
-          <div className="message-text text-text-secondary text-sm">
-            {pinnedMessage.content}
-          </div>
-        </div>
-      )}
-      
-      {/* Reply Bar - show when replying to a message */}
-      {replyingTo && (
-        <div className="reply-bar mx-4 mt-2 p-2 bg-background-tertiary/30 rounded flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="text-text-secondary text-sm mr-2">
-              Replying to <span className="text-accent-secondary">{replyingTo.author.name}</span>
-            </div>
-            <div className="text-text-muted text-xs truncate max-w-[300px]">{replyingTo.content}</div>
-          </div>
-          <button 
-            className="text-text-muted hover:text-text-secondary p-1"
-            onClick={cancelReply}
-          >
-            ✕
+        <div className="flex items-center space-x-2">
+          <button className="header-action p-2 rounded hover:bg-background-secondary text-text-secondary hover:text-text-primary">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </button>
+          <button className="header-action p-2 rounded hover:bg-background-secondary text-text-secondary hover:text-text-primary">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
           </button>
         </div>
-      )}
-      
-      {/* Messages Container */}
-      <div className="messages-container flex-1 overflow-y-auto p-4 space-y-6">
-        {messages.map(message => (
-          <div key={message.id} className={`message-group flex ${message.isBot ? 'bot-message' : ''}`}>
-            <div className={`message-avatar w-10 h-10 rounded-full flex items-center justify-center text-white font-bold mr-3 ${
-              message.isBot 
-                ? 'bg-[#43b581]' 
-                : 'bg-accent-secondary'
-            }`}>
-              {message.author.avatar}
-            </div>
-            <div className="message-content flex-1">
-              <div className="message-header flex items-center mb-1">
-                <div className={`message-author font-semibold ${message.isBot ? 'text-[#43b581]' : 'text-white'}`}>
-                  {message.author.name}
-                </div>
-                {message.isBot && <div className="bot-tag bg-[#43b581] text-white text-xs px-1 rounded ml-2">BOT</div>}
-                <div className="message-timestamp text-text-muted text-xs ml-2">{message.timestamp}</div>
-                
-                {/* Message Actions */}
-                <div className="message-actions ml-auto flex">
-                  <button 
-                    className="p-1 text-text-muted hover:text-text-secondary"
-                    onClick={() => handleReplyClick(message)}
-                    title="Reply"
-                  >
-                    ↩️
-                  </button>
-                  <button 
-                    className="p-1 text-text-muted hover:text-text-secondary"
-                    onClick={() => handlePinMessage(message)}
-                    title="Pin"
-                  >
-                    📌
-                  </button>
-                </div>
-              </div>
-              
-              <div className="message-text text-text-primary mb-2 group">
-                {message.content.split(' ').map((word, index) => (
-                  word.startsWith('@') 
-                    ? <span key={index} className="text-accent-secondary mr-1">{word}</span> 
-                    : <span key={index} className="mr-1">{word}</span>
-                ))}
-              </div>
-              
-              {message.attachment && (
-                <div className="message-attachment mb-2">
-                  <img 
-                    src={message.attachment.url} 
-                    alt={message.attachment.alt} 
-                    className="attachment-image max-w-md rounded-md"
-                  />
-                </div>
-              )}
-              
-              {/* Reactions */}
-              <div className="message-reactions flex flex-wrap gap-2 mb-2">
-                {message.reactions && message.reactions.length > 0 && message.reactions.map((reaction, index) => (
-                  <div 
-                    key={index} 
-                    className={`reaction flex items-center px-2 py-1 rounded-full text-sm cursor-pointer ${
-                      reaction.active 
-                        ? 'bg-accent-primary/30 text-accent-primary' 
-                        : 'bg-background-tertiary hover:bg-background-secondary'
-                    }`}
-                    onClick={() => handleReactionClick(message.id, reaction.emoji, reaction.active)}
-                  >
-                    <div className="reaction-emoji mr-1">{reaction.emoji}</div>
-                    <div className="reaction-count">{reaction.count}</div>
-                  </div>
-                ))}
-                <div 
-                  className="reaction flex items-center px-2 py-1 rounded-full text-sm cursor-pointer bg-background-tertiary hover:bg-background-secondary text-text-muted"
-                  onClick={() => addNewReaction(message.id)}
-                >
-                  <div className="reaction-emoji">+</div>
-                </div>
-              </div>
-              
-              {/* Replies */}
-              {message.replies && message.replies.length > 0 && (
-                <div className="message-replies pl-4 border-l-2 border-background-tertiary mt-3 space-y-3">
-                  {message.replies.map(reply => (
-                    <div key={reply.id} className="reply flex">
-                      <div className="reply-avatar w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mr-2 bg-accent-secondary">
-                        {reply.author.avatar}
-                      </div>
-                      <div className="reply-content flex-1">
-                        <div className="message-header flex items-center mb-1">
-                          <div className="message-author font-semibold text-white">{reply.author.name}</div>
-                          <div className="message-timestamp text-text-muted text-xs ml-2">{reply.timestamp}</div>
-                        </div>
-                        <div className="message-text text-text-primary">{reply.content}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
       </div>
       
-      {/* Chat Input Area */}
-      <form onSubmit={handleSendMessage} className="input-container border-t border-background-tertiary p-3 mt-auto flex items-center">
-        <div className="input-actions flex mr-2">
-          <div 
-            className="input-action w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center text-text-muted hover:text-text-secondary cursor-pointer"
-            onClick={() => alert('Upload file functionality would open here')}
-          >
-            +
-          </div>
-          <div 
-            className="input-action ml-2 bg-background-tertiary px-2 py-1 rounded text-text-muted hover:text-text-secondary cursor-pointer"
-            onClick={toggleGifPicker}
-          >
-            GIF
+      {/* Pinned message */}
+      {pinnedMessage && (
+        <div className="px-4 py-2 bg-background-secondary/50 border-b border-background-tertiary flex items-start">
+          <span className="flex-shrink-0 text-text-secondary mr-2 mt-0.5">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-text-primary">
+              {pinnedMessage.content}
+            </p>
           </div>
         </div>
-        <input 
-          type="text" 
-          className="input-field flex-1 bg-background-tertiary text-text-primary p-2 rounded-md focus:outline-none"
-          placeholder={`Message #${topic.name}`}
-          value={messageText}
-          onChange={(e) => setMessageText(e.target.value)}
-        />
-        <button 
-          type="submit"
-          className="ml-2 px-6 py-2 bg-accent-primary text-white font-semibold rounded-md hover:bg-gold transition-colors"
-          onClick={() => console.log("Send button clicked")}
-        >
-          Send
-        </button>
-        <div className="input-buttons flex ml-2">
-          <div 
-            className="input-action w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center text-text-muted hover:text-text-secondary cursor-pointer"
-            onClick={toggleEmojiPicker}
-          >
-            😊
+      )}
+      
+      {/* Messages list */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <MessageList messages={messages} />
+      </div>
+      
+      {/* Input area */}
+      <div className="px-4 py-3 border-t border-background-tertiary">
+        <form id="message-form" onSubmit={handleSubmit} className="flex items-center">
+          <div className="flex items-center space-x-2 mr-2">
+            <button type="button" className="input-action p-2 rounded hover:bg-background-secondary text-text-secondary hover:text-text-primary">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
           </div>
-          <div 
-            className="input-action ml-2 w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center text-text-muted hover:text-text-secondary cursor-pointer"
-            onClick={() => alert('Voice message functionality would open here')}
+          <input
+            ref={inputRef}
+            id="message-input"
+            name="message"
+            type="text"
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            className="input-field flex-1 p-2 bg-background-secondary text-text-primary rounded-md focus:outline-none focus:ring-1 focus:ring-accent-primary"
+            placeholder={`Message ${topic.name}...`}
+            aria-label="Type a message"
+          />
+          <button 
+            type="submit" 
+            disabled={!messageInput.trim()}
+            className={`ml-2 px-4 py-2 rounded-md font-medium ${
+              messageInput.trim() 
+                ? 'bg-accent-primary text-white hover:bg-accent-primary/90' 
+                : 'bg-background-tertiary text-text-secondary cursor-not-allowed'
+            }`}
           >
-            🎤
-          </div>
-        </div>
-      </form>
+            Send
+          </button>
+        </form>
+      </div>
       
       {/* Emoji Picker */}
       {showEmojiPicker && renderEmojiPicker()}
