@@ -86,6 +86,8 @@ export default function Home() {
           />
         ))}
       </div>
+
+      <script src="/direct-fix.js"></script>
     </div>
   );
 }

@@ -3,201 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Direct Debug Page</title>
+  <title>Turf App Interaction Debugger</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #36393f;
-      color: #dcddde;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
       max-width: 800px;
       margin: 0 auto;
-      background-color: #2f3136;
       padding: 20px;
-      border-radius: 8px;
+      line-height: 1.6;
     }
-    h1 {
-      color: white;
-      margin-top: 0;
-    }
-    .info {
-      margin-bottom: 20px;
-      border-left: 4px solid #5865f2;
-      padding-left: 15px;
-    }
-    .test-section {
+    .section {
       margin-bottom: 30px;
       padding: 15px;
-      background-color: #202225;
-      border-radius: 4px;
+      border: 1px solid #eaeaea;
+      border-radius: 8px;
     }
-    .channel {
-      padding: 8px 12px;
-      background-color: #40444b;
-      margin: 8px 0;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s;
+    h1, h2 {
+      color: #333;
     }
-    .channel:hover {
-      background-color: #45474e;
+    .log-container {
+      background-color: #f7f7f7;
+      padding: 15px;
+      border-radius: 5px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
     }
-    .channel .truncate {
-      display: inline-block;
+    .log-entry {
+      margin: 5px 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
     }
-    .reaction {
-      display: inline-block;
-      padding: 5px 10px;
-      background-color: #40444b;
-      border-radius: 15px;
-      margin-right: 10px;
-      cursor: pointer;
+    .error {
+      color: #e53e3e;
     }
-    .input-action {
-      display: inline-block;
-      width: 30px;
-      height: 30px;
-      background-color: #40444b;
-      border-radius: 50%;
-      margin-right: 10px;
-      cursor: pointer;
-      text-align: center;
-      line-height: 30px;
-    }
-    .header-action {
-      display: inline-block;
-      padding: 5px;
-      background-color: #40444b;
-      border-radius: 4px;
-      margin-right: 10px;
-      cursor: pointer;
-    }
-    form {
-      display: flex;
-      margin-top: 20px;
-    }
-    .input-field {
-      flex: 1;
-      padding: 10px;
-      background-color: #40444b;
-      border: none;
-      border-radius: 4px;
-      color: white;
-      margin-right: 10px;
+    .success {
+      color: #38a169;
     }
     button {
-      padding: 10px 15px;
-      background-color: #5865f2;
+      background-color: #4299e1;
       color: white;
       border: none;
+      padding: 8px 16px;
       border-radius: 4px;
       cursor: pointer;
+      margin-right: 10px;
+      margin-top: 10px;
     }
-    .console {
-      margin-top: 20px;
-      background-color: #202225;
-      color: #5de948;
-      font-family: monospace;
-      padding: 15px;
-      border-radius: 4px;
-      height: 200px;
-      overflow-y: auto;
-    }
-    .console-entry {
-      margin-bottom: 5px;
-      border-bottom: 1px solid #36393f;
-      padding-bottom: 5px;
+    button:hover {
+      background-color: #3182ce;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Direct Debug Page</h1>
-    
-    <div class="info">
-      <p>This page tests the direct-fix.js script without any server dependencies.</p>
-      <p>Open your browser console (F12) to see detailed logs of events.</p>
-    </div>
-    
-    <div class="test-section">
-      <h2>Channel Navigation Test</h2>
-      <p>Click on any channel below:</p>
-      
-      <div class="channel">
-        <div class="truncate">Remote Work Debate</div>
-      </div>
-      <div class="channel">
-        <div class="truncate">AI Ethics</div>
-      </div>
-      <div class="channel">
-        <div class="truncate">Climate Solutions</div>
-      </div>
-    </div>
-    
-    <div class="test-section">
-      <h2>Interactive Elements Test</h2>
-      <p>Click any of these elements:</p>
-      
-      <div class="reaction">👍 2</div>
-      <div class="reaction">🔥 5</div>
-      <div class="input-action">😊</div>
-      <div class="header-action">🔔</div>
-    </div>
-    
-    <div class="test-section">
-      <h2>Form Submission Test</h2>
-      <p>Try typing and submitting a message:</p>
-      
-      <form>
-        <input type="text" class="input-field" placeholder="Type a message...">
-        <!-- No button added here, script should add one -->
-      </form>
-    </div>
-    
-    <div class="console" id="console">
-      <div class="console-entry">Awaiting events...</div>
-    </div>
+  <h1>Turf App Interaction Debugger</h1>
+  
+  <div class="section">
+    <h2>System Information</h2>
+    <div id="system-info"></div>
   </div>
-  
+
+  <div class="section">
+    <h2>Interaction Test</h2>
+    <p>Click the buttons below to test basic interactions:</p>
+    <button id="click-test">Test Click</button>
+    <button id="navigation-test">Test Navigation</button>
+    <button id="storage-test">Test Local Storage</button>
+  </div>
+
+  <div class="section">
+    <h2>Debug Log</h2>
+    <div class="log-container" id="log-output"></div>
+  </div>
+
+  <div class="section">
+    <h2>Fix Script Status</h2>
+    <div id="fix-status">Not loaded</div>
+    <button id="load-fix">Load Fix Script</button>
+  </div>
+
   <script>
-    // Override console.log to show messages in our UI
-    (function() {
-      var realConsoleLog = console.log;
-      console.log = function() {
-        // Call the original console.log
-        realConsoleLog.apply(console, arguments);
-        
-        // Add to our console div
-        var consoleDiv = document.getElementById('console');
-        if (consoleDiv) {
-          var entry = document.createElement('div');
-          entry.className = 'console-entry';
-          
-          var args = Array.prototype.slice.call(arguments);
-          entry.textContent = args.map(function(arg) {
-            if (typeof arg === 'object') {
-              try {
-                return JSON.stringify(arg);
-              } catch (e) {
-                return '[Object]';
-              }
-            }
-            return String(arg);
-          }).join(' ');
-          
-          consoleDiv.appendChild(entry);
-          consoleDiv.scrollTop = consoleDiv.scrollHeight;
-        }
-      };
-    })();
+    // Log function
+    function log(message, type = 'info') {
+      const logContainer = document.getElementById('log-output');
+      const entry = document.createElement('div');
+      entry.classList.add('log-entry');
+      if (type === 'error') entry.classList.add('error');
+      if (type === 'success') entry.classList.add('success');
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // System info
+    function displaySystemInfo() {
+      const info = document.getElementById('system-info');
+      info.innerHTML = `
+        <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+        <p><strong>Screen Size:</strong> ${window.innerWidth}x${window.innerHeight}</p>
+        <p><strong>Touch Support:</strong> ${('ontouchstart' in window) ? 'Yes' : 'No'}</p>
+      `;
+      log('System information collected', 'info');
+    }
+
+    // Test functionality
+    document.getElementById('click-test').addEventListener('click', function() {
+      log('Click test successful', 'success');
+    });
+
+    document.getElementById('navigation-test').addEventListener('click', function() {
+      try {
+        history.pushState({}, '', window.location.pathname + '?test=true');
+        log('Navigation test successful', 'success');
+        setTimeout(() => {
+          history.back();
+        }, 1000);
+      } catch (e) {
+        log('Navigation test failed: ' + e.message, 'error');
+      }
+    });
+
+    document.getElementById('storage-test').addEventListener('click', function() {
+      try {
+        localStorage.setItem('debug-test', Date.now().toString());
+        const value = localStorage.getItem('debug-test');
+        log(`Storage test successful, value: ${value}`, 'success');
+      } catch (e) {
+        log('Storage test failed: ' + e.message, 'error');
+      }
+    });
     
-    console.log('Debug page loaded');
+    // Load fix script
+    document.getElementById('load-fix').addEventListener('click', function() {
+      const script = document.createElement('script');
+      script.src = '/direct-fix.js';
+      script.onload = function() {
+        document.getElementById('fix-status').textContent = 'Loaded successfully';
+        log('Fix script loaded', 'success');
+      };
+      script.onerror = function() {
+        document.getElementById('fix-status').textContent = 'Failed to load';
+        log('Failed to load fix script', 'error');
+      };
+      document.head.appendChild(script);
+    });
+
+    // Initialize
+    window.addEventListener('load', function() {
+      displaySystemInfo();
+      log('Debug page loaded', 'info');
+    });
   </script>
-  
-  <!-- Load the direct fix script -->
-  <script src="/direct-fix.js"></script>
 </body>
 </html> 
