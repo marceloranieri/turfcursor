@@ -1,10 +1,15 @@
-import React, { useState, FormEvent, useRef, useEffect } from 'react';
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { FaceSmileIcon, PhotoIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
+import SendButton from './SendButton';
 
-const GiphySearch = dynamic(() => import('./GiphySearch'), { ssr: false });
+// Dynamically import components that use browser APIs
+const GifPickerModal = dynamic(() => import('./GifPickerModal'), { ssr: false });
+const EmojiPicker = dynamic(() => import('@/components/EmojiPicker'), { ssr: false });
 
-interface ChatInputProps {
+interface MessageFormProps {
   onSendMessage: (content: string, type: 'text' | 'gif') => void;
   replyingTo?: string;
   onCancelReply?: () => void;
@@ -13,14 +18,14 @@ interface ChatInputProps {
   onAuthPrompt: () => void;
 }
 
-export default function ChatInput({
+export default function MessageForm({
   onSendMessage,
   replyingTo,
   onCancelReply,
   placeholder = 'Type a message...',
   isAuthenticated,
   onAuthPrompt
-}: ChatInputProps) {
+}: MessageFormProps) {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifSearch, setShowGifSearch] = useState(false);
@@ -35,7 +40,7 @@ export default function ChatInput({
     inputRef.current?.focus();
   }, []);
   
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isAuthenticated) {
@@ -124,6 +129,7 @@ export default function ChatInput({
             setShowEmojiPicker(!showEmojiPicker);
             setShowGifSearch(false);
           }}
+          aria-label="Add emoji"
         >
           <FaceSmileIcon className="h-5 w-5" />
         </button>
@@ -136,6 +142,7 @@ export default function ChatInput({
             setShowGifSearch(!showGifSearch);
             setShowEmojiPicker(false);
           }}
+          aria-label="Add GIF"
         >
           <PhotoIcon className="h-5 w-5" />
         </button>
@@ -144,6 +151,7 @@ export default function ChatInput({
         <button 
           type="button"
           className="p-2 rounded-full text-text-muted hover:text-text-primary hover:bg-background-tertiary"
+          aria-label="Add attachment"
         >
           <PaperClipIcon className="h-5 w-5" />
         </button>
@@ -161,13 +169,7 @@ export default function ChatInput({
         />
         
         {/* Send button */}
-        <button 
-          type="submit"
-          className={`py-2 px-4 rounded-md ${message.trim() ? 'button-primary' : 'button-primary opacity-50 cursor-not-allowed'}`}
-          disabled={!message.trim()}
-        >
-          Send
-        </button>
+        <SendButton disabled={!message.trim()} />
         
         {/* Emoji picker */}
         {showEmojiPicker && (
@@ -179,6 +181,7 @@ export default function ChatInput({
                   type="button"
                   className="p-2 hover:bg-background-secondary rounded-md"
                   onClick={() => handleEmojiSelect(emoji)}
+                  aria-label={`Add ${emoji} emoji`}
                 >
                   {emoji}
                 </button>
@@ -190,7 +193,7 @@ export default function ChatInput({
         {/* GIF search */}
         {showGifSearch && (
           <div className="absolute bottom-16 left-0 right-0 bg-background-tertiary rounded-lg p-2 shadow-lg z-10 max-h-60 overflow-y-auto">
-            <GiphySearch onSelect={handleGifSelect} onClose={() => setShowGifSearch(false)} />
+            <GifPickerModal onSelect={handleGifSelect} onClose={() => setShowGifSearch(false)} />
           </div>
         )}
       </form>
