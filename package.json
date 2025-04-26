@@ -15,6 +15,7 @@
     "@emoji-mart/react": "^1.1.1",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "@sentry/nextjs": "^7.101.1",
     "@supabase/supabase-js": "^2.39.0",
     "@vercel/speed-insights": "^1.0.9",
     "bufferutil": "^4.0.8",

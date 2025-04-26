@@ -44,6 +44,15 @@ const nextConfig = {
             value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.com https://*.vercel.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;"
           }
         ]
+      },
+      {
+        source: '/_vercel/insights.js',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "script-src 'self'" // block eval and Vercel's feedback
+          }
+        ]
       }
     ];
   }
