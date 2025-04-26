@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { DiscordInput } from '@/components/ui/DiscordInput';
-import { DiscordButton } from '@/components/ui/DiscordButton';
+import DiscordInput from '@/components/ui/DiscordInput';
+import DiscordButton from '@/components/ui/DiscordButton';
 import { Profile } from '@/lib/types';
 import Image from 'next/image';
 

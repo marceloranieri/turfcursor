@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { DiscordButton } from '@/components/ui/DiscordButton';
+import DiscordButton from '@/components/ui/DiscordButton';
 
 interface Settings {
   notifications_enabled: boolean;
