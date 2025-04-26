@@ -7,15 +7,21 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
+  console.error(
     'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
   );
+  // Don't throw in production to prevent app crashes
+  if (process.env.NODE_ENV === 'development') {
+    throw new Error(
+      'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
+    );
+  }
 }
 
 // Create a single supabase client for interacting with your database
 export const supabase: SupabaseClient<Database> = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey,
+  supabaseUrl || '',
+  supabaseAnonKey || '',
   {
     auth: {
       persistSession: true,
@@ -37,6 +43,13 @@ export const supabase: SupabaseClient<Database> = createClient<Database>(
     },
   }
 );
+
+// Add debug logging in development
+if (process.env.NODE_ENV === 'development') {
+  supabase.auth.onAuthStateChange((event, session) => {
+    console.log('Supabase auth state changed:', event, session?.user?.id);
+  });
+}
 
 // Types for database tables
 export type User = {

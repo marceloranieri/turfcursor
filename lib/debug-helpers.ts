@@ -1,6 +1,10 @@
 'use client'
 
+import { useEffect } from 'react';
+
 export function setupDebugListeners() {
+  if (process.env.NODE_ENV !== 'development') return;
+
   console.log('Setting up debug listeners');
   
   // Click event debugging
@@ -79,6 +83,50 @@ export function setupDebugListeners() {
     console.log('Debug helpers added to window. Try window.debugElement(".channel") or window.listClickableElements()');
   }
   
+  // Log navigation events
+  useEffect(() => {
+    const handleRouteChange = () => {
+      console.log('Route changed:', window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
+
+  // Log hydration status
+  useEffect(() => {
+    console.log('Component hydrated:', new Date().toISOString());
+  }, []);
+
+  // Log client-side errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Client-side error:', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error,
+      });
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  // Log unhandled promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', {
+        reason: event.reason,
+        promise: event.promise,
+      });
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+  }, []);
+  
   console.log('Debug listeners setup complete');
 }
 
@@ -92,6 +140,30 @@ function getFormData(form: HTMLFormElement) {
   });
   
   return data;
+}
+
+export function logComponentLifecycle(componentName: string) {
+  if (process.env.NODE_ENV !== 'development') return;
+
+  useEffect(() => {
+    console.log(`${componentName} mounted`);
+    return () => console.log(`${componentName} unmounted`);
+  }, [componentName]);
+}
+
+export function logStateChange<T>(stateName: string, newValue: T) {
+  if (process.env.NODE_ENV !== 'development') return;
+  console.log(`State '${stateName}' changed:`, newValue);
+}
+
+export function measurePerformance(label: string) {
+  if (process.env.NODE_ENV !== 'development') return;
+
+  const start = performance.now();
+  return () => {
+    const end = performance.now();
+    console.log(`${label} took ${end - start}ms`);
+  };
 }
 
 // Add this to your page component with:
