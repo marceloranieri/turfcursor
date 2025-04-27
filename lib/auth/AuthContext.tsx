@@ -238,23 +238,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithOAuth = async (provider: 'google' | 'facebook') => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
-      // Store the current path for redirect after login
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-      }
-
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
 
       if (error) {
         toast.error(error.message);
+        return { error };
       }
 
-      return { error };
+      // Success will redirect to callback URL
+      return { error: null };
     } catch (error) {
       logger.error('Unexpected error during OAuth sign in:', error);
       toast.error('An unexpected error occurred during sign in');

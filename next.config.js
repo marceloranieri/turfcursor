@@ -33,7 +33,7 @@ const nextConfig = {
   serverRuntimeConfig: {
     maxMemory: 950, // MB (leaving some buffer from the 1GB limit)
   },
-  // Add headers to allow scripts to run properly
+  // Add headers for security and caching
   async headers() {
     return [
       {
@@ -42,15 +42,54 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.com https://*.vercel.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;"
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
           }
         ]
       },
       {
-        source: '/_vercel/insights.js',
+        source: '/static/(.*)',
         headers: [
           {
-            key: 'Content-Security-Policy',
-            value: "script-src 'self'" // block eval and Vercel's feedback
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/_next/image(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0'
           }
         ]
       }

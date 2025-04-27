@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import DiscordButton from '@/components/ui/DiscordButton';
 import { FaGoogle, FaFacebook, FaEnvelope, FaTimes } from 'react-icons/fa';
 import { useConfetti } from '@/lib/auth/authEffects';
+import { toast } from 'react-hot-toast';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -27,15 +28,23 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
 
   const handleOAuthSignIn = async (provider: 'google' | 'facebook') => {
     try {
-      // Store the redirect path for after login
+      setIsLoading(true);
+      // Store the redirect path in sessionStorage
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('redirectAfterLogin', redirectPath);
+        sessionStorage.setItem('redirectAfterAuth', redirectPath);
       }
       
-      await signInWithOAuth(provider);
-      onClose();
+      const { error } = await signInWithOAuth(provider);
+      if (error) {
+        toast.error('Failed to sign in. Please try again.');
+        return;
+      }
+      // Don't close modal - OAuth will redirect
     } catch (error: any) {
       logger.error('OAuth sign in error:', error);
+      toast.error('Failed to sign in. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,16 +53,17 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
     setIsLoading(true);
     
     try {
-      // Store the redirect path for after login
+      // Store the redirect path in sessionStorage
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('redirectAfterLogin', redirectPath);
+        sessionStorage.setItem('redirectAfterAuth', redirectPath);
       }
       
-      // Redirect to sign in page with return URL
-      router.push(`/auth/signin?redirect=${encodeURIComponent(redirectPath)}`);
+      // Always redirect to sign in page
+      router.push('/auth/signin');
       onClose();
     } catch (error: any) {
       logger.error('Sign in error:', error);
+      toast.error('Failed to redirect to sign in page.');
     } finally {
       setIsLoading(false);
     }
