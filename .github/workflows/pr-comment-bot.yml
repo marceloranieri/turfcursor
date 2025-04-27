@@ -101,6 +101,18 @@ jobs:
           echo "$CONSOLE_ERRORS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+      - name: Add Labels
+        uses: actions-ecosystem/action-add-labels@v1
+        if: |
+          steps.lighthouse.outputs.performance_score != '' && 
+          steps.console-check.outputs.console_errors != ''
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ github.event.pull_request.number }}
+          labels: |
+            ${{ steps.lighthouse.outputs.performance_score < 85 && 'needs-optimization' || '' }}
+            ${{ steps.lighthouse.outputs.performance_score >= 90 && steps.console-check.outputs.console_errors == '[]' && 'ready-for-review' || '' }}
+
       - name: Create PR Comment
         uses: peter-evans/create-or-update-comment@v2
         with:
@@ -119,6 +131,10 @@ jobs:
             ### ⚠️ Console Errors
             ${{ steps.console-check.outputs.console_errors != '[]' && 'Found console errors:' || 'No console errors found ✅' }}
             ${{ steps.console-check.outputs.console_errors != '[]' && steps.console-check.outputs.console_errors || '' }}
+            
+            ### 🏷️ Labels
+            ${{ steps.lighthouse.outputs.performance_score < 85 && '⚠️ Added `needs-optimization` label due to performance score below 85%' || '' }}
+            ${{ steps.lighthouse.outputs.performance_score >= 90 && steps.console-check.outputs.console_errors == '[]' && '✅ Added `ready-for-review` label - high performance and no console errors' || '' }}
             
             ### 📝 Summary
             ${{ steps.lighthouse.outputs.performance_score >= 85 && steps.lighthouse.outputs.accessibility_issues <= 5 && '✅ All checks passed!' || '⚠️ Some checks need attention' }}
