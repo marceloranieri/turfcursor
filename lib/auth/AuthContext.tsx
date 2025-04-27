@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
 import { toast } from 'react-hot-toast';
+import { handleAuthSuccess } from './authEffects';
+import { useRouter } from 'next/navigation';
 
 type AuthState = {
   session: Session | null;
@@ -17,7 +19,9 @@ type AuthContextType = AuthState & {
   signUp: (email: string, password: string, username: string) => Promise<{ error: AuthError | null, user: User | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (token: string, newPassword: string) => Promise<{ error: AuthError | null }>;
   updateProfile: (data: {username?: string, avatar_url?: string}) => Promise<{error: Error | null}>;
+  signInWithOAuth: (provider: 'google' | 'facebook') => Promise<{ error: AuthError | null }>;
 };
 
 const initialState: AuthState = {
@@ -30,6 +34,7 @@ const initialState: AuthState = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [state, setState] = useState<AuthState>(initialState);
 
   useEffect(() => {
@@ -94,6 +99,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast.error(error.message);
+      } else {
+        handleAuthSuccess('signin');
+        router.prefetch('/chat');
+        setTimeout(() => {
+          router.push('/chat');
+        }, 100);
       }
       return { error };
     } catch (error) {
@@ -123,6 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error, user: null };
       }
 
+      handleAuthSuccess('signup');
       return { error: null, user: data.user };
     } catch (error) {
       console.error('Unexpected error during sign up:', error);
@@ -171,6 +183,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePassword = async (token: string, newPassword: string) => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        handleAuthSuccess('reset');
+        router.push('/auth/signin');
+      }
+
+      return { error };
+    } catch (error) {
+      console.error('Unexpected error during password update:', error);
+      toast.error('An unexpected error occurred during password update');
+      return { error: new AuthError('An unexpected error occurred') };
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
   const updateProfile = async (data: {username?: string, avatar_url?: string}) => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
@@ -198,13 +234,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithOAuth = async (provider: 'google' | 'facebook') => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    try {
+      // Store the current path for redirect after login
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+      }
+
+      return { error };
+    } catch (error) {
+      console.error('Unexpected error during OAuth sign in:', error);
+      toast.error('An unexpected error occurred during sign in');
+      return { error: new AuthError('An unexpected error occurred') };
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
   const value = {
     ...state,
     signIn,
     signUp,
     signOut,
     resetPassword,
+    updatePassword,
     updateProfile,
+    signInWithOAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

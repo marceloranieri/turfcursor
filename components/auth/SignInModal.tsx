@@ -1,57 +1,83 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
-import DiscordInput from '@/components/ui/DiscordInput';
 import DiscordButton from '@/components/ui/DiscordButton';
-import { FaGoogle, FaFacebook, FaEnvelope } from 'react-icons/fa';
-import toast from 'react-hot-toast';
+import { FaGoogle, FaFacebook, FaEnvelope, FaTimes } from 'react-icons/fa';
 import { useConfetti } from '@/lib/auth/authEffects';
 
-const SignInPage = () => {
+interface SignInModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  redirectPath?: string;
+}
+
+const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath = '/chat' }) => {
   const router = useRouter();
-  const { signIn, signInWithOAuth } = useAuth();
+  const { signInWithOAuth } = useAuth();
   const { ConfettiComponent } = useConfetti();
+  const [isEmailMode, setIsEmailMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isEmailMode, setIsEmailMode] = useState(false);
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  if (!isOpen) return null;
+
+  const handleOAuthSignIn = async (provider: 'google' | 'facebook') => {
+    try {
+      // Store the redirect path for after login
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('redirectAfterLogin', redirectPath);
+      }
+      
+      await signInWithOAuth(provider);
+      onClose();
+    } catch (error: any) {
+      console.error('OAuth sign in error:', error);
+    }
+  };
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      const { error } = await signIn(email, password);
-      if (error) throw error;
+      // Store the redirect path for after login
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('redirectAfterLogin', redirectPath);
+      }
+      
+      // Redirect to sign in page with return URL
+      router.push(`/auth/signin?redirect=${encodeURIComponent(redirectPath)}`);
+      onClose();
     } catch (error: any) {
       console.error('Sign in error:', error);
-      toast.error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOAuthSignIn = async (provider: 'google' | 'facebook') => {
-    try {
-      await signInWithOAuth(provider);
-    } catch (error: any) {
-      console.error('OAuth sign in error:', error);
-      toast.error(error.message || `Failed to sign in with ${provider}`);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background-primary p-4 fade-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-slide-up">
       {ConfettiComponent && <ConfettiComponent />}
       
-      <div className="bg-background-secondary rounded-lg p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-text-primary mb-6 text-center">Welcome back to Turf</h1>
+      <div className="bg-background-secondary rounded-lg p-6 w-full max-w-md relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-text-secondary hover:text-text-primary"
+          aria-label="Close modal"
+        >
+          <FaTimes />
+        </button>
+        
+        <h2 className="text-xl font-bold text-text-primary mb-4 text-center">Sign in to continue</h2>
+        <p className="text-text-secondary mb-6 text-center">
+          Sign in to join the conversation and share your voice!
+        </p>
         
         {!isEmailMode ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <DiscordButton
               onClick={() => handleOAuthSignIn('google')}
               fullWidth
@@ -70,7 +96,7 @@ const SignInPage = () => {
               Continue with Facebook
             </DiscordButton>
             
-            <div className="relative my-6">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
               </div>
@@ -89,33 +115,10 @@ const SignInPage = () => {
             </DiscordButton>
           </div>
         ) : (
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <DiscordInput
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@email.com"
-              required
-            />
-            
-            <div className="form-group">
-              <div className="flex justify-between mb-1">
-                <label htmlFor="password" className="text-text-secondary text-sm">Password</label>
-                <Link href="/auth/forgot-password" className="text-accent-secondary text-sm hover:underline">
-                  Forgot Password?
-                </Link>
-              </div>
-              <DiscordInput
-                label=""
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                required
-                className="password-dots"
-              />
-            </div>
+          <form onSubmit={handleEmailSignIn} className="space-y-4">
+            <p className="text-text-secondary text-sm mb-4">
+              You'll be redirected to the sign in page to complete the process.
+            </p>
             
             <div className="flex gap-3">
               <DiscordButton
@@ -132,21 +135,14 @@ const SignInPage = () => {
                 className="flex-1"
                 isLoading={isLoading}
               >
-                Sign In
+                Continue
               </DiscordButton>
             </div>
           </form>
         )}
-        
-        <div className="mt-6 text-center text-text-secondary text-sm">
-          Don't have an account?{' '}
-          <Link href="/auth/signup" className="text-accent-secondary hover:underline">
-            Sign Up
-          </Link>
-        </div>
       </div>
     </div>
   );
 };
 
-export default SignInPage; 
+export default SignInModal; 

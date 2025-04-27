@@ -1,160 +1,160 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AuthLayout from '@/components/layout/AuthLayout';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
 import DiscordInput from '@/components/ui/DiscordInput';
 import DiscordButton from '@/components/ui/DiscordButton';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { FaGoogle, FaFacebook, FaEnvelope } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { useConfetti } from '@/lib/auth/authEffects';
 
-export default function SignUpPage() {
+const SignUpPage = () => {
+  const router = useRouter();
+  const { signUp, signInWithOAuth } = useAuth();
+  const { ConfettiComponent, setShowConfetti } = useConfetti();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const router = useRouter();
-  const { signUp } = useAuth();
+  const [isEmailMode, setIsEmailMode] = useState(false);
 
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (!username) {
-      newErrors.username = 'Username is required';
-    } else if (username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    }
-
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
     setIsLoading(true);
-
+    
     try {
-      await signUp(email, password, username);
-      toast.success('Account created successfully!');
-      router.push('/');
+      const { error, user } = await signUp(email, password, username);
+      if (error) throw error;
+      
+      if (user) {
+        setShowConfetti(true);
+        toast.success('Account created successfully!');
+        router.push('/auth/verify-email');
+      }
     } catch (error: any) {
-      console.error('Signup error:', error);
-      toast.error('Failed to create account');
-      setErrors({
-        email: 'This email might already be in use'
-      });
+      console.error('Sign up error:', error);
+      toast.error(error.message || 'Failed to sign up');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleOAuthSignUp = async (provider: 'google' | 'facebook') => {
+    try {
+      await signInWithOAuth(provider);
+    } catch (error: any) {
+      console.error('OAuth sign up error:', error);
+      toast.error(error.message || `Failed to sign up with ${provider}`);
+    }
+  };
+
   return (
-    <AuthLayout
-      title="Create an Account"
-      subtitle="Join the conversation today!"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <DiscordInput
-          label="Username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Choose a username"
-          error={errors.username}
-          required
-        />
-
-        <DiscordInput
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          error={errors.email}
-          required
-        />
-
-        <DiscordInput
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Create a password"
-          error={errors.password}
-          required
-        />
-
-        <DiscordInput
-          label="Confirm Password"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Confirm your password"
-          error={errors.confirmPassword}
-          required
-        />
-
-        <div className="mt-6">
-          <DiscordButton
-            type="submit"
-            fullWidth
-            isLoading={isLoading}
-          >
-            Create Account
-          </DiscordButton>
-        </div>
-
-        <p className="text-center mt-4 text-[var(--text-muted)]">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background-primary p-4 fade-slide-up">
+      {ConfettiComponent && <ConfettiComponent />}
+      
+      <div className="bg-background-secondary rounded-lg p-8 w-full max-w-md">
+        <h1 className="text-2xl font-bold text-text-primary mb-6 text-center">Join Turf</h1>
+        
+        {!isEmailMode ? (
+          <div className="space-y-4">
+            <DiscordButton
+              onClick={() => handleOAuthSignUp('google')}
+              fullWidth
+              className="flex items-center justify-center gap-2 bg-white text-gray-800 hover:bg-gray-100"
+            >
+              <FaGoogle className="text-xl" />
+              Continue with Google
+            </DiscordButton>
+            
+            <DiscordButton
+              onClick={() => handleOAuthSignUp('facebook')}
+              fullWidth
+              className="flex items-center justify-center gap-2 bg-[#1877F2] text-white hover:bg-[#0d6efd]"
+            >
+              <FaFacebook className="text-xl" />
+              Continue with Facebook
+            </DiscordButton>
+            
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-background-secondary text-text-secondary">Or</span>
+              </div>
+            </div>
+            
+            <DiscordButton
+              onClick={() => setIsEmailMode(true)}
+              fullWidth
+              className="flex items-center justify-center gap-2"
+            >
+              <FaEnvelope className="text-xl" />
+              Continue with Email
+            </DiscordButton>
+          </div>
+        ) : (
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <DiscordInput
+              label="Username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              required
+            />
+            
+            <DiscordInput
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@email.com"
+              required
+            />
+            
+            <DiscordInput
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              required
+              className="password-dots"
+            />
+            
+            <div className="flex gap-3">
+              <DiscordButton
+                type="button"
+                onClick={() => setIsEmailMode(false)}
+                className="flex-1"
+                variant="secondary"
+              >
+                Back
+              </DiscordButton>
+              
+              <DiscordButton
+                type="submit"
+                className="flex-1"
+                isLoading={isLoading}
+              >
+                Sign Up
+              </DiscordButton>
+            </div>
+          </form>
+        )}
+        
+        <div className="mt-6 text-center text-text-secondary text-sm">
           Already have an account?{' '}
-          <Link
-            href="/auth/login"
-            className="text-[var(--primary-blue)] hover:underline"
-          >
-            Log In
+          <Link href="/auth/signin" className="text-accent-secondary hover:underline">
+            Sign In
           </Link>
-        </p>
-
-        <p className="text-xs text-center mt-4 text-[var(--text-muted)]">
-          By registering, you agree to our{' '}
-          <Link
-            href="/terms"
-            className="text-[var(--primary-blue)] hover:underline"
-          >
-            Terms of Service
-          </Link>
-          {' '}and{' '}
-          <Link
-            href="/privacy"
-            className="text-[var(--primary-blue)] hover:underline"
-          >
-            Privacy Policy
-          </Link>
-        </p>
-      </form>
-    </AuthLayout>
+        </div>
+      </div>
+    </div>
   );
-} 
+};
+
+export default SignUpPage; 
