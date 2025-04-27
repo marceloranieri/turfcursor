@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import SignInModal from '@/components/auth/SignInModal';
+import { useRouter } from 'next/navigation';
 
 export const useGuestMode = () => {
   const { user } = useAuth();
+  const router = useRouter();
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string>('/chat');
 
@@ -13,7 +15,12 @@ export const useGuestMode = () => {
     if (path) {
       setRedirectPath(path);
     }
-    setIsSignInModalOpen(true);
+    // Store the redirect path in sessionStorage
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('redirectAfterAuth', redirectPath);
+    }
+    // Redirect to sign-in page instead of showing modal
+    router.push('/auth/signin');
   };
 
   const closeSignInModal = () => {

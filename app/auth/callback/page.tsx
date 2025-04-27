@@ -15,7 +15,7 @@ export default function OAuthCallbackPage() {
     const handleCallback = async () => {
       try {
         // Get the redirect path from session storage
-        const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/chat';
+        const redirectPath = sessionStorage.getItem('redirectAfterAuth') || '/chat';
         
         // Check if we have a session
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -29,7 +29,7 @@ export default function OAuthCallbackPage() {
           handleAuthSuccess('signin');
           
           // Clear the redirect path from session storage
-          sessionStorage.removeItem('redirectAfterLogin');
+          sessionStorage.removeItem('redirectAfterAuth');
           
           // Redirect to the intended page
           router.push(redirectPath);

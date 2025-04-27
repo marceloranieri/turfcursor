@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import MainLayout from '@/components/layout/MainLayout';
 import { setupDebugListeners } from '@/lib/debug-helpers';
 import HydrationSafeComponent from '@/components/HydrationSafeComponent';
+import { toast } from 'react-hot-toast';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -222,8 +223,12 @@ export default function ChatPage() {
     logger.info("Send message triggered");
     
     if (!isAuthenticated) {
-      logger.info("User not authenticated, showing guest modal");
-      setShowGuestModal(true);
+      logger.info("User not authenticated, redirecting to sign in");
+      // Store current path for redirect after auth
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('redirectAfterAuth', `/chat/${topicId}`);
+      }
+      router.push('/auth/signin');
       return;
     }
     
@@ -233,20 +238,14 @@ export default function ChatPage() {
   
   const handleSignIn = async () => {
     try {
-      // For demo purposes, we'll use direct email link
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/chat/' + topicId
-        }
-      });
-      
-      if (error) throw error;
-      
-      // Modal will be closed by auth state change listener
+      // Store current path for redirect after auth
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('redirectAfterAuth', `/chat/${topicId}`);
+      }
+      router.push('/auth/signin');
     } catch (error) {
       logger.error('Error signing in:', error);
-      alert('Failed to sign in. Please try again.');
+      toast.error('Failed to sign in. Please try again.');
     }
   };
   

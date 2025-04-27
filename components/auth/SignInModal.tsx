@@ -93,6 +93,7 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
               onClick={() => handleOAuthSignIn('google')}
               fullWidth
               className="flex items-center justify-center gap-2 bg-white text-gray-800 hover:bg-gray-100"
+              isLoading={isLoading}
             >
               <FaGoogle className="text-xl" />
               Continue with Google
@@ -102,6 +103,7 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
               onClick={() => handleOAuthSignIn('facebook')}
               fullWidth
               className="flex items-center justify-center gap-2 bg-[#1877F2] text-white hover:bg-[#0d6efd]"
+              isLoading={isLoading}
             >
               <FaFacebook className="text-xl" />
               Continue with Facebook
