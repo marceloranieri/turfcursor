@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || 'undefined' }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - uses: actions/checkout@v3
 
@@ -26,13 +27,33 @@ jobs:
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.13.x
 
-      - name: Build project
-        run: npm run build
+      - name: Get Vercel Preview URL
+        id: get-preview-url
+        run: |
+          # Wait for Vercel deployment to be ready (max 5 minutes)
+          for i in {1..30}; do
+            PREVIEW_URL=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?projectId=turf&teamId=team_123&state=READY&target=preview&gitSource.commitSha=${{ github.sha }}" \
+              | jq -r '.deployments[0].url')
+            
+            if [ ! -z "$PREVIEW_URL" ] && [ "$PREVIEW_URL" != "null" ]; then
+              echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+              break
+            fi
+            
+            echo "Waiting for Vercel preview URL... (attempt $i/30)"
+            sleep 10
+          done
 
       - name: Run Lighthouse CI
         run: |
+          if [ -z "${{ steps.get-preview-url.outputs.url }}" ]; then
+            echo "Failed to get Vercel preview URL after 5 minutes"
+            exit 1
+          fi
+          
           lhci autorun \
-            --collect.url=https://turf-ruddy.vercel.app/ \
+            --collect.url=${{ steps.get-preview-url.outputs.url }} \
             --collect.numberOfRuns=3 \
             --collect.settings.preset=desktop \
             --upload.target=temporary-public-storage \
