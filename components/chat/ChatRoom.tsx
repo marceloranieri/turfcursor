@@ -6,8 +6,8 @@ import { Message, Topic } from '@/lib/types';
 import { useSupabaseRealtime } from '@/lib/hooks/useSupabaseRealtime';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
-import { DiscordInput } from '@/components/ui/DiscordInput';
-import { DiscordButton } from '@/components/ui/DiscordButton';
+import { GuestAwareChatInput } from './GuestAwareChatInput';
+import { FaTimes } from 'react-icons/fa';
 
 interface ChatRoomProps {
   topic: Topic;
@@ -20,6 +20,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic }) => {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -100,15 +101,15 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic }) => {
     onUpdateMessage: handleUpdateMessage,
   });
 
-  const handleSendMessage = async () => {
-    if (!user || !newMessage.trim()) return;
+  const handleSendMessage = async (content: string) => {
+    if (!user || !content.trim()) return;
 
     setIsLoading(true);
     try {
       const { error } = await supabase.from('messages').insert({
         topic_id: topic.id,
         user_id: user.id,
-        content: newMessage.trim(),
+        content: content.trim(),
         parent_id: replyTo,
       });
 
@@ -128,8 +129,23 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic }) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-grow overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-full bg-background-primary">
+      {/* Chat header */}
+      <div className="flex items-center justify-between p-4 border-b border-background-tertiary">
+        <h2 className="text-lg font-semibold text-text-primary">{topic.name}</h2>
+        <button
+          className="md:hidden button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
+          aria-label="Close chat"
+        >
+          <FaTimes className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Messages container */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-grow overflow-y-auto p-4 space-y-4 scroll-smooth"
+      >
         {messages.map((message) => (
           <MessageComponent
             key={message.id}
@@ -140,43 +156,29 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 border-t border-[var(--divider)]">
-        {replyTo && (
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-sm text-[var(--text-muted)]">
-              Replying to message
-            </span>
-            <DiscordButton
-              variant="secondary"
-              onClick={() => setReplyTo(null)}
-              className="!p-1 text-sm"
-            >
-              Cancel
-            </DiscordButton>
-          </div>
-        )}
-        <div className="flex gap-2">
-          <DiscordInput
-            label=""
-            placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            className="flex-grow"
-          />
-          <DiscordButton
-            onClick={handleSendMessage}
-            isLoading={isLoading}
-            disabled={!newMessage.trim()}
+      {/* Reply indicator */}
+      {replyTo && (
+        <div className="px-4 py-2 bg-background-secondary border-t border-background-tertiary flex items-center justify-between">
+          <span className="text-sm text-text-secondary">
+            Replying to message
+          </span>
+          <button
+            onClick={() => setReplyTo(null)}
+            className="button bg-background-tertiary hover:bg-background-secondary text-text-secondary text-sm"
+            aria-label="Cancel reply"
           >
-            Send
-          </DiscordButton>
+            <FaTimes className="w-4 h-4" />
+          </button>
         </div>
+      )}
+
+      {/* Chat input */}
+      <div className="p-4 border-t border-background-tertiary bg-background-primary">
+        <GuestAwareChatInput
+          onSendMessage={handleSendMessage}
+          placeholder="Type a message..."
+          className="w-full"
+        />
       </div>
     </div>
   );

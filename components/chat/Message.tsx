@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase/client';
 import { EmojiPicker } from '@/components/ui/EmojiPicker';
 import { DiscordButton } from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
+import { GuestAwareReactionButton } from './GuestAwareReactionButton';
+import { FaReply, FaRegSmile } from 'react-icons/fa';
 
 interface MessageProps {
   message: MessageType;
@@ -38,12 +40,8 @@ export const Message: React.FC<MessageProps> = ({ message, onReply }) => {
     setIsReplying(true);
   };
 
-  const handleUpvote = () => handleReaction('upvote');
-  const handleDownvote = () => handleReaction('downvote');
-  const handleGenius = () => handleReaction('genius');
-
   return (
-    <div className={`p-4 ${message.is_pinned ? 'bg-[var(--pin-bg)]' : ''} ${message.is_wizard ? 'bg-[var(--wizard-bg)]' : ''}`}>
+    <div className={`message-bubble fade-in ${message.is_pinned ? 'border-l-4 border-accent-primary' : ''} ${message.is_wizard ? 'border-l-4 border-accent-secondary' : ''}`}>
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0">
@@ -52,22 +50,22 @@ export const Message: React.FC<MessageProps> = ({ message, onReply }) => {
             alt={message.user?.username || 'User'}
             width={40}
             height={40}
-            className="rounded-full"
+            className="rounded-full ring-2 ring-background-tertiary"
           />
         </div>
 
         {/* Message content */}
-        <div className="flex-grow">
+        <div className="flex-grow min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-[var(--header-primary)]">
+            <span className="font-semibold text-text-primary truncate">
               {message.user?.username}
             </span>
-            <span className="text-xs text-[var(--text-muted)]">
+            <span className="text-xs text-text-muted whitespace-nowrap">
               {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
             </span>
           </div>
 
-          <div className="text-[var(--text-normal)]">{message.content}</div>
+          <div className="text-text-primary break-words">{message.content}</div>
 
           {/* Reactions */}
           {message.reactions && message.reactions.length > 0 && (
@@ -78,55 +76,51 @@ export const Message: React.FC<MessageProps> = ({ message, onReply }) => {
                   return acc;
                 }, {} as Record<string, number>)
               ).map(([type, count]) => (
-                <button
+                <GuestAwareReactionButton
                   key={type}
-                  onClick={() => handleReaction(type)}
-                  className="flex items-center gap-1 px-2 py-1 text-sm rounded bg-[var(--reaction-bg)] hover:bg-[var(--reaction-bg-hover)]"
-                >
-                  <span>{type === 'upvote' ? '👍' : type === 'downvote' ? '👎' : type === 'genius' ? '🌟' : type}</span>
-                  <span>{count}</span>
-                </button>
+                  emoji={type === 'upvote' ? '👍' : type === 'downvote' ? '👎' : type === 'genius' ? '🌟' : type}
+                  count={count}
+                  onClick={() => handleReaction(type as ReactionType)}
+                  isActive={message.reactions?.some(r => r.user_id === user?.id && r.type === type)}
+                />
               ))}
             </div>
           )}
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 mt-2">
-            <DiscordButton
-              variant="secondary"
-              onClick={handleUpvote}
-              className="!p-1"
-            >
-              👍
-            </DiscordButton>
-            <DiscordButton
-              variant="secondary"
-              onClick={handleDownvote}
-              className="!p-1"
-            >
-              ��
-            </DiscordButton>
-            <DiscordButton
-              variant="secondary"
-              onClick={handleGenius}
-              className="!p-1"
-            >
-              🌟
-            </DiscordButton>
-            <DiscordButton
-              variant="secondary"
+            <GuestAwareReactionButton
+              emoji="👍"
+              count={0}
+              onClick={() => handleReaction('upvote')}
+              isActive={message.reactions?.some(r => r.user_id === user?.id && r.type === 'upvote')}
+            />
+            <GuestAwareReactionButton
+              emoji="👎"
+              count={0}
+              onClick={() => handleReaction('downvote')}
+              isActive={message.reactions?.some(r => r.user_id === user?.id && r.type === 'downvote')}
+            />
+            <GuestAwareReactionButton
+              emoji="🌟"
+              count={0}
+              onClick={() => handleReaction('genius')}
+              isActive={message.reactions?.some(r => r.user_id === user?.id && r.type === 'genius')}
+            />
+            <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="!p-1"
+              className="button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
+              aria-label="Add reaction"
             >
-              😊
-            </DiscordButton>
-            <DiscordButton
-              variant="secondary"
+              <FaRegSmile className="w-4 h-4" />
+            </button>
+            <button
               onClick={handleReply}
-              className="!p-1"
+              className="button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
+              aria-label="Reply to message"
             >
-              💬
-            </DiscordButton>
+              <FaReply className="w-4 h-4" />
+            </button>
           </div>
 
           {showEmojiPicker && (
@@ -145,7 +139,7 @@ export const Message: React.FC<MessageProps> = ({ message, onReply }) => {
 
       {/* Replies */}
       {message.replies && message.replies.length > 0 && (
-        <div className="ml-14 mt-2 border-l-2 border-[var(--divider)] pl-4">
+        <div className="ml-14 mt-2 border-l-2 border-background-tertiary pl-4">
           {message.replies.map((reply) => (
             <Message key={reply.id} message={reply} onReply={onReply} />
           ))}

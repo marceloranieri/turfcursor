@@ -4,19 +4,117 @@
 
 @layer base {
   :root {
-    /* Discord-inspired color palette */
-    --color-background-primary: #2C2F33;
-    --color-background-secondary: #23272A;
-    --color-background-tertiary: #202225;
-    --color-text-primary: #FFFFFF;
-    --color-text-secondary: #B9BBBE;
-    --color-text-muted: #72767D;
-    --color-accent-primary: #FFD700; /* Gold accent */
-    --color-accent-secondary: #2F80ED; /* Bright blue */
-    --color-danger: #ED4245;
-    --color-success: #57F287;
-    --color-gold: #FFD700;
-    --color-border: #4F545C;
+    /* Light theme variables */
+    --background: #FFFFFF;
+    --background-secondary: #F5F5F5;
+    --background-tertiary: #EEEEEE;
+    --background-primary: #FFFFFF;
+    
+    --text-primary: #1A1A1A;
+    --text-secondary: #4A4A4A;
+    --text-muted: #6B6B6B;
+    
+    --accent-primary: #FFD700;
+    --accent-secondary: #2F80ED;
+    
+    --gold: #FFD700;
+    --success: #34D399;
+    --danger: #EF4444;
+    --warning: #FBBF24;
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark {
+    /* Dark theme variables */
+    --background: #1A1A1A;
+    --background-secondary: #2C2C2C;
+    --background-tertiary: #333333;
+    --background-primary: #1A1A1A;
+    
+    --text-primary: #FFFFFF;
+    --text-secondary: #B9BBBE;
+    --text-muted: #72767D;
+    
+    --accent-primary: #FFD700;
+    --accent-secondary: #2F80ED;
+    
+    --gold: #FFD700;
+    --success: #34D399;
+    --danger: #EF4444;
+    --warning: #FBBF24;
+    
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-background-secondary rounded-card shadow-card p-4;
+  }
+  
+  .message-bubble {
+    @apply bg-background-secondary rounded-message shadow-message p-3;
+  }
+  
+  .button {
+    @apply rounded-button px-4 py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent-secondary/50;
+  }
+  
+  .input {
+    @apply rounded-input bg-background-tertiary px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent-secondary/50;
+  }
+  
+  .sidebar {
+    @apply bg-background-secondary w-64 h-screen fixed left-0 top-0 transition-transform duration-200 ease-in-out;
+  }
+  
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-background-secondary p-4 md:hidden;
+  }
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.2s ease-out;
+}
+
+.slide-down {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .mobile-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
   }
 }
 
