@@ -1,5 +1,7 @@
 # Turf - Daily Debates
 
+![Vercel Deployment](https://img.shields.io/github/deployments/marceloranieri/turf-app/production?label=Vercel%20Deployment&style=for-the-badge&logo=vercel)
+![Lighthouse CI](https://img.shields.io/github/actions/workflow/status/marceloranieri/turf-app/lighthouse.yml?branch=main&label=Lighthouse%20Audit&style=for-the-badge&logo=githubactions)
 ![Lighthouse Performance Badge](https://github.com/marceloranieri/turf-app/actions/workflows/lighthouse.yml/badge.svg)
 
 A modern debate platform where users can engage in thoughtful discussions on daily topics. Built with ❤️ using Next.js, Tailwind CSS, and Supabase.
