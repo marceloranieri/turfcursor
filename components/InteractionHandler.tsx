@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 

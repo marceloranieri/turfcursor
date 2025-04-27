@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ChatArea from '@/components/layout/ChatArea';

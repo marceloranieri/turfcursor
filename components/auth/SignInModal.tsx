@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import DiscordButton from '@/components/ui/DiscordButton';
-import { FaGoogle, FaFacebook, FaEnvelope, FaTimes } from 'react-icons/fa';
+import { FaGoogle, FaFacebook, FaGithub, FaEnvelope, FaTimes } from 'react-icons/fa';
 import { useConfetti } from '@/lib/auth/authEffects';
 import { toast } from 'react-hot-toast';
 
@@ -26,7 +26,7 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
 
   if (!isOpen) return null;
 
-  const handleOAuthSignIn = async (provider: 'google' | 'facebook') => {
+  const handleOAuthSignIn = async (provider: 'google' | 'facebook' | 'github') => {
     try {
       setIsLoading(true);
       // Store the redirect path in sessionStorage
@@ -109,6 +109,16 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
               Continue with Facebook
             </DiscordButton>
             
+            <DiscordButton
+              onClick={() => handleOAuthSignIn('github')}
+              fullWidth
+              className="flex items-center justify-center gap-2 bg-[#24292e] text-white hover:bg-[#1b1f23]"
+              isLoading={isLoading}
+            >
+              <FaGithub className="text-xl" />
+              Continue with GitHub
+            </DiscordButton>
+            
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
@@ -121,7 +131,7 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
             <DiscordButton
               onClick={() => setIsEmailMode(true)}
               fullWidth
-              className="flex items-center justify-center gap-2"
+              className="flex items-center justify-center gap-2 bg-accent-primary text-white hover:bg-accent-primary-dark"
             >
               <FaEnvelope className="text-xl" />
               Continue with Email
@@ -129,27 +139,49 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
           </div>
         ) : (
           <form onSubmit={handleEmailSignIn} className="space-y-4">
-            <p className="text-text-secondary text-sm mb-4">
-              You'll be redirected to the sign in page to complete the process.
-            </p>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 bg-background-primary border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-primary"
+                required
+              />
+            </div>
             
-            <div className="flex gap-3">
-              <DiscordButton
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 bg-background-primary border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-primary"
+                required
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <button
                 type="button"
                 onClick={() => setIsEmailMode(false)}
-                className="flex-1"
-                variant="secondary"
+                className="text-sm text-accent-primary hover:underline"
               >
-                Back
-              </DiscordButton>
-              
-              <DiscordButton
+                Back to options
+              </button>
+              <button
                 type="submit"
-                className="flex-1"
-                isLoading={isLoading}
+                disabled={isLoading}
+                className="px-4 py-2 bg-accent-primary text-white rounded-md hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary"
               >
-                Continue
-              </DiscordButton>
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </button>
             </div>
           </form>
         )}

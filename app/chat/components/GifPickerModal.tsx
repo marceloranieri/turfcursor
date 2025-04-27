@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';

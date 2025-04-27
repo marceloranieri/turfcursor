@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../supabase/client';
@@ -22,7 +22,7 @@ type AuthContextType = AuthState & {
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   updatePassword: (token: string, newPassword: string) => Promise<{ error: AuthError | null }>;
   updateProfile: (data: {username?: string, avatar_url?: string}) => Promise<{error: Error | null}>;
-  signInWithOAuth: (provider: 'google' | 'facebook') => Promise<{ error: AuthError | null }>;
+  signInWithOAuth: (provider: 'google' | 'facebook' | 'github') => Promise<{ error: AuthError | null }>;
 };
 
 const initialState: AuthState = {
@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithOAuth = async (provider: 'google' | 'facebook') => {
+  const signInWithOAuth = async (provider: 'google' | 'facebook' | 'github') => {
     setState(prev => ({ ...prev, isLoading: true }));
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -246,6 +246,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             access_type: 'offline',
             prompt: 'consent',
           },
+          scopes: provider === 'github' 
+            ? 'read:user user:email repo' 
+            : undefined,
         },
       });
 

@@ -1,16 +1,12 @@
-import logger from '@/lib/logger';
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth/AuthContext';
-import DiscordInput from '@/components/ui/DiscordInput';
-import DiscordButton from '@/components/ui/DiscordButton';
-import { FaArrowLeft } from 'react-icons/fa';
-import toast from 'react-hot-toast';
+import { supabase } from '@/lib/supabase/client';
+import { toast } from 'react-hot-toast';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-const ForgotPasswordPage = () => {
-  const { resetPassword } = useAuth();
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -18,78 +14,83 @@ const ForgotPasswordPage = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      const { error } = await resetPassword(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
       if (error) throw error;
-      
+
       setIsSubmitted(true);
-      toast.success('📩 Reset link sent! Check your inbox.');
+      toast.success('Password reset instructions sent to your email');
     } catch (error: any) {
-      logger.error('Password reset error:', error);
-      toast.error(error.message || 'Failed to send reset email');
+      console.error('Reset password error:', error);
+      toast.error(error.message || 'Failed to send reset instructions. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background-primary p-4 fade-slide-up">
-      <div className="bg-background-secondary rounded-lg p-8 max-w-md w-full">
-        <Link 
-          href="/auth/signin" 
-          className="inline-flex items-center text-accent-secondary hover:underline mb-6"
-        >
-          <FaArrowLeft className="mr-2" />
-          Back to Sign In
-        </Link>
-        
-        <h1 className="text-2xl font-bold text-text-primary mb-2">Reset Password</h1>
-        <p className="text-text-secondary mb-6">
-          Enter your email address and we'll send you a link to reset your password.
-        </p>
-        
+    <div className="min-h-screen flex items-center justify-center bg-background-primary p-4">
+      <div className="bg-background-secondary rounded-lg p-8 max-w-md w-full shadow-lg">
+        <h1 className="text-2xl font-bold text-text-primary mb-6 text-center">
+          Reset your password
+        </h1>
+
         {isSubmitted ? (
-          <div className="bg-green-500/10 border border-green-500 text-green-500 rounded-md p-4 mb-4">
-            <h2 className="font-semibold mb-2">Check your email</h2>
-            <p className="text-sm">
-              We've sent a password reset link to <span className="font-medium">{email}</span>. 
-              Please check your inbox and follow the instructions.
+          <div className="space-y-6">
+            <p className="text-text-secondary text-center">
+              We've sent password reset instructions to your email address.
+              Please check your inbox and follow the link to reset your password.
             </p>
-            <p className="text-sm mt-2">
-              Didn't receive the email? Check your spam folder or{' '}
-              <button 
-                onClick={() => setIsSubmitted(false)} 
-                className="text-accent-secondary hover:underline"
+            <div className="text-center">
+              <Link
+                href="/auth/signin"
+                className="text-accent-primary hover:text-accent-primary-dark"
               >
-                try again
-              </button>
-              .
-            </p>
+                Return to sign in
+              </Link>
+            </div>
           </div>
         ) : (
-          <form onSubmit={handleResetPassword} className="space-y-4">
-            <DiscordInput
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@email.com"
-              required
-            />
-            
-            <DiscordButton
+          <form onSubmit={handleResetPassword} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-background-primary text-text-primary focus:ring-2 focus:ring-accent-primary focus:border-transparent"
+                required
+              />
+            </div>
+
+            <button
               type="submit"
-              fullWidth
-              isLoading={isLoading}
+              disabled={isLoading}
+              className="w-full py-2 px-4 bg-accent-primary text-white rounded-lg hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send Reset Link
-            </DiscordButton>
+              {isLoading ? <LoadingSpinner size="sm" /> : 'Send reset instructions'}
+            </button>
+
+            <div className="text-center">
+              <Link
+                href="/auth/signin"
+                className="text-accent-primary hover:text-accent-primary-dark"
+              >
+                Back to sign in
+              </Link>
+            </div>
           </form>
         )}
+
+        <p>Don&apos;t worry, we&apos;ll help you reset your password.</p>
       </div>
     </div>
   );
-};
-
-export default ForgotPasswordPage; 
+} 

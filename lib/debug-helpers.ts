@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
-'use client'
+'use client';
 
+import logger from '@/lib/logger';
 import { useEffect } from 'react';
 
 export function setupDebugListeners() {

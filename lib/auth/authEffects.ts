@@ -37,7 +37,7 @@ export const trackLoginStreak = () => {
   localStorage.setItem('turf-login-count', String(newCount));
 
   if (newCount === 5) {
-    toast('You're on a roll! 🛹 5 logins in a row!', {
+    toast("You're on a roll! 🛹 5 logins in a row!", {
       icon: '🔥',
       duration: 4000
     });

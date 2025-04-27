@@ -54,8 +54,8 @@ const config: Config = {
           muted: 'var(--text-muted)',
         },
         accent: {
-          primary: 'var(--accent-primary)',
-          secondary: 'var(--accent-secondary)',
+          primary: 'rgb(var(--accent-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--accent-secondary) / <alpha-value>)',
         },
         gold: 'var(--gold)',
         success: 'var(--success)',

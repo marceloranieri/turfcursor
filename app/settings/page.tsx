@@ -1,187 +1,481 @@
-import logger from '@/lib/logger';
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
-import { AppLayout } from '@/components/layout/AppLayout';
-import DiscordButton from '@/components/ui/DiscordButton';
-
-interface Settings {
-  notifications_enabled: boolean;
-  email_notifications: boolean;
-  dark_mode: boolean;
-  sound_enabled: boolean;
-}
+import Image from 'next/image';
+import { useToast } from '@/components/ui/ToastContext';
+import { logger } from '@/lib/logger';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
-  const [settings, setSettings] = useState<Settings>({
-    notifications_enabled: true,
-    email_notifications: true,
-    dark_mode: true,
-    sound_enabled: true,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const saveSettings = useCallback(async (newSettings: Settings) => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          ...newSettings,
-        });
-
-      if (error) throw error;
-      setSettings(newSettings);
-    } catch (error) {
-      logger.error('Error saving settings:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  const fetchSettings = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          await saveSettings(settings);
-        } else {
-          throw error;
-        }
-      } else if (data) {
-        setSettings(data);
-      }
-    } catch (error) {
-      logger.error('Error fetching settings:', error);
-    }
-  }, [user, settings, saveSettings]);
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
+  const { showToast } = useToast();
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [theme, setTheme] = useState('light');
+  const [language, setLanguage] = useState('en');
+  const [isSaving, setIsSaving] = useState(false);
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [githubUsername, setGithubUsername] = useState('');
+  const [githubSyncEnabled, setGithubSyncEnabled] = useState(false);
+  const [githubNotifications, setGithubNotifications] = useState(true);
+  const [githubRepos, setGithubRepos] = useState<string[]>([]);
+  const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    const loadUserSettings = async () => {
+      if (!user) return;
 
-  const handleToggle = (key: keyof Settings) => {
-    const newSettings = {
-      ...settings,
-      [key]: !settings[key],
+      try {
+        // Load user preferences from metadata
+        const preferences = user.user_metadata?.preferences || {};
+        setEmailNotifications(preferences.emailNotifications ?? true);
+        setPushNotifications(preferences.pushNotifications ?? true);
+        setTheme(preferences.theme || 'light');
+        setLanguage(preferences.language || 'en');
+
+        // Load GitHub connection state
+        const githubData = user.user_metadata?.github || {};
+        setGithubConnected(!!githubData.username);
+        setGithubUsername(githubData.username || '');
+        setGithubSyncEnabled(githubData.sync_enabled || false);
+        setGithubNotifications(githubData.notifications ?? true);
+        setGithubRepos(githubData.repos || []);
+        setSelectedRepos(githubData.selected_repos || []);
+
+        // If we have a GitHub username but no repos, try to fetch them
+        if (githubData.username && (!githubData.repos || githubData.repos.length === 0)) {
+          // Check if we have a GitHub access token in the session
+          const { data: { session } } = await supabase.auth.getSession();
+          const githubAccessToken = session?.provider_token;
+          
+          if (githubAccessToken) {
+            await fetchGithubRepos(githubAccessToken);
+          }
+        }
+      } catch (error) {
+        logger.error('Error loading user settings:', error);
+        showToast({
+          message: 'Failed to load settings',
+          type: 'error',
+        });
+      }
     };
-    saveSettings(newSettings);
+
+    loadUserSettings();
+  }, [user, showToast]);
+
+  const fetchGithubRepos = async (accessToken: string) => {
+    try {
+      const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+
+      const repos = await response.json();
+      const repoNames = repos.map((repo: any) => repo.full_name);
+      
+      setGithubRepos(repoNames);
+      
+      // Save repos to user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          github: {
+            ...user?.user_metadata?.github,
+            repos: repoNames,
+          },
+        },
+      });
+      
+      if (error) {
+        logger.error('Error saving GitHub repos to metadata:', error);
+      }
+      
+      return repoNames;
+    } catch (error) {
+      logger.error('Error fetching GitHub repos:', error);
+      showToast({
+        message: 'Failed to fetch GitHub repositories',
+        type: 'error',
+      });
+      return [];
+    }
   };
 
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          preferences: {
+            emailNotifications,
+            pushNotifications,
+            theme,
+            language,
+          },
+          github: {
+            ...user?.user_metadata?.github,
+            sync_enabled: githubSyncEnabled,
+            notifications: githubNotifications,
+            selected_repos: selectedRepos,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      showToast({
+        message: 'Settings saved successfully',
+        type: 'success',
+      });
+    } catch (error) {
+      showToast({
+        message: 'Failed to save settings',
+        type: 'error',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleConnectGithub = async () => {
+    try {
+      // Store the current settings in sessionStorage to restore after OAuth redirect
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('settingsState', JSON.stringify({
+          emailNotifications,
+          pushNotifications,
+          theme,
+          language,
+          githubSyncEnabled,
+          githubNotifications,
+          selectedRepos
+        }));
+      }
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/settings`,
+          scopes: 'read:user user:email repo',
+        },
+      });
+
+      if (error) throw error;
+      
+      showToast({
+        message: 'Redirecting to GitHub...',
+        type: 'info',
+      });
+    } catch (error) {
+      showToast({
+        message: 'Failed to connect to GitHub',
+        type: 'error',
+      });
+    }
+  };
+
+  const handleDisconnectGithub = async () => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          github: null,
+        },
+      });
+
+      if (error) throw error;
+
+      setGithubConnected(false);
+      setGithubUsername('');
+      setGithubSyncEnabled(false);
+      setGithubRepos([]);
+      setSelectedRepos([]);
+      
+      showToast({
+        message: 'GitHub account disconnected successfully',
+        type: 'success',
+      });
+    } catch (error) {
+      showToast({
+        message: 'Failed to disconnect GitHub account',
+        type: 'error',
+      });
+    }
+  };
+
+  const handleRepoSelection = (repo: string) => {
+    setSelectedRepos(prev => {
+      if (prev.includes(repo)) {
+        return prev.filter(r => r !== repo);
+      } else {
+        return [...prev, repo];
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-primary">
+        <div className="text-text-primary">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <AppLayout>
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-[var(--channel-bg)] rounded-lg shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-[var(--header-primary)] mb-8">
-            Settings
-          </h1>
+    <div className="min-h-screen bg-background-primary p-4">
+      <div className="max-w-4xl mx-auto bg-background-secondary rounded-xl shadow-lg p-8">
+        <h1 className="text-2xl font-bold text-text-primary mb-8">Settings</h1>
 
-          <div className="space-y-8">
-            {/* Notifications */}
-            <div className="bg-[var(--input-bg)] rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-[var(--header-primary)] mb-4">
-                Notifications
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[var(--text-normal)]">Push Notifications</p>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Receive notifications for mentions and reactions
-                    </p>
-                  </div>
-                  <DiscordButton
-                    variant={settings.notifications_enabled ? 'primary' : 'secondary'}
-                    onClick={() => handleToggle('notifications_enabled')}
-                  >
-                    {settings.notifications_enabled ? 'Enabled' : 'Disabled'}
-                  </DiscordButton>
+        <form onSubmit={handleSaveSettings} className="space-y-8">
+          {/* Notifications Section */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium text-text-primary">Notifications</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label htmlFor="emailNotifications" className="text-text-primary">
+                    Email Notifications
+                  </label>
+                  <p className="text-sm text-text-secondary">
+                    Receive email notifications for important updates
+                  </p>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[var(--text-normal)]">Email Notifications</p>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Receive email updates for important activity
-                    </p>
-                  </div>
-                  <DiscordButton
-                    variant={settings.email_notifications ? 'primary' : 'secondary'}
-                    onClick={() => handleToggle('email_notifications')}
-                  >
-                    {settings.email_notifications ? 'Enabled' : 'Disabled'}
-                  </DiscordButton>
-                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={emailNotifications}
+                  onClick={() => setEmailNotifications(!emailNotifications)}
+                  className={`${
+                    emailNotifications ? 'bg-accent-primary' : 'bg-gray-300'
+                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                >
+                  <span
+                    className={`${
+                      emailNotifications ? 'translate-x-6' : 'translate-x-1'
+                    } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                  />
+                </button>
               </div>
-            </div>
 
-            {/* Appearance */}
-            <div className="bg-[var(--input-bg)] rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-[var(--header-primary)] mb-4">
-                Appearance
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[var(--text-normal)]">Dark Mode</p>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Toggle between light and dark theme
-                    </p>
-                  </div>
-                  <DiscordButton
-                    variant={settings.dark_mode ? 'primary' : 'secondary'}
-                    onClick={() => handleToggle('dark_mode')}
-                  >
-                    {settings.dark_mode ? 'Dark' : 'Light'}
-                  </DiscordButton>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label htmlFor="pushNotifications" className="text-text-primary">
+                    Push Notifications
+                  </label>
+                  <p className="text-sm text-text-secondary">
+                    Receive push notifications in your browser
+                  </p>
                 </div>
-              </div>
-            </div>
-
-            {/* Sound */}
-            <div className="bg-[var(--input-bg)] rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-[var(--header-primary)] mb-4">
-                Sound
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[var(--text-normal)]">Notification Sounds</p>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Play sounds for new messages and notifications
-                    </p>
-                  </div>
-                  <DiscordButton
-                    variant={settings.sound_enabled ? 'primary' : 'secondary'}
-                    onClick={() => handleToggle('sound_enabled')}
-                  >
-                    {settings.sound_enabled ? 'Enabled' : 'Disabled'}
-                  </DiscordButton>
-                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={pushNotifications}
+                  onClick={() => setPushNotifications(!pushNotifications)}
+                  className={`${
+                    pushNotifications ? 'bg-accent-primary' : 'bg-gray-300'
+                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                >
+                  <span
+                    className={`${
+                      pushNotifications ? 'translate-x-6' : 'translate-x-1'
+                    } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                  />
+                </button>
               </div>
             </div>
           </div>
 
-          {isLoading && (
-            <div className="mt-4 text-center text-[var(--text-muted)]">
-              Saving changes...
+          {/* GitHub Integration Section */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium text-text-primary">GitHub Integration</h2>
+            <div className="space-y-4">
+              {githubConnected ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Image
+                        src={`https://github.com/${githubUsername}.png`}
+                        alt="GitHub Avatar"
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                      <div>
+                        <p className="text-text-primary">Connected as {githubUsername}</p>
+                        <button
+                          type="button"
+                          onClick={handleDisconnectGithub}
+                          className="text-sm text-red-500 hover:text-red-600"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label htmlFor="githubSync" className="text-text-primary">
+                        Sync Activity
+                      </label>
+                      <p className="text-sm text-text-secondary">
+                        Sync your GitHub activity with Turf
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={githubSyncEnabled}
+                      onClick={() => setGithubSyncEnabled(!githubSyncEnabled)}
+                      className={`${
+                        githubSyncEnabled ? 'bg-accent-primary' : 'bg-gray-300'
+                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                    >
+                      <span
+                        className={`${
+                          githubSyncEnabled ? 'translate-x-6' : 'translate-x-1'
+                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label htmlFor="githubNotifications" className="text-text-primary">
+                        GitHub Notifications
+                      </label>
+                      <p className="text-sm text-text-secondary">
+                        Receive notifications for GitHub activity
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={githubNotifications}
+                      onClick={() => setGithubNotifications(!githubNotifications)}
+                      className={`${
+                        githubNotifications ? 'bg-accent-primary' : 'bg-gray-300'
+                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+                    >
+                      <span
+                        className={`${
+                          githubNotifications ? 'translate-x-6' : 'translate-x-1'
+                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                      />
+                    </button>
+                  </div>
+
+                  {githubSyncEnabled && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-text-primary mb-2">
+                          Select Repositories to Sync
+                        </label>
+                        <p className="text-sm text-text-secondary mb-4">
+                          Choose which repositories to sync with Turf
+                        </p>
+                        <div className="max-h-60 overflow-y-auto space-y-2">
+                          {githubRepos.map((repo) => (
+                            <div
+                              key={repo}
+                              className="flex items-center space-x-3 p-2 rounded-md hover:bg-background-tertiary"
+                            >
+                              <input
+                                type="checkbox"
+                                id={repo}
+                                checked={selectedRepos.includes(repo)}
+                                onChange={() => handleRepoSelection(repo)}
+                                className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-gray-300 rounded"
+                              />
+                              <label htmlFor={repo} className="text-text-primary">
+                                {repo}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-text-primary">Connect your GitHub account</p>
+                    <p className="text-sm text-text-secondary">
+                      Link your GitHub account to sync activity and receive notifications
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleConnectGithub}
+                    className="bg-accent-primary text-white px-4 py-2 rounded-md hover:bg-accent-primary-dark transition-colors"
+                  >
+                    Connect GitHub
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+
+          {/* Appearance Section */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium text-text-primary">Appearance</h2>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="theme" className="block text-text-primary mb-2">
+                  Theme
+                </label>
+                <select
+                  id="theme"
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  className="w-full px-3 py-2 bg-background-primary border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-primary"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="language" className="block text-text-primary mb-2">
+                  Language
+                </label>
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full px-3 py-2 bg-background-primary border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-primary"
+                >
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="bg-accent-primary text-white px-6 py-2 rounded-md hover:bg-accent-primary-dark transition-colors"
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
       </div>
-    </AppLayout>
+    </div>
   );
 } 

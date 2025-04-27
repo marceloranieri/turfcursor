@@ -150,30 +150,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Button styles */
-.button-primary {
-  background-color: var(--color-accent-primary);
-  color: var(--color-background-primary);
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+.btn {
+  @apply rounded-button px-4 py-2 transition-colors duration-200;
 }
 
-.button-primary:hover {
-  background-color: #E5C100; /* Darker gold */
+.btn-primary {
+  @apply btn bg-accent-primary text-white hover:bg-accent-primary/90;
 }
 
-.button-secondary {
-  background-color: var(--color-background-secondary);
-  color: var(--color-text-primary);
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.button-secondary:hover {
-  background-color: var(--color-background-tertiary);
+.btn-secondary {
+  @apply btn bg-background-secondary text-text-primary hover:bg-background-tertiary;
 }
 
 /* Form elements */
@@ -466,5 +452,125 @@ input:focus, textarea:focus {
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .animate-fade-out {
+    animation: fade-out 0.3s ease-out;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Theme variables */
+:root {
+  --background-primary: #ffffff;
+  --background-secondary: #f3f4f6;
+  --background-tertiary: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --accent-primary: #3b82f6;
+  --accent-primary-dark: #2563eb;
+}
+
+[data-theme='dark'] {
+  --background-primary: #111827;
+  --background-secondary: #1f2937;
+  --background-tertiary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --accent-primary: #3b82f6;
+  --accent-primary-dark: #60a5fa;
+}
+
+/* Base styles */
+body {
+  color: var(--text-primary);
+  background: var(--background-primary);
+}
+
+/* Transitions */
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Focus styles */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-background-primary;
+}
+
+/* Input styles */
+.input {
+  @apply w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-accent-primary focus:border-transparent;
+}
+
+/* Card styles */
+.card {
+  @apply bg-background-secondary rounded-xl shadow-lg p-6;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
   }
 }

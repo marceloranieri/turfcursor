@@ -4,13 +4,18 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run cleanup && next build --no-lint",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "deploy": "vercel --prod --force",
-    "cleanup": "node scripts/cleanup.js",
-    "analyze": "ANALYZE=true next build"
+    "deploy": "vercel --prod",
+    "analyze": "ANALYZE=true next build",
+    "check-env": "node scripts/check-env.js",
+    "check-local": "node scripts/check-local.js",
+    "check-deployment": "node scripts/check-deployment.js",
+    "check-prod": "node scripts/check-prod.js",
+    "check-dev": "node scripts/check-dev.js",
+    "deploy:force": "./scripts/deploy.sh"
   },
   "dependencies": {
     "@emoji-mart/data": "1.2.1",
@@ -18,10 +23,11 @@
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
     "@sentry/nextjs": "^7.101.1",
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
     "@supabase/supabase-js": "^2.39.0",
+    "@tailwindcss/forms": "0.5.10",
     "@vercel/speed-insights": "^1.0.9",
     "bufferutil": "^4.0.8",
-    "critters": "0.0.23",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.0.3",
     "giphy-api": "^2.0.2",
@@ -32,32 +38,25 @@
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.0.1",
-    "utf-8-validate": "^6.0.3"
+    "utf-8-validate": "^6.0.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@babel/generator": "7.27.0",
-    "@babel/traverse": "7.27.0",
-    "@babel/types": "7.27.0",
     "@next/bundle-analyzer": "^14.0.4",
     "@playwright/test": "1.52.0",
-    "@types/babel__generator": "7.27.0",
-    "@types/babel__traverse": "7.20.7",
     "@types/node": "20.10.0",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
     "@typescript-eslint/parser": "8.31.0",
-    "acorn-walk": "8.3.4",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.55.0",
     "eslint-config-next": "14.0.4",
-    "next-unused": "^0.0.6",
     "postcss": "^8.4.31",
-    "recast": "0.23.11",
     "supabase": "^2.22.4",
     "tailwindcss": "^3.3.0",
     "typescript": "5.0.4"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=18.x"
   }
 }

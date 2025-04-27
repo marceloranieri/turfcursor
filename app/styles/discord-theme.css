@@ -2,6 +2,8 @@
 :root {
     --primary-blue: #5865F2;
     --accent-gold: #FFD700;
+    --accent-primary: 88, 101, 242;  /* RGB values for #5865F2 */
+    --accent-secondary: 255, 215, 0;  /* RGB values for #FFD700 */
     --dark-background: #36393F;
     --sidebar-bg: #2F3136;
     --server-bar-bg: #202225;

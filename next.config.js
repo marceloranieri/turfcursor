@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -14,10 +11,10 @@ const nextConfig = {
   },
   // Enable TypeScript and ESLint checks during build
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Configure output for optimal Vercel deployment
   output: 'standalone',
@@ -44,7 +41,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.com https://*.vercel.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.com https://*.vercel.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.github.com; img-src 'self' data: https:; font-src 'self' data:;"
           },
           {
             key: 'X-Content-Type-Options',
@@ -57,6 +54,14 @@ const nextConfig = {
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
           }
         ]
       },
@@ -97,6 +102,13 @@ const nextConfig = {
         ]
       }
     ];
+  },
+  // Enable SWC minification for faster builds
+  swcMinify: true,
+  // Configure experimental features
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true
   }
 };
 

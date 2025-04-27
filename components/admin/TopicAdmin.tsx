@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import React, { useState, useEffect } from 'react';
 import { getActiveTopics, getTopicHistory, manuallyRefreshTopics, addTopic } from '../../lib/topics/topicHelpers';
 import { Topic, TopicHistory } from '../../lib/topics/types';

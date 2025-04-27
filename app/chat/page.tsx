@@ -1,6 +1,6 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import React, { useState, useEffect, useCallback } from 'react';
 import DiscordLayout from '@/components/layout/DiscordLayout';
 import { Message as MessageType, User, Reaction as ReactionType, Circle } from '@/lib/supabase/client';
