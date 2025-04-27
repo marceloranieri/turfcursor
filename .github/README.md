@@ -1,69 +1,75 @@
-# GitHub Workflows for Turf App
+# 📦 Turf App – GitHub Workflows
 
-This directory contains GitHub Actions workflows for automating tasks in the Turf application.
+> GitHub Actions powering Turf’s backend automation: Supabase deployments and daily topic rotations.
 
-## Available Workflows
+This directory contains Turf’s production-ready GitHub Actions to ensure reliability, scalability, and minimal manual intervention.
+
+---
+
+## 🚀 Workflows
 
 ### 1. Deploy Supabase Edge Functions
-**File:** `deploy-functions.yml`
-
-This workflow automatically deploys Supabase Edge Functions whenever changes are pushed to the main branch and the function code is modified.
-
-**Triggers:**
-- Push to `main` branch with changes to `lib/supabase/edge-functions/**`
-- Manual trigger via GitHub Actions UI
-
-**Required Secrets:**
-- `SUPABASE_ACCESS_TOKEN`: Your Supabase access token
-- `SUPABASE_PROJECT_REF`: Your Supabase project reference ID
+- **File:** `deploy-functions.yml`
+- **Triggers:**
+  - Push to `main` branch (`lib/supabase/edge-functions/**`)
+  - Manual run via GitHub Actions UI
+- **Required Secrets:**
+  - `SUPABASE_ACCESS_TOKEN`
+  - `SUPABASE_PROJECT_REF`
 
 ### 2. Daily Topic Refresh
-**File:** `refresh-topics.yml`
+- **File:** `refresh-topics.yml`
+- **Triggers:**
+  - Scheduled daily at 00:00 UTC
+  - Manual run via GitHub Actions UI
+- **Required Secrets:**
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `SUPABASE_URL`
 
-This workflow runs daily at midnight UTC to refresh the active debate topics for the next 24 hours.
+---
 
-**Triggers:**
-- Scheduled run at 00:00 UTC every day
-- Manual trigger via GitHub Actions UI
+## 🔐 Secrets Configuration
 
-**Required Secrets:**
-- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key
-- `SUPABASE_URL`: Your Supabase project URL
+Add the required secrets to your GitHub repository:
 
-## Setting Up Secrets
+1. Navigate to **Settings** → **Secrets and variables** → **Actions**.
+2. Create the following secrets:
+   - `SUPABASE_ACCESS_TOKEN` — from Supabase account settings
+   - `SUPABASE_SERVICE_ROLE_KEY` — from Supabase project settings
+   - `SUPABASE_PROJECT_REF` — from Supabase project URL
+   - `SUPABASE_URL` — full project URL (e.g., `https://your-project.supabase.co`)
 
-To set up the required secrets for these workflows:
+Secrets are securely injected via each workflow’s `env` section.
 
-1. Go to your GitHub repository
-2. Click on "Settings"
-3. Select "Secrets and variables" → "Actions"
-4. Click "New repository secret"
-5. Add each of the required secrets:
-   - `SUPABASE_ACCESS_TOKEN`: Get this from your Supabase account settings
-   - `SUPABASE_SERVICE_ROLE_KEY`: Find this in your Supabase project settings
-   - `SUPABASE_PROJECT_REF`: The reference ID from your Supabase project URL
-   - `SUPABASE_URL`: Your full Supabase project URL
+---
 
-Each workflow uses the `env` section to properly reference these secrets, which helps avoid context access issues in GitHub Actions.
+## 🧑‍💻 Manual Workflow Execution
 
-## Manual Execution
+1. Open the **Actions** tab.
+2. Select the workflow.
+3. Click **Run workflow**.
+4. Choose the branch (e.g., `main`) and run.
 
-To manually trigger a workflow:
+---
 
-1. Go to the "Actions" tab in your GitHub repository
-2. Select the workflow you want to run
-3. Click "Run workflow"
-4. Select the branch and click "Run workflow"
+## 📈 Monitoring & Logs
 
-## Monitoring
+- Monitor workflow statuses and logs directly in the **Actions** tab.
+- Use logs for detailed debugging in case of failures.
 
-You can monitor the execution of these workflows in the "Actions" tab of your GitHub repository.
+---
 
-## Troubleshooting
+## 🛠 Troubleshooting
 
-If you encounter issues with the workflows:
+- Ensure all required secrets are correctly configured.
+- Confirm repository Actions permissions are enabled.
+- Review full error logs in the **Actions** tab.
+- Verify that Supabase tokens are valid and active.
 
-1. Check that all required secrets are properly set up
-2. Verify the workflows have the correct permissions
-3. Check the logs in the "Actions" tab to see detailed error messages
-4. Make sure your Supabase project and tokens are valid 
+---
+
+## 🧠 Best Practices
+
+- Rotate secrets periodically for security.
+- Test manual runs after major dependency or permission updates.
+- Monitor GitHub Actions permission updates and Supabase API changes.
