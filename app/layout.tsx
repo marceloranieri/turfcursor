@@ -34,10 +34,15 @@ export default function RootLayout({
         {/* Load our new consolidated fix script */}
         <script src="/interaction-fix.js" defer></script>
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} flex flex-col min-h-screen`}>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <div className="flex-grow">
+              {children}
+            </div>
+            <footer className="text-center p-4 text-gray-500 dark:text-gray-400 text-sm">
+              <a href="/legal/privacy" className="hover:underline">Privacy Policy</a> • <a href="/legal/terms" className="hover:underline">Terms of Service</a>
+            </footer>
             <Toaster
               position="bottom-right"
               toastOptions={{
