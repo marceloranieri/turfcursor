@@ -1,10 +1,4 @@
-# TL;DR (Full Version below)
-
-Awesome — here’s the **compressed, top-tier "minimal README" version** you can also keep ready.
-
-This one is optimized for people who *already know GitHub Actions* and *just need fast operational info* without any "storytelling."
-
----
+## TL;DR (for full version scroll down)
 
 # Turf App – GitHub Workflows
 
