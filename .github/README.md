@@ -1,69 +1,144 @@
-# GitHub Workflows for Turf App
+# TL;DR (Full Version below)
 
-This directory contains GitHub Actions workflows for automating tasks in the Turf application.
+Awesome — here’s the **compressed, top-tier "minimal README" version** you can also keep ready.
 
-## Available Workflows
+This one is optimized for people who *already know GitHub Actions* and *just need fast operational info* without any "storytelling."
 
-### 1. Deploy Supabase Edge Functions
-**File:** `deploy-functions.yml`
+---
 
-This workflow automatically deploys Supabase Edge Functions whenever changes are pushed to the main branch and the function code is modified.
+# Turf App – GitHub Workflows
 
-**Triggers:**
-- Push to `main` branch with changes to `lib/supabase/edge-functions/**`
-- Manual trigger via GitHub Actions UI
+> GitHub Actions to automate Turf’s Supabase deployments and daily topic rotations.
 
-**Required Secrets:**
-- `SUPABASE_ACCESS_TOKEN`: Your Supabase access token
-- `SUPABASE_PROJECT_REF`: Your Supabase project reference ID
+---
 
-### 2. Daily Topic Refresh
-**File:** `refresh-topics.yml`
+## Workflows
 
-This workflow runs daily at midnight UTC to refresh the active debate topics for the next 24 hours.
+- **Deploy Supabase Edge Functions** (`deploy-functions.yml`)  
+  - Triggers: Push to `main` (changes in `lib/supabase/edge-functions/**`) or manual run
+  - Secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`
 
-**Triggers:**
-- Scheduled run at 00:00 UTC every day
-- Manual trigger via GitHub Actions UI
+- **Daily Topic Refresh** (`refresh-topics.yml`)  
+  - Triggers: Scheduled at 00:00 UTC or manual run
+  - Secrets: `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`
 
-**Required Secrets:**
-- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key
-- `SUPABASE_URL`: Your Supabase project URL
+---
 
-## Setting Up Secrets
+## Setup
 
-To set up the required secrets for these workflows:
+1. Go to **Settings** → **Secrets and variables** → **Actions**.
+2. Add:
+   - `SUPABASE_ACCESS_TOKEN`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `SUPABASE_PROJECT_REF`
+   - `SUPABASE_URL`
 
-1. Go to your GitHub repository
-2. Click on "Settings"
-3. Select "Secrets and variables" → "Actions"
-4. Click "New repository secret"
-5. Add each of the required secrets:
-   - `SUPABASE_ACCESS_TOKEN`: Get this from your Supabase account settings
-   - `SUPABASE_SERVICE_ROLE_KEY`: Find this in your Supabase project settings
-   - `SUPABASE_PROJECT_REF`: The reference ID from your Supabase project URL
-   - `SUPABASE_URL`: Your full Supabase project URL
+Secrets are injected via the `env` section in each workflow.
 
-Each workflow uses the `env` section to properly reference these secrets, which helps avoid context access issues in GitHub Actions.
+---
 
-## Manual Execution
+## Manual Run
 
-To manually trigger a workflow:
+- **Actions tab** → Select workflow → **Run workflow** → Choose branch → **Run**.
 
-1. Go to the "Actions" tab in your GitHub repository
-2. Select the workflow you want to run
-3. Click "Run workflow"
-4. Select the branch and click "Run workflow"
-
-## Monitoring
-
-You can monitor the execution of these workflows in the "Actions" tab of your GitHub repository.
+---
 
 ## Troubleshooting
 
-If you encounter issues with the workflows:
+- Check secrets configuration.
+- Verify repository Action permissions.
+- Review logs in the **Actions** tab.
 
-1. Check that all required secrets are properly set up
-2. Verify the workflows have the correct permissions
-3. Check the logs in the "Actions" tab to see detailed error messages
-4. Make sure your Supabase project and tokens are valid 
+
+# Turf App – GitHub Workflows (FULL VERSION)
+
+> **Turf** is a social platform for daily topic-based discussions, powered by lightweight AI curation and ephemeral group chats.
+
+This directory contains GitHub Actions workflows used to automate critical operations for Turf’s backend and infrastructure.
+
+---
+
+## 📋 Available Workflows
+
+### 1. Deploy Supabase Edge Functions
+- **File:** `deploy-functions.yml`
+
+Automatically deploys updated Supabase Edge Functions when changes are pushed to `main`.
+
+**Triggers:**
+- Push to `main` branch affecting `lib/supabase/edge-functions/**`
+- Manual trigger via GitHub Actions UI
+
+**Required Secrets:**
+- `SUPABASE_ACCESS_TOKEN`: Supabase access token
+- `SUPABASE_PROJECT_REF`: Supabase project reference ID
+
+---
+
+### 2. Daily Topic Refresh
+- **File:** `refresh-topics.yml`
+
+Runs daily to refresh active debate topics for the next 24 hours.
+
+**Triggers:**
+- Scheduled run at 00:00 UTC
+- Manual trigger via GitHub Actions UI
+
+**Required Secrets:**
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key
+- `SUPABASE_URL`: Supabase project URL
+
+---
+
+## 🔐 Setting Up Secrets
+
+To configure secrets for GitHub Actions:
+
+1. Go to **Settings** → **Secrets and variables** → **Actions** in your repository.
+2. Click **New repository secret** and add the following:
+   - `SUPABASE_ACCESS_TOKEN`: Available in your Supabase account settings.
+   - `SUPABASE_SERVICE_ROLE_KEY`: Found in your Supabase project settings.
+   - `SUPABASE_PROJECT_REF`: Extracted from your Supabase project URL.
+   - `SUPABASE_URL`: Full Supabase project URL (e.g., `https://your-project.supabase.co`).
+
+**Note:**  
+Workflows reference secrets via the `env` section to ensure secure, context-aware access during runtime.
+
+---
+
+## 🚀 Manually Running a Workflow
+
+To manually execute a workflow:
+
+1. Open the **Actions** tab in GitHub.
+2. Select the workflow you want to run.
+3. Click **Run workflow**.
+4. Choose the branch (e.g., `main`) and click **Run workflow**.
+
+---
+
+## 📈 Monitoring and Logs
+
+- Track workflow runs and view detailed logs in the **Actions** tab.
+- GitHub automatically displays run status (success, failure, in progress) for each workflow execution.
+
+---
+
+## 🛠 Troubleshooting
+
+If a workflow fails:
+
+- Ensure all required secrets are correctly configured.
+- Confirm workflows have the correct repository permissions under **Settings** → **Actions** → **General**.
+- Review error logs in the **Actions** tab for stack traces or API failures.
+- Double-check that your Supabase project credentials are valid and active.
+
+---
+
+## 🧠 Notes
+
+- Workflows are designed for minimum maintenance.
+- Secrets should be rotated periodically following security best practices.
+
+---
+
