@@ -6,6 +6,8 @@
 
 A modern debate platform where users can engage in thoughtful discussions on daily topics. Built with ❤️ using Next.js, Tailwind CSS, and Supabase.
 
+> 🚀 Production-ready with automated CI/CD, performance monitoring, and quality checks.
+
 ![Turf App Screenshot](public/screenshots/turf-app-preview.png)
 
 ## Features
@@ -92,6 +94,7 @@ turf-app/
 ├── app/                    # Next.js App Router
 │   ├── admin/              # Admin panels
 │   │   └── topics/         # Topic administration
+│   │   └── api/            # API routes
 │   ├── auth/               # Authentication pages
 │   ├── chat/               # Chat interface
 │   ├── profile/            # User profile
@@ -119,8 +122,6 @@ turf-app/
 │   └── topics/             # Topic management utilities
 ├── .github/                # GitHub Actions workflows
 ├── pages/                  # Next.js Pages
-│   └── api/                # API routes
-├── public/                 # Static assets
 └── styles/                 # Global styles
 ```
 
