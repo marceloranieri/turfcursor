@@ -7,6 +7,9 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   darkMode: 'class',
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   safelist: [
     // Spacing utilities
     'p-3', 'px-4', 'py-2', 'px-2', 'py-1', 'my-1', 'my-2', 'mr-1', 'pb-16',
@@ -79,11 +82,15 @@ const config: Config = {
       spacing: {
         '18': '4.5rem',
         '22': '5.5rem',
+        'safe': 'env(safe-area-inset-bottom)',
       },
       animation: {
         'fade-in': 'fadeIn 0.2s ease-in-out',
         'slide-up': 'slideUp 0.2s ease-out',
         'slide-down': 'slideDown 0.2s ease-out',
+        'bounce-in': 'bounceIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'spin': 'spin 1s linear infinite',
+        'count': 'count 0.3s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -98,9 +105,27 @@ const config: Config = {
           '0%': { transform: 'translateY(-10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
+        bounceIn: {
+          '0%': { transform: 'scale(0.3)', opacity: '0' },
+          '50%': { transform: 'scale(1.05)' },
+          '70%': { transform: 'scale(0.9)' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        spin: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        count: {
+          '0%': { transform: 'translateY(-5px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms')({
+      strategy: 'class',
+    }),
+  ],
 };
 export default config; 
