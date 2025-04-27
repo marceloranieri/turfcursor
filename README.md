@@ -1,6 +1,8 @@
 # Turf - Daily Debates
 
-A modern debate platform where users can engage in thoughtful discussions on daily topics. Built with Next.js, Tailwind CSS, and Supabase.
+![Lighthouse Performance Badge](https://github.com/marceloranieri/turf-app/actions/workflows/lighthouse.yml/badge.svg)
+
+A modern debate platform where users can engage in thoughtful discussions on daily topics. Built with ❤️ using Next.js, Tailwind CSS, and Supabase.
 
 ![Turf App Screenshot](public/screenshots/turf-app-preview.png)
 

@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { supabase } from '../supabase/client';
 import { User, Message, Reaction, Circle, Notification } from '../supabase/client';
 
@@ -20,7 +21,7 @@ async function retry<T>(
       return await fn();
     } catch (error) {
       lastError = error;
-      console.warn(`API call failed, retrying (${i + 1}/${maxRetries})...`, error);
+      logger.warn(`API call failed, retrying (${i + 1}/${maxRetries})...`, error);
       
       // Wait before retrying with exponential backoff
       await new Promise(resolve => setTimeout(resolve, retryDelay * Math.pow(2, i)));

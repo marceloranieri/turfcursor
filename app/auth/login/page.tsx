@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState } from 'react';
@@ -27,7 +28,7 @@ export default function LoginPage() {
       toast.success('Welcome back!');
       router.push('/');
     } catch (error: any) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       toast.error('Failed to sign in');
       setErrors({
         email: 'Invalid email or password',

@@ -1,0 +1,29 @@
+name: Prevent Console Logs on Pull Requests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  check-console-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Search for console logs
+        run: |
+          # Exclude test files, scripts, and public directory from check
+          if grep -r "console\." \
+            --exclude-dir={node_modules,.next,.git,scripts,public} \
+            --exclude="*.test.*" \
+            --exclude="*.spec.*" \
+            ./src ./app ./components ./lib; then
+            echo "::error::Console log found! Please remove console.log before merging."
+            echo "Note: console logs should be replaced with logger.info/warn/error"
+            exit 1
+          else
+            echo "No console logs found. Good to go! 🎉"
+          fi 

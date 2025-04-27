@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState } from 'react';
@@ -25,7 +26,7 @@ const ForgotPasswordPage = () => {
       setIsSubmitted(true);
       toast.success('📩 Reset link sent! Check your inbox.');
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      logger.error('Password reset error:', error);
       toast.error(error.message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);

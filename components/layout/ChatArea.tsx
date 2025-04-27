@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import Image from 'next/image';
 import { createClient } from '@supabase/supabase-js';
@@ -247,7 +248,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           });
       }
     } catch (error) {
-      console.error('Error handling reaction:', error);
+      logger.error('Error handling reaction:', error);
     }
   };
   
@@ -302,7 +303,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           .eq('id', message.id);
       }, 30000);
     } catch (error) {
-      console.error('Error pinning message:', error);
+      logger.error('Error pinning message:', error);
     }
   };
   
@@ -359,7 +360,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
             setGifs(gifUrls);
           } catch (error) {
-            console.error('Error fetching GIFs:', error);
+            logger.error('Error fetching GIFs:', error);
             // Fallback to static GIFs if API fails
             setGifs([
               'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDMwbWlxNDg4cGlmMmZuemdqNTk1MHUyMGc2Z3ppNXkyNnV2eTdubyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YrBRYRDN4M5Q0dyzKh/giphy.gif',
@@ -380,7 +381,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
             setGifs(gifUrls);
           } catch (error) {
-            console.error('Error searching GIFs:', error);
+            logger.error('Error searching GIFs:', error);
           } finally {
             setIsLoading(false);
           }

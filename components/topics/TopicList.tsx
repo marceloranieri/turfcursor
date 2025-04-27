@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Topic } from '@/lib/types';
@@ -42,7 +43,7 @@ export const TopicList: React.FC = () => {
       if (error) throw error;
       setTopics(data || []);
     } catch (error) {
-      console.error('Error fetching topics:', error);
+      logger.error('Error fetching topics:', error);
     } finally {
       setLoading(false);
     }

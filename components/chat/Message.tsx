@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { Message as MessageType, ReactionType } from '@/lib/types';
@@ -31,7 +32,7 @@ export const Message: React.FC<MessageProps> = ({ message, onReply }) => {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error adding reaction:', error);
+      logger.error('Error adding reaction:', error);
     }
   };
 

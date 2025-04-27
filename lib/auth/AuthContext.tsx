@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
 
         if (error) {
-          console.error('Error getting auth session:', error.message);
+          logger.error('Error getting auth session:', error.message);
           setState({
             ...initialState,
             isLoading: false,
@@ -64,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } catch (error) {
         if (!mounted) return;
-        console.error('Unexpected error during auth initialization:', error);
+        logger.error('Unexpected error during auth initialization:', error);
         setState({
           ...initialState,
           isLoading: false,
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { error };
     } catch (error) {
-      console.error('Unexpected error during sign in:', error);
+      logger.error('Unexpected error during sign in:', error);
       toast.error('An unexpected error occurred during sign in');
       return { error: new AuthError('An unexpected error occurred') };
     } finally {
@@ -137,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       handleAuthSuccess('signup');
       return { error: null, user: data.user };
     } catch (error) {
-      console.error('Unexpected error during sign up:', error);
+      logger.error('Unexpected error during sign up:', error);
       toast.error('An unexpected error occurred during sign up');
       return { error: new AuthError('An unexpected error occurred'), user: null };
     } finally {
@@ -153,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.error(error.message);
       }
     } catch (error) {
-      console.error('Unexpected error during sign out:', error);
+      logger.error('Unexpected error during sign out:', error);
       toast.error('An unexpected error occurred during sign out');
     } finally {
       setState(prev => ({ ...prev, isLoading: false }));
@@ -175,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error };
     } catch (error) {
-      console.error('Unexpected error during password reset:', error);
+      logger.error('Unexpected error during password reset:', error);
       toast.error('An unexpected error occurred during password reset');
       return { error: new AuthError('An unexpected error occurred') };
     } finally {
@@ -199,7 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error };
     } catch (error) {
-      console.error('Unexpected error during password update:', error);
+      logger.error('Unexpected error during password update:', error);
       toast.error('An unexpected error occurred during password update');
       return { error: new AuthError('An unexpected error occurred') };
     } finally {
@@ -226,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.success('Profile updated successfully');
       return { error: null };
     } catch (error) {
-      console.error('Unexpected error during profile update:', error);
+      logger.error('Unexpected error during profile update:', error);
       toast.error('An unexpected error occurred during profile update');
       return { error: error as Error };
     } finally {
@@ -255,7 +256,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error };
     } catch (error) {
-      console.error('Unexpected error during OAuth sign in:', error);
+      logger.error('Unexpected error during OAuth sign in:', error);
       toast.error('An unexpected error occurred during sign in');
       return { error: new AuthError('An unexpected error occurred') };
     } finally {

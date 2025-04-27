@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../../lib/supabase/client';
 
@@ -26,7 +27,7 @@ export default async function handler(
 
       return res.status(200).json({ data });
     } catch (error) {
-      console.error('Error fetching users:', error);
+      logger.error('Error fetching users:', error);
       return res.status(500).json({ error: 'Failed to fetch users' });
     }
   }
@@ -56,7 +57,7 @@ export default async function handler(
 
     return res.status(200).json({ data: usersMap });
   } catch (error) {
-    console.error('Error fetching users:', error);
+    logger.error('Error fetching users:', error);
     return res.status(500).json({ error: 'Failed to fetch users' });
   }
 } 

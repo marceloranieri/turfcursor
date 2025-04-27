@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { captureError } from './sentry';
 
 interface EnvVar {
@@ -54,7 +55,7 @@ export function checkEnvironmentVariables() {
     };
 
     // Log the error
-    console.error('Environment variables validation failed:', context);
+    logger.error('Environment variables validation failed:', context);
 
     // Capture in Sentry if in production
     if (process.env.NODE_ENV === 'production') {

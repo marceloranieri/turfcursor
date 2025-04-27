@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import * as Sentry from '@sentry/nextjs';
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
@@ -8,7 +9,7 @@ export function initSentry() {
   }
 
   if (!SENTRY_DSN) {
-    console.warn('Sentry DSN not found. Error tracking will be disabled.');
+    logger.warn('Sentry DSN not found. Error tracking will be disabled.');
     return;
   }
 
@@ -28,7 +29,7 @@ export function initSentry() {
 
 export function captureError(error: Error, context?: Record<string, any>) {
   if (process.env.NODE_ENV !== 'production') {
-    console.error('Error captured in development:', error, context);
+    logger.error('Error captured in development:', error, context);
     return;
   }
 
@@ -39,7 +40,7 @@ export function captureError(error: Error, context?: Record<string, any>) {
 
 export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info') {
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`[${level}] ${message}`);
+    logger.info(`[${level}] ${message}`);
     return;
   }
 
@@ -48,7 +49,7 @@ export function captureMessage(message: string, level: Sentry.SeverityLevel = 'i
 
 export function setUserContext(user: { id: string; email?: string; username?: string }) {
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Setting user context:', user);
+    logger.info('Setting user context:', user);
     return;
   }
 
@@ -57,7 +58,7 @@ export function setUserContext(user: { id: string; email?: string; username?: st
 
 export function clearUserContext() {
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Clearing user context');
+    logger.info('Clearing user context');
     return;
   }
 

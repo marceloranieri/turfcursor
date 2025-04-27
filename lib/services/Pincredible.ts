@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { supabase } from '@/lib/supabase/client';
 import { Message } from '@/lib/types';
 
@@ -76,7 +77,7 @@ export class Pincredible {
         if (notificationError) throw notificationError;
       }
     } catch (error) {
-      console.error('Error in Pincredible:', error);
+      logger.error('Error in Pincredible:', error);
     }
   }
 
@@ -90,7 +91,7 @@ export class Pincredible {
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error unpinning message:', error);
+      logger.error('Error unpinning message:', error);
     }
   }
 } 

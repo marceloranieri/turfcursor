@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState } from 'react';
@@ -34,7 +35,7 @@ const SignUpPage = () => {
         router.push('/auth/verify-email');
       }
     } catch (error: any) {
-      console.error('Sign up error:', error);
+      logger.error('Sign up error:', error);
       toast.error(error.message || 'Failed to sign up');
     } finally {
       setIsLoading(false);
@@ -45,7 +46,7 @@ const SignUpPage = () => {
     try {
       await signInWithOAuth(provider);
     } catch (error: any) {
-      console.error('OAuth sign up error:', error);
+      logger.error('OAuth sign up error:', error);
       toast.error(error.message || `Failed to sign up with ${provider}`);
     }
   };

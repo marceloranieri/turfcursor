@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import { supabase } from '../supabase/client';
@@ -20,7 +21,7 @@ export async function getActiveTopics(): Promise<Topic[]> {
     
     return data as unknown as Topic[];
   } catch (error) {
-    console.error('Error fetching active topics:', error);
+    logger.error('Error fetching active topics:', error);
     toast.error('Failed to load daily topics');
     return [];
   }
@@ -73,7 +74,7 @@ export async function manuallyRefreshTopics(apiKey: string): Promise<{success: b
     toast.success('Topics refreshed successfully');
     return { success: true, message: 'Topics refreshed successfully' };
   } catch (error: any) {
-    console.error('Error refreshing topics:', error);
+    logger.error('Error refreshing topics:', error);
     toast.error(error.message || 'Failed to refresh topics');
     return { success: false, message: error.message || 'Failed to refresh topics' };
   }
@@ -94,7 +95,7 @@ export async function getTopicHistory(): Promise<TopicHistory[]> {
     
     return data as unknown as TopicHistory[];
   } catch (error) {
-    console.error('Error fetching topic history:', error);
+    logger.error('Error fetching topic history:', error);
     toast.error('Failed to load topic history');
     return [];
   }
@@ -121,7 +122,7 @@ export async function addTopic(topic: Omit<Topic, 'id' | 'created_at' | 'active'
     toast.success('Topic added successfully');
     return data as unknown as Topic;
   } catch (error: any) {
-    console.error('Error adding topic:', error);
+    logger.error('Error adding topic:', error);
     // Handle unique constraint violation
     if (error.code === '23505') {
       toast.error('A topic with this title already exists');

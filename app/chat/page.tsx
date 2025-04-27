@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -69,7 +70,7 @@ export default function Chat() {
       
       setUsers(prev => ({ ...prev, ...usersObj }));
     } catch (error) {
-      console.error("Error loading circle data:", error);
+      logger.error("Error loading circle data:", error);
     } finally {
       setIsDataLoading(false);
     }
@@ -86,7 +87,7 @@ export default function Chat() {
         setActiveCircleId(circlesData[0].id);
       }
     } catch (error) {
-      console.error("Error loading initial data:", error);
+      logger.error("Error loading initial data:", error);
     } finally {
       setIsDataLoading(false);
     }
@@ -138,7 +139,7 @@ export default function Chat() {
         }
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      logger.error("Error sending message:", error);
     }
   };
   
@@ -157,7 +158,7 @@ export default function Chat() {
       const reactionsData = await getReactions(messageIds);
       setReactions(reactionsData);
     } catch (error) {
-      console.error("Error handling reaction:", error);
+      logger.error("Error handling reaction:", error);
     }
   };
   
@@ -181,7 +182,7 @@ export default function Chat() {
         alert('Failed to give Genius Award. You may not have any awards remaining.');
       }
     } catch (error) {
-      console.error("Error giving genius award:", error);
+      logger.error("Error giving genius award:", error);
     }
   };
 

@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client'
 
 import { useEffect, useState } from 'react';
@@ -19,7 +20,7 @@ export default function HydrationSafeComponent({
   useEffect(() => {
     setIsHydrated(true);
     if (process.env.NODE_ENV === 'development') {
-      console.log(`${componentName} hydrated at:`, new Date().toISOString());
+      logger.info(`${componentName} hydrated at:`, new Date().toISOString());
     }
   }, [componentName]);
 

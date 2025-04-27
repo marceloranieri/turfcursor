@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -32,7 +33,7 @@ export default function ProfilePage() {
       setUsername(data.username);
       setAvatarUrl(data.avatar_url || '');
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      logger.error('Error fetching profile:', error);
     }
   }, [user]);
 
@@ -57,7 +58,7 @@ export default function ProfilePage() {
       await fetchProfile();
       setIsEditing(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      logger.error('Error updating profile:', error);
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +84,7 @@ export default function ProfilePage() {
 
       setAvatarUrl(data.publicUrl);
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      logger.error('Error uploading avatar:', error);
     }
   };
 

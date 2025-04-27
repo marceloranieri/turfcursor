@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -178,12 +179,12 @@ export default function ChatPage() {
         setIsAuthenticated(!!session);
         if (session) {
           setUser(session.user);
-          console.log("User authenticated:", session.user);
+          logger.info("User authenticated:", session.user);
         } else {
-          console.log("No authenticated user");
+          logger.info("No authenticated user");
         }
       } catch (error) {
-        console.error("Auth error:", error);
+        logger.error("Auth error:", error);
       } finally {
         setLoading(false);
       }
@@ -218,16 +219,16 @@ export default function ChatPage() {
   const pinnedMessage = DEMO_PINNED_MESSAGES[topicId as keyof typeof DEMO_PINNED_MESSAGES];
   
   const handleSendMessage = () => {
-    console.log("Send message triggered");
+    logger.info("Send message triggered");
     
     if (!isAuthenticated) {
-      console.log("User not authenticated, showing guest modal");
+      logger.info("User not authenticated, showing guest modal");
       setShowGuestModal(true);
       return;
     }
     
     // In a real app, this would send the message to Supabase
-    console.log('Message sent by user:', user?.id);
+    logger.info('Message sent by user:', user?.id);
   };
   
   const handleSignIn = async () => {
@@ -244,7 +245,7 @@ export default function ChatPage() {
       
       // Modal will be closed by auth state change listener
     } catch (error) {
-      console.error('Error signing in:', error);
+      logger.error('Error signing in:', error);
       alert('Failed to sign in. Please try again.');
     }
   };
@@ -255,12 +256,12 @@ export default function ChatPage() {
   
   // Add a useEffect hook at the top of the component to directly attach event handlers
   useEffect(() => {
-    console.log('ChatPage: Adding click handlers directly');
+    logger.info('ChatPage: Adding click handlers directly');
     
     // Function to make channels clickable
     const makeChannelsClickable = () => {
       const channels = document.querySelectorAll('.channel');
-      console.log('Found channels:', channels.length);
+      logger.info('Found channels:', channels.length);
       
       channels.forEach(channel => {
         // Add visual cue
@@ -270,7 +271,7 @@ export default function ChatPage() {
           const nameElement = channel.querySelector('.truncate');
           if (nameElement) {
             const name = nameElement.textContent;
-            console.log('Channel clicked:', name);
+            logger.info('Channel clicked:', name);
             
             if (name) {
               const topics = {
@@ -293,7 +294,7 @@ export default function ChatPage() {
     const enableForm = () => {
       const form = document.querySelector('form');
       if (form) {
-        console.log('Found form');
+        logger.info('Found form');
         
         // Add an ID to the form if it doesn't have one
         if (!form.id) {
@@ -311,14 +312,14 @@ export default function ChatPage() {
             inputField.setAttribute('name', 'message');
           }
           
-          console.log('Added accessibility attributes to form fields');
+          logger.info('Added accessibility attributes to form fields');
         }
         
         // Add a submit button if missing
         if (!form.querySelector('button[type="submit"]')) {
           const inputField = form.querySelector('.input-field');
           if (inputField) {
-            console.log('Adding submit button');
+            logger.info('Adding submit button');
             const button = document.createElement('button');
             button.type = 'submit';
             button.textContent = 'Send';
@@ -339,7 +340,7 @@ export default function ChatPage() {
         
         form.addEventListener('submit', (e) => {
           e.preventDefault();
-          console.log('Form submitted');
+          logger.info('Form submitted');
           handleSendMessage();
         });
       }
@@ -364,8 +365,8 @@ export default function ChatPage() {
     setupDebugListeners();
     
     // Log some useful debugging information
-    console.log('Chat page loaded for topic:', topicId);
-    console.log('Authentication status:', isAuthenticated ? 'Logged in' : 'Not logged in');
+    logger.info('Chat page loaded for topic:', topicId);
+    logger.info('Authentication status:', isAuthenticated ? 'Logged in' : 'Not logged in');
     
     // Test Supabase connection
     const testSupabase = async () => {
@@ -376,12 +377,12 @@ export default function ChatPage() {
           .limit(1);
         
         if (error) {
-          console.error('Supabase connection error:', error);
+          logger.error('Supabase connection error:', error);
         } else {
-          console.log('Supabase connection successful:', data);
+          logger.info('Supabase connection successful:', data);
         }
       } catch (err) {
-        console.error('Supabase test failed:', err);
+        logger.error('Supabase test failed:', err);
       }
     };
     

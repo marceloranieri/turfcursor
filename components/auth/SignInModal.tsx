@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState } from 'react';
@@ -34,7 +35,7 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
       await signInWithOAuth(provider);
       onClose();
     } catch (error: any) {
-      console.error('OAuth sign in error:', error);
+      logger.error('OAuth sign in error:', error);
     }
   };
 
@@ -52,7 +53,7 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
       router.push(`/auth/signin?redirect=${encodeURIComponent(redirectPath)}`);
       onClose();
     } catch (error: any) {
-      console.error('Sign in error:', error);
+      logger.error('Sign in error:', error);
     } finally {
       setIsLoading(false);
     }

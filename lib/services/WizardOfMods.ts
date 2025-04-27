@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { supabase } from '@/lib/supabase/client';
 import { Message } from '@/lib/types';
 
@@ -59,7 +60,7 @@ export class WizardOfMods {
 
       if (notificationError) throw notificationError;
     } catch (error) {
-      console.error('Error in Wizard of Mods:', error);
+      logger.error('Error in Wizard of Mods:', error);
     }
   }
 

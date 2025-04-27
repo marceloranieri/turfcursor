@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -88,17 +89,17 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
         setAvailableTopics(updatedTopics);
       }
     } catch (error) {
-      console.error('Error fetching topics:', error);
+      logger.error('Error fetching topics:', error);
     }
   };
   
   const handleTopicClick = (id: string) => {
-    console.log("Topic clicked:", id);
+    logger.info("Topic clicked:", id);
     try {
       // Use window.location for a hard navigation if router isn't working
       window.location.href = `/chat/${id}`;
     } catch (e) {
-      console.error("Navigation error:", e);
+      logger.error("Navigation error:", e);
       // Fallback - direct assignment
       window.location.href = `/chat/${id}`;
     }
@@ -152,7 +153,7 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
         router.push(`/chat/${data[0].id}`);
       }
     } catch (error) {
-      console.error('Error creating topic:', error);
+      logger.error('Error creating topic:', error);
       alert('Failed to create topic. Please try again.');
     }
   };

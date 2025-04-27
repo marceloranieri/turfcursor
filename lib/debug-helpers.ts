@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client'
 
 import { useEffect } from 'react';
@@ -5,14 +6,14 @@ import { useEffect } from 'react';
 export function setupDebugListeners() {
   if (process.env.NODE_ENV !== 'development') return;
 
-  console.log('Setting up debug listeners');
+  logger.info('Setting up debug listeners');
   
   // Click event debugging
   document.addEventListener('click', (e) => {
-    console.log('Element clicked:', e.target);
-    console.log('Element ID:', e.target.id || 'No ID');
-    console.log('Element classes:', e.target.className || 'No classes');
-    console.log('Element tag:', e.target.tagName);
+    logger.info('Element clicked:', e.target);
+    logger.info('Element ID:', e.target.id || 'No ID');
+    logger.info('Element classes:', e.target.className || 'No classes');
+    logger.info('Element tag:', e.target.tagName);
     
     // Highlight clicked element
     const originalBg = e.target.style.backgroundColor;
@@ -27,16 +28,16 @@ export function setupDebugListeners() {
   
   // Log all form submissions
   document.addEventListener('submit', (e) => {
-    console.log('Form submitted:', e.target);
-    console.log('Form ID:', e.target.id || 'No ID');
-    console.log('Form fields:', getFormData(e.target));
+    logger.info('Form submitted:', e.target);
+    logger.info('Form ID:', e.target.id || 'No ID');
+    logger.info('Form fields:', getFormData(e.target));
   });
   
   // Monitor DOM mutations for dynamically added elements
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        console.log('DOM nodes added:', mutation.addedNodes);
+        logger.info('DOM nodes added:', mutation.addedNodes);
       }
     });
   });
@@ -48,11 +49,11 @@ export function setupDebugListeners() {
     window.debugElement = (selector) => {
       const el = document.querySelector(selector);
       if (el) {
-        console.log('Debug element:', el);
-        console.log('Classes:', el.className);
-        console.log('Attributes:', Array.from(el.attributes).map(attr => `${attr.name}="${attr.value}"`));
-        console.log('Styles:', el.style);
-        console.log('Computed styles:', window.getComputedStyle(el));
+        logger.info('Debug element:', el);
+        logger.info('Classes:', el.className);
+        logger.info('Attributes:', Array.from(el.attributes).map(attr => `${attr.name}="${attr.value}"`));
+        logger.info('Styles:', el.style);
+        logger.info('Computed styles:', window.getComputedStyle(el));
         
         // Highlight the element
         const originalOutline = el.style.outline;
@@ -63,7 +64,7 @@ export function setupDebugListeners() {
         
         return el;
       } else {
-        console.warn('No element found matching selector:', selector);
+        logger.warn('No element found matching selector:', selector);
         return null;
       }
     };
@@ -73,20 +74,20 @@ export function setupDebugListeners() {
       const anchors = Array.from(document.querySelectorAll('a'));
       const clickables = Array.from(document.querySelectorAll('[role="button"], .channel, .reaction, .input-action, .header-action'));
       
-      console.log('Buttons:', buttons);
-      console.log('Links:', anchors);
-      console.log('Other clickables:', clickables);
+      logger.info('Buttons:', buttons);
+      logger.info('Links:', anchors);
+      logger.info('Other clickables:', clickables);
       
       return { buttons, anchors, clickables };
     };
     
-    console.log('Debug helpers added to window. Try window.debugElement(".channel") or window.listClickableElements()');
+    logger.info('Debug helpers added to window. Try window.debugElement(".channel") or window.listClickableElements()');
   }
   
   // Log navigation events
   useEffect(() => {
     const handleRouteChange = () => {
-      console.log('Route changed:', window.location.pathname);
+      logger.info('Route changed:', window.location.pathname);
     };
 
     window.addEventListener('popstate', handleRouteChange);
@@ -95,13 +96,13 @@ export function setupDebugListeners() {
 
   // Log hydration status
   useEffect(() => {
-    console.log('Component hydrated:', new Date().toISOString());
+    logger.info('Component hydrated:', new Date().toISOString());
   }, []);
 
   // Log client-side errors
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
-      console.error('Client-side error:', {
+      logger.error('Client-side error occurred', {
         message: event.message,
         filename: event.filename,
         lineno: event.lineno,
@@ -117,7 +118,7 @@ export function setupDebugListeners() {
   // Log unhandled promise rejections
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled promise rejection:', {
+      logger.error('Unhandled promise rejection occurred', {
         reason: event.reason,
         promise: event.promise,
       });
@@ -127,7 +128,7 @@ export function setupDebugListeners() {
     return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
   }, []);
   
-  console.log('Debug listeners setup complete');
+  logger.info('Debug listeners setup complete');
 }
 
 // Helper to extract form data
@@ -146,14 +147,14 @@ export function logComponentLifecycle(componentName: string) {
   if (process.env.NODE_ENV !== 'development') return;
 
   useEffect(() => {
-    console.log(`${componentName} mounted`);
-    return () => console.log(`${componentName} unmounted`);
+    logger.info(`${componentName} mounted`);
+    return () => logger.info(`${componentName} unmounted`);
   }, [componentName]);
 }
 
 export function logStateChange<T>(stateName: string, newValue: T) {
   if (process.env.NODE_ENV !== 'development') return;
-  console.log(`State '${stateName}' changed:`, newValue);
+  logger.info(`State '${stateName}' changed:`, newValue);
 }
 
 export function measurePerformance(label: string) {
@@ -162,7 +163,7 @@ export function measurePerformance(label: string) {
   const start = performance.now();
   return () => {
     const end = performance.now();
-    console.log(`${label} took ${end - start}ms`);
+    logger.info(`${label} took ${end - start}ms`);
   };
 }
 

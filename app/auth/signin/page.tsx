@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState } from 'react';
@@ -27,7 +28,7 @@ const SignInPage = () => {
       const { error } = await signIn(email, password);
       if (error) throw error;
     } catch (error: any) {
-      console.error('Sign in error:', error);
+      logger.error('Sign in error:', error);
       toast.error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
@@ -38,7 +39,7 @@ const SignInPage = () => {
     try {
       await signInWithOAuth(provider);
     } catch (error: any) {
-      console.error('OAuth sign in error:', error);
+      logger.error('OAuth sign in error:', error);
       toast.error(error.message || `Failed to sign in with ${provider}`);
     }
   };

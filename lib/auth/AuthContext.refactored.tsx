@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        logger.error('Error initializing auth:', error);
         setState({
           user: null,
           isAuthenticated: false,

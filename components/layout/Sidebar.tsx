@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -35,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     try {
       await signOut();
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', error);
     }
   };
 

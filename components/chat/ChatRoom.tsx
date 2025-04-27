@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -54,7 +55,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
       if (error) throw error;
       setMessages(data || []);
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      logger.error('Error fetching messages:', error);
     }
   }, [topic.id]);
 
@@ -68,7 +69,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
       if (error) throw error;
       setMembers(data || []);
     } catch (error) {
-      console.error('Error fetching members:', error);
+      logger.error('Error fetching members:', error);
     }
   }, []);
 
@@ -90,7 +91,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
           .from('typing_status')
           .upsert({ user_id: user.id, topic_id: topic.id, is_typing: isTyping });
       } catch (error) {
-        console.error('Error updating typing status:', error);
+        logger.error('Error updating typing status:', error);
       }
     }, 500),
     [user, topic.id]
@@ -188,7 +189,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
       setReplyTo(null);
       updateTypingStatus(false);
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
     }

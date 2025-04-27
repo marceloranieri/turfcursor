@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 // @ts-nocheck
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -26,7 +27,7 @@ async function refreshDailyTopics(supabase: any) {
   if (!available || available.length < 5) {
     // If all topics have been used, clear history to start over
     if (usedIds.length > 0) {
-      console.log("All topics used, resetting rotation cycle");
+      logger.info("All topics used, resetting rotation cycle");
       const { error: truncateErr } = await supabase.from('topic_history').delete().neq('topic_id', '00000000-0000-0000-0000-000000000000');
       
       if (truncateErr) throw new Error(`History reset failed: ${truncateErr.message}`);
@@ -121,7 +122,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error refreshing topics:', error);
+    logger.error('Error refreshing topics:', error);
     
     return new Response(
       JSON.stringify({ 

@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -65,7 +66,7 @@ export default function GifPickerModal({ onSelect, onClose }: GifPickerModalProp
       const data = await response.json();
       setGifs(data.data);
     } catch (err) {
-      console.error('Error fetching GIFs:', err);
+      logger.error('Error fetching GIFs:', err);
       setError('Failed to load GIFs. Please try again.');
       
       // Fallback to static GIFs if API fails

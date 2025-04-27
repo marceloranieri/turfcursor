@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -92,7 +93,7 @@ export default function Topic() {
         setNotifications(transformedNotifications);
       }
     } catch (error) {
-      console.error('Error fetching circles and notifications:', error);
+      logger.error('Error fetching circles and notifications:', error);
       toast.error('Failed to load circles and notifications');
     }
   }, [user, activeCircleId]);
@@ -129,7 +130,7 @@ export default function Topic() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching topics:', error);
+        logger.error('Error fetching topics:', error);
         toast.error('Failed to load topics');
         return;
       }
@@ -146,7 +147,7 @@ export default function Topic() {
         setCurrentTopic(mappedTopics[0].id);
       }
     } catch (error) {
-      console.error('Unexpected error fetching topics:', error);
+      logger.error('Unexpected error fetching topics:', error);
       toast.error('An unexpected error occurred while loading topics');
     }
   }, [currentTopic]);
@@ -169,7 +170,7 @@ export default function Topic() {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        logger.error('Error fetching messages:', error);
         toast.error('Failed to load messages');
         return;
       }
@@ -188,7 +189,7 @@ export default function Topic() {
 
       setMessages(mappedMessages);
     } catch (error) {
-      console.error('Unexpected error fetching messages:', error);
+      logger.error('Unexpected error fetching messages:', error);
       toast.error('An unexpected error occurred while loading messages');
     } finally {
       setLoading(false);
@@ -209,7 +210,7 @@ export default function Topic() {
         });
 
       if (error) {
-        console.error('Error sending message:', error);
+        logger.error('Error sending message:', error);
         toast.error('Failed to send message');
         return;
       }
@@ -217,7 +218,7 @@ export default function Topic() {
       setInputValue('');
       fetchMessages();
     } catch (error) {
-      console.error('Unexpected error sending message:', error);
+      logger.error('Unexpected error sending message:', error);
       toast.error('An unexpected error occurred while sending message');
     }
   };

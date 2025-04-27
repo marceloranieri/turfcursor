@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -38,7 +39,7 @@ export default function SettingsPage() {
       if (error) throw error;
       setSettings(newSettings);
     } catch (error) {
-      console.error('Error saving settings:', error);
+      logger.error('Error saving settings:', error);
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +65,7 @@ export default function SettingsPage() {
         setSettings(data);
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      logger.error('Error fetching settings:', error);
     }
   }, [user, settings, saveSettings]);
 

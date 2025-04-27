@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
@@ -117,7 +118,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
         setMembers(combinedMembers);
       }
     } catch (error) {
-      console.error('Error fetching online members:', error);
+      logger.error('Error fetching online members:', error);
     }
   };
   
@@ -159,7 +160,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
   const sortedRoles = ['owner', 'admin', 'moderator', 'member'].filter(role => groupedMembers[role]);
   
   const handleMemberClick = (memberId: string) => {
-    console.log("Member clicked:", memberId);
+    logger.info("Member clicked:", memberId);
     // Toggle profile popup
     setActiveProfile(activeProfile === memberId ? null : memberId);
   };
@@ -204,7 +205,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
       // Navigate to the DM channel
       router.push(`/messages/${channelId}`);
     } catch (error) {
-      console.error('Error setting up direct message:', error);
+      logger.error('Error setting up direct message:', error);
       alert('Failed to open direct message. Please try again.');
     }
     
@@ -225,7 +226,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
     
     // Also copy to clipboard as a fallback
     navigator.clipboard.writeText(`@${name}`).catch(err => {
-      console.error('Failed to copy mention to clipboard:', err);
+      logger.error('Failed to copy mention to clipboard:', err);
     });
     
     setActiveProfile(null);

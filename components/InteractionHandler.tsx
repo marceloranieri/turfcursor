@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -39,8 +40,8 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
       const script = document.createElement('script');
       script.src = '/direct-fix.js';
       script.async = true;
-      script.onload = () => console.log('Direct fix script loaded successfully');
-      script.onerror = () => console.error('Failed to load direct fix script');
+      script.onload = () => logger.info('Direct fix script loaded successfully');
+      script.onerror = () => logger.error('Failed to load direct fix script', { context: 'Error occurred' });
       document.body.appendChild(script);
     };
 
@@ -49,8 +50,8 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
       const script = document.createElement('script');
       script.src = '/fix-csp.js';
       script.async = true;
-      script.onload = () => console.log('CSP-safe fix script loaded successfully');
-      script.onerror = () => console.error('Failed to load CSP-safe fix script');
+      script.onload = () => logger.info('CSP-safe fix script loaded successfully');
+      script.onerror = () => logger.error('Failed to load CSP-safe fix script', { context: 'Error occurred' });
       document.body.appendChild(script);
     };
 
@@ -61,21 +62,21 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
       const events = ['click', 'submit', 'input', 'change', 'pointerdown', 'pointerup'];
       events.forEach(eventType => {
         document.addEventListener(eventType, (e) => {
-          console.log(`[Debug] ${eventType} event captured on:`, e.target);
+          logger.info(`[Debug] ${eventType} event captured on:`, e.target);
         }, true); // Use capturing phase
       });
       
-      console.log('[Debug] Event monitoring setup complete');
+      logger.info('[Debug] Event monitoring setup complete');
 
       // Monitor for React synthetic events
       window.addEventListener('reactevent', (e) => {
-        console.log('[Debug] React synthetic event captured:', (e as CustomEvent).detail);
+        logger.info('[Debug] React synthetic event captured:', (e as CustomEvent).detail);
       });
     };
 
     // Function to make channels clickable
     const makeChannelsClickable = () => {
-      console.log('Making channels clickable');
+      logger.info('Making channels clickable');
       const channels = document.querySelectorAll('.channel');
       
       channels.forEach(channel => {
@@ -89,7 +90,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
           const nameElement = channel.querySelector('.truncate');
           if (nameElement) {
             const name = nameElement.textContent;
-            console.log('Channel clicked:', name);
+            logger.info('Channel clicked:', name);
             
             if (name) {
               const topics = {
@@ -112,7 +113,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
 
     // Ensure forms work properly
     const fixForms = () => {
-      console.log('Fixing forms');
+      logger.info('Fixing forms');
       const forms = document.querySelectorAll('form');
       
       forms.forEach(form => {
@@ -126,7 +127,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
         
         // Add submit handler
         form.addEventListener('submit', (e) => {
-          console.log('Form submitted:', form.id);
+          logger.info('Form submitted:', form.id);
           
           // Get form data for logging
           const formData = new FormData(form);
@@ -135,7 +136,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
             formValues[key] = value;
           }
           
-          console.log('Form data:', formValues);
+          logger.info('Form data:', formValues);
           
           // Dispatch a custom event
           const submitEvent = new CustomEvent('turfformsubmit', { 
@@ -149,7 +150,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
         if (!form.querySelector('button[type="submit"]')) {
           const inputField = form.querySelector('.input-field, input');
           if (inputField) {
-            console.log('Adding submit button to form');
+            logger.info('Adding submit button to form');
             const button = document.createElement('button');
             button.type = 'submit';
             button.textContent = 'Send';
@@ -234,7 +235,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
     const interactiveElements = document.querySelectorAll('.reaction, .input-action, .header-action');
     
     if (debug) {
-      console.log(`Found ${interactiveElements.length} interactive elements`);
+      logger.info(`Found ${interactiveElements.length} interactive elements`);
     }
     
     interactiveElements.forEach((element, index) => {
@@ -252,7 +253,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
         event.preventDefault();
         
         if (debug) {
-          console.log(`Interactive element clicked: ${element.className}`);
+          logger.info(`Interactive element clicked: ${element.className}`);
         }
         
         // Track interaction for analytics
@@ -276,7 +277,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
     }
     
     if (debug) {
-      console.log('Showing authentication modal');
+      logger.info('Showing authentication modal');
     }
     
     // Create modal container

@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -19,7 +20,7 @@ export default function DailyTopics() {
         const activeTopics = await getActiveTopics();
         setTopics(activeTopics);
       } catch (error) {
-        console.error('Error loading topics:', error);
+        logger.error('Error loading topics:', error);
       } finally {
         setLoading(false);
       }

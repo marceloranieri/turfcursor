@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -41,7 +42,7 @@ export default function TopicAdmin() {
         if (error) throw error;
         setIsAdmin(Boolean((data as { is_debate_maestro?: boolean })?.is_debate_maestro));
       } catch (error) {
-        console.error('Error checking admin status:', error);
+        logger.error('Error checking admin status:', error);
         setIsAdmin(false);
       }
     };
@@ -68,7 +69,7 @@ export default function TopicAdmin() {
         if (error) throw error;
         setAllTopics(data as unknown as Topic[]);
       } catch (error) {
-        console.error('Error loading topic data:', error);
+        logger.error('Error loading topic data:', error);
         toast.error('Failed to load topic data');
       } finally {
         setLoading(false);
@@ -100,7 +101,7 @@ export default function TopicAdmin() {
         setHistory(historyData);
       }
     } catch (error) {
-      console.error('Error refreshing topics:', error);
+      logger.error('Error refreshing topics:', error);
     } finally {
       setRefreshing(false);
     }
@@ -133,7 +134,7 @@ export default function TopicAdmin() {
         setAllTopics(data as unknown as Topic[]);
       }
     } catch (error) {
-      console.error('Error adding topic:', error);
+      logger.error('Error adding topic:', error);
     }
   };
 

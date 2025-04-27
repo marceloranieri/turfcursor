@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -38,7 +39,7 @@ export default function OAuthCallbackPage() {
           router.push('/auth/signin');
         }
       } catch (error: any) {
-        console.error('OAuth callback error:', error);
+        logger.error('OAuth callback error:', error);
         toast.error('Authentication error. Please try again.');
         router.push('/auth/signin');
       } finally {

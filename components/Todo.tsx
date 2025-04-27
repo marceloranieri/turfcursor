@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -35,7 +36,7 @@ export default function Todo() {
         createdAt: new Date(todo.created_at)
       })) || []);
     } catch (error) {
-      console.error('Error fetching todos:', error);
+      logger.error('Error fetching todos:', error);
       toast.error('Failed to load todos');
     } finally {
       setLoading(false);
@@ -80,7 +81,7 @@ export default function Todo() {
         
         setInputValue('');
       } catch (error) {
-        console.error('Error adding todo:', error);
+        logger.error('Error adding todo:', error);
         toast.error('Failed to add task');
       }
     }
@@ -104,7 +105,7 @@ export default function Todo() {
         )
       );
     } catch (error) {
-      console.error('Error updating todo:', error);
+      logger.error('Error updating todo:', error);
       toast.error('Failed to update task');
     }
   };
@@ -121,7 +122,7 @@ export default function Todo() {
       setTodos(todos.filter(todo => todo.id !== id));
       toast.success('Task removed');
     } catch (error) {
-      console.error('Error deleting todo:', error);
+      logger.error('Error deleting todo:', error);
       toast.error('Failed to delete task');
     }
   };

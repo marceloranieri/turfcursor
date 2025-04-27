@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -50,7 +51,7 @@ const ResetPasswordPage = () => {
       const { error } = await updatePassword(token, password);
       if (error) throw error;
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      logger.error('Password reset error:', error);
       setError(error.message || 'Failed to reset password');
       toast.error(error.message || 'Failed to reset password');
     } finally {

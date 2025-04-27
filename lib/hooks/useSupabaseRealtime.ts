@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { useEffect } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
@@ -85,7 +86,7 @@ export function useSupabaseRealtime({
 
       channel.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Connected to realtime channel');
+          logger.info('Connected to realtime channel');
         }
       });
     };

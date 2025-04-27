@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -58,7 +59,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
       onUpload(publicUrl);
     } catch (error) {
-      console.error('Error uploading image:', error);
+      logger.error('Error uploading image:', error);
       alert('Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);

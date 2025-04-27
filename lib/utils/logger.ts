@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
@@ -20,13 +21,13 @@ class Logger {
 
   info(message: string, options: LogOptions = {}) {
     if (this.isDevelopment) {
-      console.info(this.formatMessage('info', message, options.context));
+      logger.info(this.formatMessage('info', message, options.context));
     }
   }
 
   warn(message: string, options: LogOptions = {}) {
     if (this.isDevelopment) {
-      console.warn(this.formatMessage('warn', message, options.context));
+      logger.warn(this.formatMessage('warn', message, options.context));
     }
 
     if (options.shouldReport) {
@@ -44,7 +45,7 @@ class Logger {
     const message = errorObj.message || String(errorObj);
 
     if (this.isDevelopment) {
-      console.error(this.formatMessage('error', message, options.context));
+      logger.error(this.formatMessage('error', message, options.context));
     }
 
     if (options.shouldReport) {

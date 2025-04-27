@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
 
@@ -7,9 +8,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
-  );
+  // intentional log: critical environment variable check that should halt execution in development
+  logger.error('Missing Supabase environment variables', {
+    context: 'Supabase Client Initialization',
+    message: 'Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
+  });
   // Don't throw in production to prevent app crashes
   if (process.env.NODE_ENV === 'development') {
     throw new Error(
@@ -47,7 +50,7 @@ export const supabase: SupabaseClient<Database> = createClient<Database>(
 // Add debug logging in development
 if (process.env.NODE_ENV === 'development') {
   supabase.auth.onAuthStateChange((event, session) => {
-    console.log('Supabase auth state changed:', event, session?.user?.id);
+    logger.info('Supabase auth state changed:', event, session?.user?.id);
   });
 }
 

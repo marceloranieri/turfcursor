@@ -1,10 +1,11 @@
+import logger from '@/lib/logger';
 'use client';
 
 import { useEffect } from 'react';
 
 export default function DebugPage() {
   useEffect(() => {
-    console.log('✅ Hydration complete — DebugPage loaded');
+    logger.info('✅ Hydration complete — DebugPage loaded');
   }, []);
 
   return (

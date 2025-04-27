@@ -1,3 +1,4 @@
+import logger from '@/lib/logger';
 'use client';
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
@@ -32,14 +33,14 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
   
   // Load trending GIFs by default
   useEffect(() => {
-    console.log("GiphySearch mounted, fetching trending GIFs");
+    logger.info("GiphySearch mounted, fetching trending GIFs");
     fetchGifs();
   }, []);
 
   // Search for GIFs when query changes
   useEffect(() => {
     if (searchQuery) {
-      console.log("Search query changed to:", searchQuery);
+      logger.info("Search query changed to:", searchQuery);
       const debounceTimer = setTimeout(() => {
         fetchGifs();
       }, 500);
@@ -53,30 +54,30 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
     setError(null);
     
     try {
-      console.log("Fetching GIFs with query:", searchQuery || "trending");
+      logger.info("Fetching GIFs with query:", searchQuery || "trending");
       
       const endpoint = searchQuery
         ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(searchQuery)}&limit=10&rating=g`
         : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=10&rating=g`;
       
-      console.log("GIPHY endpoint:", endpoint);
+      logger.info("GIPHY endpoint:", endpoint);
       
       const response = await fetch(endpoint);
-      console.log("GIPHY response status:", response.status);
+      logger.info("GIPHY response status:", response.status);
       
       if (!response.ok) {
         throw new Error('Failed to fetch GIFs');
       }
       
       const data = await response.json();
-      console.log("GIPHY data received:", data.data.length, "GIFs");
+      logger.info("GIPHY data received:", data.data.length, "GIFs");
       setGifs(data.data);
     } catch (err) {
-      console.error('Error fetching GIFs:', err);
+      logger.error('Error fetching GIFs:', err);
       setError('Failed to load GIFs. Please try again.');
       
       // Fallback to static GIFs if API fails
-      console.log("Using fallback static GIFs");
+      logger.info("Using fallback static GIFs");
       setGifs([
         {
           id: '1',
@@ -109,7 +110,7 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
   };
 
   const handleGifSelect = (gifUrl: string) => {
-    console.log("GIF selected:", gifUrl);
+    logger.info("GIF selected:", gifUrl);
     onSelect(gifUrl);
   };
 
