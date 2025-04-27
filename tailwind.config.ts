@@ -9,6 +9,8 @@ const config: Config = {
   darkMode: 'class',
   future: {
     hoverOnlyWhenSupported: true,
+    respectDefaultRingColorOpacity: true,
+    disableColorOpacityUtilitiesByDefault: true,
   },
   safelist: [
     // Spacing utilities
@@ -91,6 +93,7 @@ const config: Config = {
         'bounce-in': 'bounceIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
         'spin': 'spin 1s linear infinite',
         'count': 'count 0.3s ease-out',
+        'reaction-bounce': 'reactionBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
       },
       keyframes: {
         fadeIn: {
@@ -118,6 +121,11 @@ const config: Config = {
         count: {
           '0%': { transform: 'translateY(-5px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        reactionBounce: {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.2)' },
+          '100%': { transform: 'scale(1)' },
         },
       },
     },
