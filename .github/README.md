@@ -1,5 +1,4 @@
 ## TL;DR (for full version scroll down)
-
 # Turf App – GitHub Workflows
 
 > GitHub Actions to automate Turf’s Supabase deployments and daily topic rotations.
