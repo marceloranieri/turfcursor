@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "type-check": "tsc --noEmit",
     "deploy": "vercel --prod",
     "analyze": "ANALYZE=true next build",
     "check-env": "node scripts/check-env.js",
@@ -15,7 +15,9 @@
     "check-deployment": "node scripts/check-deployment.js",
     "check-prod": "node scripts/check-prod.js",
     "check-dev": "node scripts/check-dev.js",
-    "deploy:force": "./scripts/deploy.sh"
+    "deploy:force": "./scripts/deploy.sh",
+    "prepare": "husky install",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@emoji-mart/data": "1.2.1",
@@ -54,6 +56,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@axe-core/cli": "4.10.1",
     "@next/bundle-analyzer": "^14.0.4",
     "@playwright/test": "1.52.0",
     "@types/node": "20.10.0",
@@ -63,12 +66,25 @@
     "autoprefixer": "^10.4.16",
     "eslint": "9.25.1",
     "eslint-config-next": "14.0.4",
+    "husky": "9.1.7",
+    "lint-staged": "15.5.1",
     "postcss": "^8.4.31",
+    "prettier": "3.5.3",
     "supabase": "^2.22.4",
     "tailwindcss": "^3.3.0",
-    "typescript": "5.0.4"
+    "typescript": "5.0.4",
+    "wait-on": "8.0.3"
   },
   "engines": {
     "node": ">=18.x"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   }
 }

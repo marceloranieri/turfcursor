@@ -32,8 +32,25 @@ jobs:
     - name: Type check
       run: npm run type-check
     
+    - name: Run Prettier check
+      run: npx prettier --check .
+    
     - name: Build
       run: npm run build
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+        NEXT_PUBLIC_GIPHY_API_KEY: ${{ secrets.NEXT_PUBLIC_GIPHY_API_KEY }}
+    
+    - name: Install Playwright
+      run: npx playwright install --with-deps chromium
+    
+    - name: Run accessibility tests
+      run: |
+        npm run dev & # Start the development server
+        npx wait-on http://localhost:3000
+        npx axe-core-npm http://localhost:3000
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
