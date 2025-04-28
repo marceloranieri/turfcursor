@@ -1,10 +1,11 @@
+'use client';
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GiphyFetch } from '@giphy/js-fetch-api';
 import { IGif } from '@giphy/js-types';
 import { Grid } from '@giphy/react-components';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import logger from '@/lib/logger';
-'use client';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 

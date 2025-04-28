@@ -1,4 +1,3 @@
-import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -6,6 +5,8 @@ import Link from 'next/link';
 import { getActiveTopics, subscribeToTopics } from '../lib/topics/topicHelpers';
 import { Topic } from '../lib/topics/types';
 import { useRouter } from 'next/navigation';
+import logger from '@/lib/logger';
+import { supabase } from '@/lib/supabase/client';
 
 export default function DailyTopics() {
   const [topics, setTopics] = useState<Topic[]>([]);
