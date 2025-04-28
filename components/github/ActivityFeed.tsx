@@ -1,306 +1,245 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
-import { formatDistanceToNow } from 'date-fns';
-import Link from 'next/link';
-import { Github, GitPullRequest, GitCommit, Star, AlertCircle, GitBranch, Tag, Eye } from 'lucide-react';
+import { Octokit } from '@octokit/rest';
+import logger from '@/lib/logger';
 import Image from 'next/image';
 
-interface GitHubEvent {
+interface Event {
   id: string;
-  type: 'push' | 'pull_request' | 'issue' | 'star' | 'gist' | 'fork' | 'release' | 'watch';
-  repo_name: string;
-  action?: string;
-  branch?: string;
-  commit_count?: number;
-  details: any;
-  created_at: string;
-  actor?: {
+  type: string;
+  actor: {
     login: string;
     avatar_url: string;
   };
+  repo: {
+    name: string;
+  };
+  payload: {
+    commits?: Array<{
+      message: string;
+      sha: string;
+    }>;
+    action?: string;
+    issue?: {
+      number: number;
+      title: string;
+    };
+    pull_request?: {
+      number: number;
+      title: string;
+    };
+    ref?: string;
+    ref_type?: string;
+    description?: string;
+    release?: {
+      tag_name: string;
+      name: string;
+    };
+  };
+  created_at: string;
 }
 
 interface ActivityFeedProps {
-  selectedRepos: string[];
+  username: string;
   limit?: number;
 }
 
-export const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedRepos, limit = 10 }) => {
-  const [events, setEvents] = useState<GitHubEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5 }) => {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Create a tagged logger for this component
+  const componentLogger = logger.tagged('ActivityFeed');
 
   useEffect(() => {
     const fetchEvents = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('github_events')
-          .select('*')
-          .in('repo_name', selectedRepos)
-          .order('created_at', { ascending: false })
-          .limit(limit);
+      componentLogger.debug(`Fetching GitHub events for user: ${username}`);
+      setLoading(true);
+      setError(null);
 
-        if (error) throw error;
-        setEvents(data || []);
-      } catch (error) {
-        console.error('Error fetching GitHub events:', error);
+      try {
+        const octokit = new Octokit();
+        const response = await octokit.activity.listPublicEventsForUser({
+          username,
+          per_page: limit,
+        });
+
+        componentLogger.info(`Successfully fetched ${response.data.length} events for ${username}`);
+        setEvents(response.data as Event[]);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        componentLogger.error(`Failed to fetch GitHub events: ${errorMessage}`);
+        setError(`Failed to load GitHub activity: ${errorMessage}`);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
+        componentLogger.debug('Finished loading GitHub events');
       }
     };
 
-    if (selectedRepos.length > 0) {
+    if (username) {
       fetchEvents();
     } else {
-      setEvents([]);
-      setIsLoading(false);
+      setError('Username is required');
     }
+  }, [username, limit, componentLogger]);
 
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('github_events')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'github_events',
-        filter: `repo_name=in.(${selectedRepos.join(',')})`,
-      }, (payload) => {
-        setEvents(current => [payload.new as GitHubEvent, ...current].slice(0, limit));
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [selectedRepos, limit]);
-
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case 'push':
-        return <GitCommit className="w-5 h-5 text-green-500" />;
-      case 'pull_request':
-        return <GitPullRequest className="w-5 h-5 text-blue-500" />;
-      case 'issue':
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
-      case 'star':
-        return <Star className="w-5 h-5 text-yellow-400" />;
-      case 'gist':
-        return <Github className="w-5 h-5 text-purple-500" />;
-      case 'fork':
-        return <GitBranch className="w-5 h-5 text-indigo-500" />;
-      case 'release':
-        return <Tag className="w-5 h-5 text-pink-500" />;
-      case 'watch':
-        return <Eye className="w-5 h-5 text-cyan-500" />;
-      default:
-        return <Github className="w-5 h-5 text-gray-500" />;
-    }
-  };
-
-  const renderEventContent = (event: GitHubEvent) => {
+  const renderEventContent = (event: Event) => {
     switch (event.type) {
-      case 'push':
+      case 'PushEvent':
         return (
-          <div className="space-y-2">
+          <div>
             <p>
-              Pushed {event.commit_count} commit{event.commit_count === 1 ? '' : 's'} to{' '}
-              <span className="font-medium">{event.branch}</span>
+              Pushed to <strong>{event.repo.name}</strong>
+              {event.payload.ref && (
+                <span className="text-gray-600">
+                  {' '}
+                  ({event.payload.ref.replace('refs/heads/', '')})
+                </span>
+              )}
             </p>
-            <div className="space-y-1">
-              {event.details.commits.map((commit: any) => (
-                <div key={commit.id} className="text-sm">
-                  <Link
-                    href={commit.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-accent-primary hover:underline"
-                  >
-                    {commit.id.substring(0, 7)}
-                  </Link>
-                  {' - '}
-                  {commit.message}
-                </div>
+            <ul className="text-sm text-gray-600">
+              {event.payload.commits?.map(commit => (
+                <li key={commit.sha.substring(0, 7)} className="truncate">
+                  <span className="font-mono text-xs text-gray-500">
+                    {commit.sha.substring(0, 7)}
+                  </span>{' '}
+                  {commit.message.split('\n')[0]}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         );
-
-      case 'pull_request':
+      case 'CreateEvent':
         return (
-          <div>
-            <Link
-              href={event.details.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-primary hover:underline"
-            >
-              Pull request #{event.details.number}
-            </Link>
-            {' '}
-            {event.action}: {event.details.title}
-            {event.details.body && (
-              <p className="mt-1 text-sm text-text-secondary line-clamp-2">
-                {event.details.body}
-              </p>
-            )}
-          </div>
+          <p>
+            Created {event.payload.ref_type}{' '}
+            {event.payload.ref && <strong>{event.payload.ref}</strong>} in{' '}
+            <strong>{event.repo.name}</strong>
+          </p>
         );
-
-      case 'issue':
+      case 'DeleteEvent':
         return (
-          <div>
-            <Link
-              href={event.details.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-primary hover:underline"
-            >
-              Issue #{event.details.number}
-            </Link>
-            {' '}
-            {event.action}: {event.details.title}
-            {event.details.body && (
-              <p className="mt-1 text-sm text-text-secondary line-clamp-2">
-                {event.details.body}
-              </p>
-            )}
-          </div>
+          <p>
+            Deleted {event.payload.ref_type}{' '}
+            {event.payload.ref && <strong>{event.payload.ref}</strong>} in{' '}
+            <strong>{event.repo.name}</strong>
+          </p>
         );
-
-      case 'star':
+      case 'IssuesEvent':
         return (
-          <div>
-            Repository {event.action === 'created' ? 'starred' : 'unstarred'} (now has {event.details.stars} stars)
-          </div>
+          <p>
+            {event.payload.action} issue{' '}
+            <strong>
+              {event.repo.name}#{event.payload.issue?.number}
+            </strong>
+            : {event.payload.issue?.title}
+          </p>
         );
-
-      case 'gist':
+      case 'IssueCommentEvent':
         return (
-          <div>
-            <Link
-              href={event.details.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-primary hover:underline"
-            >
-              Gist {event.details.id}
-            </Link>
-            {' '}
-            {event.action}: {event.details.description || 'Untitled gist'}
-          </div>
+          <p>
+            Commented on issue{' '}
+            <strong>
+              {event.repo.name}#{event.payload.issue?.number}
+            </strong>
+          </p>
         );
-
-      case 'fork':
+      case 'PullRequestEvent':
         return (
-          <div>
-            Forked repository to{' '}
-            <Link
-              href={event.details.fork_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-primary hover:underline"
-            >
-              {event.details.fork_name}
-            </Link>
-          </div>
+          <p>
+            {event.payload.action} pull request{' '}
+            <strong>
+              {event.repo.name}#{event.payload.pull_request?.number}
+            </strong>
+            : {event.payload.pull_request?.title}
+          </p>
         );
-
-      case 'release':
+      case 'ReleaseEvent':
         return (
-          <div>
-            <Link
-              href={event.details.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-primary hover:underline"
-            >
-              Released version {event.details.tag_name}
-            </Link>
-            {event.details.name && `: ${event.details.name}`}
-            {event.details.body && (
-              <p className="mt-1 text-sm text-text-secondary line-clamp-2">
-                {event.details.body}
-              </p>
-            )}
-          </div>
+          <p>
+            Released{' '}
+            <strong>{event.payload.release?.name || event.payload.release?.tag_name}</strong> on{' '}
+            <strong>{event.repo.name}</strong>
+          </p>
         );
-
-      case 'watch':
+      case 'WatchEvent':
         return (
-          <div>
-            Started watching the repository
-            {event.details.stars_count && ` (${event.details.stars_count} total watchers)`}
-          </div>
+          <p>
+            Starred <strong>{event.repo.name}</strong>
+          </p>
         );
-
+      case 'ForkEvent':
+        return (
+          <p>
+            Forked <strong>{event.repo.name}</strong>
+          </p>
+        );
       default:
-        return null;
+        return (
+          <p>
+            Activity on <strong>{event.repo.name}</strong>
+          </p>
+        );
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-accent-primary"></div>
+      <div className="p-4 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600 mx-auto mb-2"></div>
+        <p>Loading GitHub activity...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <p className="font-medium">Error</p>
+        <p className="text-sm">{error}</p>
       </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-8 text-text-secondary">
-        {selectedRepos.length === 0
-          ? 'Select repositories to see their activity'
-          : 'No recent activity in selected repositories'}
+      <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+        <p>No recent GitHub activity found for @{username}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {events.map((event) => (
-        <div
-          key={event.id}
-          className="p-4 bg-background-tertiary rounded-lg border border-background-secondary hover:border-accent-primary/30 transition-colors"
-        >
-          <div className="flex items-start space-x-4">
-            {event.actor && (
+    <div className="bg-white rounded-lg shadow">
+      <div className="px-4 py-3 border-b border-gray-200">
+        <h3 className="text-lg font-medium">Recent GitHub Activity</h3>
+      </div>
+      <ul className="divide-y divide-gray-200">
+        {events.map(event => (
+          <li key={event.id} className="p-4 hover:bg-gray-50 transition-colors">
+            <div className="flex items-start">
               <Image
                 src={event.actor.avatar_url}
-                alt={event.actor.login}
+                alt={`${event.actor.login}'s avatar`}
                 width={40}
                 height={40}
-                className="rounded-full"
+                className="rounded-full mr-4"
               />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Link
-                    href={`https://github.com/${event.repo_name}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-text-primary font-medium hover:text-accent-primary"
-                  >
-                    {event.repo_name}
-                  </Link>
-                  <div className="text-text-secondary text-sm">
-                    {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {getEventIcon(event.type)}
-                  <div className="text-xs font-medium px-2 py-1 rounded-full bg-background-secondary text-text-secondary">
-                    {event.type.replace('_', ' ')}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2 text-text-primary">
-                {renderEventContent(event)}
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-gray-900">{event.actor.login}</p>
+                <div className="mt-1">{renderEventContent(event)}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(event.created_at).toLocaleString()}
+                </p>
               </div>
             </div>
-          </div>
-        </div>
-      ))}
+          </li>
+        ))}
+      </ul>
     </div>
   );
-}; 
+};
+
+export default ActivityFeed;
