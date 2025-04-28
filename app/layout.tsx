@@ -1,7 +1,7 @@
 // app/layout.tsx
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { Providers } from '@/components/providers/Providers';
 
 const inter = Inter({ subsets: ['latin'] });

@@ -63,7 +63,7 @@ export function trackLoginCount() {
       duration: 4000
     });
   } else if (newCount === 10) {
-    toast("Wow! 10 logins! You must really like us! 🎉", {
+    toast("You must really like us! 🎉 10 logins!", {
       icon: '🌟',
       duration: 4000
     });
