@@ -3,104 +3,51 @@
 import logger from '@/lib/logger';
 import { useEffect } from 'react';
 
-export function setupDebugListeners() {
-  if (process.env.NODE_ENV !== 'development') return;
+export function useDebugListeners() {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
 
-  logger.info('Setting up debug listeners');
-  
-  // Click event debugging
-  document.addEventListener('click', (e) => {
-    logger.info('Element clicked:', e.target);
-    logger.info('Element ID:', e.target.id || 'No ID');
-    logger.info('Element classes:', e.target.className || 'No classes');
-    logger.info('Element tag:', e.target.tagName);
+    logger.info('Setting up debug listeners');
     
-    // Highlight clicked element
-    const originalBg = e.target.style.backgroundColor;
-    const originalOutline = e.target.style.outline;
-    e.target.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
-    e.target.style.outline = '2px solid red';
-    setTimeout(() => {
-      e.target.style.backgroundColor = originalBg;
-      e.target.style.outline = originalOutline;
-    }, 500);
-  });
-  
-  // Log all form submissions
-  document.addEventListener('submit', (e) => {
-    logger.info('Form submitted:', e.target);
-    logger.info('Form ID:', e.target.id || 'No ID');
-    logger.info('Form fields:', getFormData(e.target));
-  });
-  
-  // Monitor DOM mutations for dynamically added elements
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        logger.info('DOM nodes added:', mutation.addedNodes);
-      }
+    // Click event debugging
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      logger.info('Element clicked:', target);
+      logger.info('Element ID:', target.id || 'No ID');
+      logger.info('Element classes:', target.className || 'No classes');
+      logger.info('Element tag:', target.tagName);
+      
+      // Highlight clicked element
+      const originalBg = target.style.backgroundColor;
+      const originalOutline = target.style.outline;
+      target.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+      target.style.outline = '2px solid red';
+      setTimeout(() => {
+        target.style.backgroundColor = originalBg;
+        target.style.outline = originalOutline;
+      }, 500);
+    };
+    
+    // Log all form submissions
+    const handleSubmit = (e: SubmitEvent) => {
+      const target = e.target as HTMLFormElement;
+      logger.info('Form submitted:', target);
+      logger.info('Form ID:', target.id || 'No ID');
+      logger.info('Form fields:', getFormData(target));
+    };
+    
+    // Monitor DOM mutations for dynamically added elements
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          logger.info('DOM nodes added:', mutation.addedNodes);
+        }
+      });
     });
-  });
-  
-  observer.observe(document.body, { childList: true, subtree: true });
-  
-  // Add helper method to global window object
-  if (typeof window !== 'undefined') {
-    window.debugElement = (selector) => {
-      const el = document.querySelector(selector);
-      if (el) {
-        logger.info('Debug element:', el);
-        logger.info('Classes:', el.className);
-        logger.info('Attributes:', Array.from(el.attributes).map(attr => `${attr.name}="${attr.value}"`));
-        logger.info('Styles:', el.style);
-        logger.info('Computed styles:', window.getComputedStyle(el));
-        
-        // Highlight the element
-        const originalOutline = el.style.outline;
-        el.style.outline = '2px solid blue';
-        setTimeout(() => {
-          el.style.outline = originalOutline;
-        }, 3000);
-        
-        return el;
-      } else {
-        logger.warn('No element found matching selector:', selector);
-        return null;
-      }
-    };
     
-    window.listClickableElements = () => {
-      const buttons = Array.from(document.querySelectorAll('button'));
-      const anchors = Array.from(document.querySelectorAll('a'));
-      const clickables = Array.from(document.querySelectorAll('[role="button"], .channel, .reaction, .input-action, .header-action'));
-      
-      logger.info('Buttons:', buttons);
-      logger.info('Links:', anchors);
-      logger.info('Other clickables:', clickables);
-      
-      return { buttons, anchors, clickables };
-    };
+    observer.observe(document.body, { childList: true, subtree: true });
     
-    logger.info('Debug helpers added to window. Try window.debugElement(".channel") or window.listClickableElements()');
-  }
-  
-  // Log navigation events
-  useEffect(() => {
-    const handleRouteChange = () => {
-      logger.info('Route changed:', window.location.pathname);
-    };
-
-    window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
-  }, []);
-
-  // Log hydration status
-  useEffect(() => {
-    logger.info('Component hydrated:', new Date().toISOString());
-  }, []);
-
-  // Log client-side errors
-  useEffect(() => {
+    // Log client-side errors
     const handleError = (event: ErrorEvent) => {
       logger.error('Client-side error occurred', {
         message: event.message,
@@ -111,12 +58,7 @@ export function setupDebugListeners() {
       });
     };
 
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
-
-  // Log unhandled promise rejections
-  useEffect(() => {
+    // Log unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       logger.error('Unhandled promise rejection occurred', {
         reason: event.reason,
@@ -124,29 +66,26 @@ export function setupDebugListeners() {
       });
     };
 
+    // Add event listeners
+    document.addEventListener('click', handleClick);
+    document.addEventListener('submit', handleSubmit);
+    window.addEventListener('error', handleError);
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('submit', handleSubmit);
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      observer.disconnect();
+    };
   }, []);
-  
-  logger.info('Debug listeners setup complete');
 }
 
-// Helper to extract form data
-function getFormData(form: HTMLFormElement) {
-  const formData = new FormData(form);
-  const data: Record<string, string> = {};
-  
-  formData.forEach((value, key) => {
-    data[key] = value.toString();
-  });
-  
-  return data;
-}
-
-export function logComponentLifecycle(componentName: string) {
-  if (process.env.NODE_ENV !== 'development') return;
-
+export function useComponentLifecycle(componentName: string) {
   useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
     logger.info(`${componentName} mounted`);
     return () => logger.info(`${componentName} unmounted`);
   }, [componentName]);
@@ -165,6 +104,15 @@ export function measurePerformance(label: string) {
     const end = performance.now();
     logger.info(`${label} took ${end - start}ms`);
   };
+}
+
+function getFormData(form: HTMLFormElement): Record<string, any> {
+  const formData = new FormData(form);
+  const data: Record<string, any> = {};
+  for (const [key, value] of formData.entries()) {
+    data[key] = value;
+  }
+  return data;
 }
 
 // Add this to your page component with:

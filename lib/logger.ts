@@ -1,18 +1,9 @@
 export const logger = {
-  info: (...args: any[]) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[INFO]', ...args);
-    }
-  },
-  error: (...args: any[]) => {
-    console.error('[ERROR]', ...args);
-  },
-  warn: (...args: any[]) => {
-    console.warn('[WARN]', ...args);
-  },
-  debug: (...args: any[]) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[DEBUG]', ...args);
-    }
-  }
-}; 
+  log: (...args: any[]) => console.log(...args),
+  error: (...args: any[]) => console.error(...args),
+  warn: (...args: any[]) => console.warn(...args),
+  info: (...args: any[]) => console.info(...args),
+  debug: (...args: any[]) => console.debug(...args),
+};
+
+export default logger; 

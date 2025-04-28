@@ -55,6 +55,95 @@ interface ChatAreaProps {
   onSendMessage: (content: string) => void;
 }
 
+interface GifPickerProps {
+  onGifSelect: (message: string) => void;
+  onClose: () => void;
+}
+
+const GifPicker: React.FC<GifPickerProps> = ({ onGifSelect, onClose }) => {
+  const [gifs, setGifs] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  useEffect(() => {
+    const searchGifs = async () => {
+      if (!searchQuery) {
+        // Just show trending gifs
+        setIsLoading(true);
+        try {
+          const response = await fetch(
+            `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=5`
+          );
+          const data = await response.json();
+          const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
+          setGifs(gifUrls);
+        } catch (error) {
+          logger.error('Error fetching GIFs:', error);
+          // Fallback to static GIFs if API fails
+          setGifs([
+            'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDMwbWlxNDg4cGlmMmZuemdqNTk1MHUyMGc2Z3ppNXkyNnV2eTdubyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YrBRYRDN4M5Q0dyzKh/giphy.gif',
+            'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWdyY3JhNnN1c3I4MG02ZjBpNGhteXBkb3NydnRveTFyc3owbWZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ZG0OPY9ToFbXO/giphy.gif',
+            'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3ppMGJxendnYTk3cHVqcnRyY240em84aXQ2bncydXM3ZXkzYnlmdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ohhwytHcusSCXXp96/giphy.gif'
+          ]);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // Search for gifs based on query
+        setIsLoading(true);
+        try {
+          const response = await fetch(
+            `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${searchQuery}&limit=5`
+          );
+          const data = await response.json();
+          const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
+          setGifs(gifUrls);
+        } catch (error) {
+          logger.error('Error searching GIFs:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    searchGifs();
+  }, [searchQuery]);
+  
+  return (
+    <div className="absolute bottom-16 right-4 bg-background-tertiary p-2 rounded-md shadow-lg z-10 w-64">
+      <div className="mb-2">
+        <input
+          type="text"
+          placeholder="Search GIFs..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full p-1 bg-background-secondary text-text-primary rounded border border-background-primary focus:outline-none"
+        />
+      </div>
+      <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+        {isLoading ? (
+          <div className="text-center py-4 text-text-muted">Loading...</div>
+        ) : gifs.length > 0 ? (
+          gifs.map((url, index) => (
+            <img 
+              key={index}
+              src={url}
+              alt="GIF option"
+              className="cursor-pointer hover:brightness-90 rounded w-full"
+              onClick={() => {
+                onClose();
+                onGifSelect("I sent a GIF! (In a real app, this would show the actual GIF)");
+              }}
+            />
+          ))
+        ) : (
+          <div className="text-center py-4 text-text-muted">No GIFs found</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const ChatArea: React.FC<ChatAreaProps> = ({
   topic,
   messages: initialMessages,
@@ -341,97 +430,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     );
   };
   
-  // Improved GIF picker with GIPHY API
-  const renderGifPicker = () => {
-    const [gifs, setGifs] = useState<string[]>([]);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    
-    useEffect(() => {
-      const searchGifs = async () => {
-        if (!searchQuery) {
-          // Just show trending gifs
-          setIsLoading(true);
-          try {
-            const response = await fetch(
-              `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_API_KEY}&limit=5`
-            );
-            const data = await response.json();
-            const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
-            setGifs(gifUrls);
-          } catch (error) {
-            logger.error('Error fetching GIFs:', error);
-            // Fallback to static GIFs if API fails
-            setGifs([
-              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDMwbWlxNDg4cGlmMmZuemdqNTk1MHUyMGc2Z3ppNXkyNnV2eTdubyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YrBRYRDN4M5Q0dyzKh/giphy.gif',
-              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWdyY3JhNnN1c3I4MG02ZjBpNGhteXBkb3NydnRveTFyc3owbWZ5ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ZG0OPY9ToFbXO/giphy.gif',
-              'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3ppMGJxendnYTk3cHVqcnRyY240em84aXQ2bncydXM3ZXkzYnlmdiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ohhwytHcusSCXXp96/giphy.gif'
-            ]);
-          } finally {
-            setIsLoading(false);
-          }
-        } else {
-          // Search for gifs based on query
-          setIsLoading(true);
-          try {
-            const response = await fetch(
-              `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_API_KEY}&q=${searchQuery}&limit=5`
-            );
-            const data = await response.json();
-            const gifUrls = data.data.map((gif: any) => gif.images.fixed_height.url);
-            setGifs(gifUrls);
-          } catch (error) {
-            logger.error('Error searching GIFs:', error);
-          } finally {
-            setIsLoading(false);
-          }
-        }
-      };
-      
-      searchGifs();
-    }, [searchQuery]);
-    
-    return (
-      <div className="absolute bottom-16 right-4 bg-background-tertiary p-2 rounded-md shadow-lg z-10 w-64">
-        <div className="mb-2">
-          <input
-            type="text"
-            placeholder="Search GIFs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-1 bg-background-secondary text-text-primary rounded border border-background-primary focus:outline-none"
-          />
-        </div>
-        <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-          {isLoading ? (
-            <div className="text-center py-4 text-text-muted">Loading...</div>
-          ) : gifs.length > 0 ? (
-            gifs.map((url, index) => (
-              <img 
-                key={index}
-                src={url}
-                alt="GIF option"
-                className="cursor-pointer hover:brightness-90 rounded w-full"
-                onClick={() => {
-                  // In a real app, we would insert the GIF URL as a message or attachment
-                  // For this demo, we'll just close the picker and send a text message
-                  setShowGifPicker(false);
-                  setMessageInput("I sent a GIF! (In a real app, this would show the actual GIF)");
-                  // Immediately send the message
-                  handleSubmit({
-                    preventDefault: () => {}
-                  } as React.FormEvent);
-                }}
-              />
-            ))
-          ) : (
-            <div className="text-center py-4 text-text-muted">No GIFs found</div>
-          )}
-        </div>
-      </div>
-    );
-  };
-  
   return (
     <div className="flex flex-col flex-1 bg-background min-w-0">
       {/* Chat header */}
@@ -519,7 +517,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       {showEmojiPicker && renderEmojiPicker()}
       
       {/* GIF Picker */}
-      {showGifPicker && renderGifPicker()}
+      {showGifPicker && (
+        <GifPicker 
+          onGifSelect={(message) => {
+            setMessageInput(message);
+            handleSubmit({
+              preventDefault: () => {}
+            } as React.FormEvent);
+          }}
+          onClose={() => setShowGifPicker(false)}
+        />
+      )}
     </div>
   );
 };

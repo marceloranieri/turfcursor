@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/ToastContext';
-import { logger } from '@/lib/logger';
+import logger from '@/lib/logger';
 
 export default function SettingsPage() {
   const router = useRouter();

@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
+import React from 'react';
 
 // Loading component for dynamic imports
 const LoadingComponent = () => (

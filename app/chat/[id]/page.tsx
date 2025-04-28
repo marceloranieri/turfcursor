@@ -9,7 +9,7 @@ import MobileNavigation from '@/components/layout/MobileNavigation';
 import GuestModal from '@/components/modals/GuestModal';
 import { createClient } from '@supabase/supabase-js';
 import MainLayout from '@/components/layout/MainLayout';
-import { setupDebugListeners } from '@/lib/debug-helpers';
+import { useDebugListeners } from '@/lib/debug-helpers';
 import HydrationSafeComponent from '@/components/HydrationSafeComponent';
 import { toast } from 'react-hot-toast';
 
@@ -165,6 +165,9 @@ export default function ChatPage() {
   const router = useRouter();
   const params = useParams();
   const topicId = params?.id as string;
+  
+  // Call the debug hook
+  useDebugListeners();
   
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);

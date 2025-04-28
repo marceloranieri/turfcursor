@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, FC } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import SignInModal from '@/components/auth/SignInModal';
 import { useRouter } from 'next/navigation';
 
-export const useGuestMode = () => {
+interface GuestModeReturn {
+  isGuest: boolean;
+  isSignInModalOpen: boolean;
+  openSignInModal: (path?: string) => void;
+  closeSignInModal: () => void;
+  handleGuestAction: (action: () => void, path?: string) => void;
+  SignInModalComponent: any;
+}
+
+export const useGuestMode = (): GuestModeReturn => {
   const { user } = useAuth();
   const router = useRouter();
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
