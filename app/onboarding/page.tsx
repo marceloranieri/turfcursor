@@ -44,21 +44,23 @@ const OnboardingPage = () => {
       <div className="bg-background-secondary rounded-xl max-w-md w-full py-8 px-6">
         <div className="onboarding-content text-center">
           <div className="onboarding-image mb-6">
-            <Image 
-              src={slides[currentSlide].image} 
-              alt={slides[currentSlide].title}
-              width={250}
-              height={200}
-              className="mx-auto"
-            />
+            {slides[currentSlide]?.image && (
+              <Image 
+                src={slides[currentSlide]!.image} 
+                alt={slides[currentSlide]!.title}
+                width={250}
+                height={200}
+                className="mx-auto"
+              />
+            )}
           </div>
           
           <h1 className="text-2xl font-bold text-text-primary mb-3">
-            {slides[currentSlide].title}
+            {slides[currentSlide]?.title}
           </h1>
           
           <p className="text-text-secondary mb-6">
-            {slides[currentSlide].description}
+            {slides[currentSlide]?.description}
           </p>
           
           <div className="dots flex justify-center mb-8">

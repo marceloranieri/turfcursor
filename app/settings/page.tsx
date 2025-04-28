@@ -1,12 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/ToastContext';
 import logger from '@/lib/logger';
+
+type GithubRepo = {
+  id: number;
+  full_name: string;
+  name: string;
+  private: boolean;
+  html_url: string;
+  description: string | null;
+};
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -21,8 +30,29 @@ export default function SettingsPage() {
   const [githubUsername, setGithubUsername] = useState('');
   const [githubSyncEnabled, setGithubSyncEnabled] = useState(false);
   const [githubNotifications, setGithubNotifications] = useState(true);
-  const [githubRepos, setGithubRepos] = useState<string[]>([]);
+  const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([]);
   const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+
+  const fetchGithubRepos = useCallback(async (accessToken: string) => {
+    try {
+      setIsLoadingRepos(true);
+      const response = await fetch('https://api.github.com/user/repos', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const data = await response.json();
+      setGithubRepos(data);
+    } catch (error) {
+      showToast({
+        message: 'Error fetching GitHub repositories',
+        type: 'error',
+      });
+    } finally {
+      setIsLoadingRepos(false);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -65,50 +95,7 @@ export default function SettingsPage() {
     };
 
     loadUserSettings();
-  }, [user, showToast]);
-
-  const fetchGithubRepos = async (accessToken: string) => {
-    try {
-      const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-
-      const repos = await response.json();
-      const repoNames = repos.map((repo: any) => repo.full_name);
-      
-      setGithubRepos(repoNames);
-      
-      // Save repos to user metadata
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          github: {
-            ...user?.user_metadata?.github,
-            repos: repoNames,
-          },
-        },
-      });
-      
-      if (error) {
-        logger.error('Error saving GitHub repos to metadata:', error);
-      }
-      
-      return repoNames;
-    } catch (error) {
-      logger.error('Error fetching GitHub repos:', error);
-      showToast({
-        message: 'Failed to fetch GitHub repositories',
-        type: 'error',
-      });
-      return [];
-    }
-  };
+  }, [user, showToast, fetchGithubRepos]);
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -387,18 +374,18 @@ export default function SettingsPage() {
                         <div className="max-h-60 overflow-y-auto space-y-2">
                           {githubRepos.map((repo) => (
                             <div
-                              key={repo}
+                              key={repo.full_name}
                               className="flex items-center space-x-3 p-2 rounded-md hover:bg-background-tertiary"
                             >
                               <input
                                 type="checkbox"
-                                id={repo}
-                                checked={selectedRepos.includes(repo)}
-                                onChange={() => handleRepoSelection(repo)}
+                                id={repo.full_name}
+                                checked={selectedRepos.includes(repo.full_name)}
+                                onChange={() => handleRepoSelection(repo.full_name)}
                                 className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-gray-300 rounded"
                               />
-                              <label htmlFor={repo} className="text-text-primary">
-                                {repo}
+                              <label htmlFor={repo.full_name} className="text-text-primary">
+                                {repo.full_name}
                               </label>
                             </div>
                           ))}

@@ -8,6 +8,7 @@ import DiscordButton from '@/components/ui/DiscordButton';
 import { FaGoogle, FaFacebook, FaGithub, FaEnvelope, FaTimes } from 'react-icons/fa';
 import { useConfetti } from '@/lib/auth/authEffects';
 import { toast } from 'react-hot-toast';
+import { X, Chrome, Facebook, Github, Mail } from 'lucide-react';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
           className="absolute top-4 right-4 text-text-secondary hover:text-text-primary"
           aria-label="Close modal"
         >
-          <FaTimes />
+          <X size={20} />
         </button>
         
         <h2 className="text-xl font-bold text-text-primary mb-4 text-center">Sign in to continue</h2>
@@ -91,31 +92,28 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
           <div className="space-y-3">
             <DiscordButton
               onClick={() => handleOAuthSignIn('google')}
-              fullWidth
-              className="flex items-center justify-center gap-2 bg-white text-gray-800 hover:bg-gray-100"
-              isLoading={isLoading}
+              className="w-full flex items-center justify-center gap-2 bg-white text-gray-800 hover:bg-gray-100"
+              disabled={isLoading}
             >
-              <FaGoogle className="text-xl" />
+              <Chrome size={20} />
               Continue with Google
             </DiscordButton>
             
             <DiscordButton
               onClick={() => handleOAuthSignIn('facebook')}
-              fullWidth
-              className="flex items-center justify-center gap-2 bg-[#1877F2] text-white hover:bg-[#0d6efd]"
-              isLoading={isLoading}
+              className="w-full flex items-center justify-center gap-2 bg-[#1877F2] text-white hover:bg-[#0d6efd]"
+              disabled={isLoading}
             >
-              <FaFacebook className="text-xl" />
+              <Facebook size={20} />
               Continue with Facebook
             </DiscordButton>
             
             <DiscordButton
               onClick={() => handleOAuthSignIn('github')}
-              fullWidth
-              className="flex items-center justify-center gap-2 bg-[#24292e] text-white hover:bg-[#1b1f23]"
-              isLoading={isLoading}
+              className="w-full flex items-center justify-center gap-2 bg-[#24292e] text-white hover:bg-[#1b1f23]"
+              disabled={isLoading}
             >
-              <FaGithub className="text-xl" />
+              <Github size={20} />
               Continue with GitHub
             </DiscordButton>
             
@@ -130,10 +128,9 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath
             
             <DiscordButton
               onClick={() => setIsEmailMode(true)}
-              fullWidth
-              className="flex items-center justify-center gap-2 bg-accent-primary text-white hover:bg-accent-primary-dark"
+              className="w-full flex items-center justify-center gap-2 bg-accent-primary text-white hover:bg-accent-primary-dark"
             >
-              <FaEnvelope className="text-xl" />
+              <Mail size={20} />
               Continue with Email
             </DiscordButton>
           </div>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Message } from '@/lib/types';
+import Image from 'next/image';
 
 interface MessageListProps {
   messages: Message[];
@@ -138,9 +139,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {/* Attachment if any */}
         {message.attachment && (
           <div className="mb-2 max-w-md">
-            <img 
+            <Image 
               src={message.attachment.url} 
               alt={message.attachment.alt || "Attachment"} 
+              width={500}
+              height={300}
               className="rounded-md w-full"
             />
           </div>

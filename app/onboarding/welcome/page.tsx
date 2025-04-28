@@ -57,9 +57,9 @@ export default function OnboardingWelcome() {
         </div>
         
         <div className="text-center py-8">
-          <div className="text-6xl mb-4">{currentFeature.icon}</div>
-          <h2 className="text-2xl font-bold mb-2">{currentFeature.title}</h2>
-          <p className="text-text-secondary">{currentFeature.description}</p>
+          <div className="text-6xl mb-4">{currentFeature?.icon}</div>
+          <h2 className="text-2xl font-bold mb-2">{currentFeature?.title}</h2>
+          <p className="text-text-secondary">{currentFeature?.description}</p>
         </div>
         
         {/* Progress dots */}

@@ -1,27 +1,17 @@
-import React from 'react';
-import Head from 'next/head';
-import InteractionHandler from '@/components/InteractionHandler';
+'use client'
+
+import { ReactNode } from 'react'
 
 interface MainLayoutProps {
-  children: React.ReactNode;
-  enableDebug?: boolean;
+  children: ReactNode
+  enableDebug?: boolean
 }
 
-export default function MainLayout({ children, enableDebug = true }: MainLayoutProps) {
+export function MainLayout({ children, enableDebug = false }: MainLayoutProps) {
   return (
-    <>
-      <Head>
-        <title>Turf - Debate App</title>
-        <meta name="description" content="Join discussions on trending topics" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {enableDebug && <script src="/debug.js" />}
-      </Head>
-      
-      {/* Main content */}
-      {children}
-      
-      {/* Add the interaction handler component */}
-      <InteractionHandler debug={enableDebug} />
-    </>
-  );
-} 
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body>{children}</body>
+    </html>
+  )
+}

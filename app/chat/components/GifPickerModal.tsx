@@ -1,7 +1,7 @@
 'use client';
 
 import logger from '@/lib/logger';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
@@ -32,23 +32,7 @@ export default function GifPickerModal({ onSelect, onClose }: GifPickerModalProp
   // Use environment variable for API key in production
   const GIPHY_API_KEY = process.env.NEXT_PUBLIC_GIPHY_API_KEY || 'LAEhUpkO8Kb5pCjPgiufyX2LVJDv01s6';
   
-  // Load trending GIFs by default
-  useEffect(() => {
-    fetchGifs();
-  }, []);
-  
-  // Search for GIFs when query changes
-  useEffect(() => {
-    if (searchQuery) {
-      const debounceTimer = setTimeout(() => {
-        fetchGifs();
-      }, 500);
-      
-      return () => clearTimeout(debounceTimer);
-    }
-  }, [searchQuery]);
-  
-  const fetchGifs = async () => {
+  const fetchGifs = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -99,7 +83,29 @@ export default function GifPickerModal({ onSelect, onClose }: GifPickerModalProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, GIPHY_API_KEY]);
+  
+  // Load trending GIFs by default
+  useEffect(() => {
+    fetchGifs();
+  }, [fetchGifs]);
+  
+  // Search for GIFs when query changes
+  useEffect(() => {
+    let debounceTimer: NodeJS.Timeout;
+    
+    if (searchQuery) {
+      debounceTimer = setTimeout(() => {
+        fetchGifs();
+      }, 500);
+    }
+    
+    return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+    };
+  }, [searchQuery, fetchGifs]);
   
   const handleGifSelect = (gifUrl: string) => {
     onSelect(gifUrl);
@@ -137,26 +143,19 @@ export default function GifPickerModal({ onSelect, onClose }: GifPickerModalProp
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
         </div>
       ) : (
-        <div className="giphy-results grid grid-cols-2 gap-3">
+        <div className="gif-grid grid grid-cols-2 gap-2">
           {gifs.map((gif) => (
             <div 
               key={gif.id}
-              className="giphy-result cursor-pointer hover:opacity-80 transition-opacity border border-background-primary rounded overflow-hidden"
-              onClick={() => handleGifSelect(gif.images.fixed_height.url)}
-              role="button"
-              tabIndex={0}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleGifSelect(gif.images.fixed_height.url);
-                }
-              }}
-              aria-label={`Select GIF: ${gif.title}`}
+              className="gif-item cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => handleGifSelect(gif.images.original.url)}
             >
-              <img 
+              <Image 
                 src={gif.images.fixed_height.url}
                 alt={gif.title}
-                className="w-full h-auto"
-                loading="lazy"
+                width={200}
+                height={200}
+                className="w-full h-auto rounded"
               />
             </div>
           ))}

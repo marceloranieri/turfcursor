@@ -1,8 +1,8 @@
-import logger from '@/lib/logger';
 'use client'
 
+import logger from '@/lib/logger';
 import { useEffect, useState } from 'react';
-import { logComponentLifecycle } from '@/lib/debug-helpers';
+import { useComponentLifecycle } from '@/lib/debug-helpers';
 
 interface HydrationSafeComponentProps {
   children: React.ReactNode;
@@ -25,7 +25,7 @@ export default function HydrationSafeComponent({
   }, [componentName]);
 
   // Log component lifecycle in development
-  logComponentLifecycle(componentName);
+  useComponentLifecycle(componentName);
 
   // Show fallback until hydration is complete
   if (!isHydrated) {

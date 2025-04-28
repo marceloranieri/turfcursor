@@ -1,6 +1,6 @@
 import logger from '@/lib/logger';
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
@@ -35,7 +35,7 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
   useEffect(() => {
     logger.info("GiphySearch mounted, fetching trending GIFs");
     fetchGifs();
-  }, []);
+  }, [fetchGifs]);
 
   // Search for GIFs when query changes
   useEffect(() => {
@@ -47,9 +47,9 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
 
       return () => clearTimeout(debounceTimer);
     }
-  }, [searchQuery]);
+  }, [searchQuery, fetchGifs]);
 
-  const fetchGifs = async () => {
+  const fetchGifs = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -107,7 +107,7 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, GIPHY_API_KEY]);
 
   const handleGifSelect = (gifUrl: string) => {
     logger.info("GIF selected:", gifUrl);
@@ -148,11 +148,12 @@ const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
               className="giphy-result cursor-pointer hover:opacity-80 transition-opacity border border-background-primary rounded overflow-hidden"
               onClick={() => handleGifSelect(gif.images.fixed_height.url)}
             >
-              <img 
+              <Image 
                 src={gif.images.fixed_height.url}
-                alt="GIF"
+                alt={gif.title}
+                width={200}
+                height={200}
                 className="w-full h-auto"
-                loading="lazy"
               />
             </div>
           ))}

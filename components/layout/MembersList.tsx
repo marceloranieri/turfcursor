@@ -1,7 +1,8 @@
 import logger from '@/lib/logger';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -43,39 +44,23 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
     }
     
     // Set up presence channel for real-time online status
-    const channel = supabase.channel('online-users');
-    
-    // Track when users come online or go offline
-    channel
+    const channel = supabase
+      .channel('presence')
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
-        updateMembersStatus(state);
+        Object.keys(state).forEach(userId => {
+          updateMemberStatus(userId, 'online');
+        });
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        // User came online, update their status
-        updateMemberStatus(key, 'online');
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-        // User went offline, update their status
-        updateMemberStatus(key, 'offline');
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED' && currentUser) {
-          // When successfully subscribed, track our own presence
-          await channel.track({
-            user_id: currentUser.id,
-            online_at: new Date().toISOString(),
-          });
-        }
-      });
+      .subscribe();
       
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [initialMembers, topicId]);
+  }, [initialMembers, topicId, currentUser, fetchOnlineMembers, updateMemberStatus]);
   
   // Fetch online members from Supabase
-  const fetchOnlineMembers = async () => {
+  const fetchOnlineMembers = useCallback(async () => {
     if (!topicId) return;
     
     try {
@@ -120,10 +105,10 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
     } catch (error) {
       logger.error('Error fetching online members:', error);
     }
-  };
+  }, [initialMembers, topicId]);
   
   // Update members status from presence state
-  const updateMembersStatus = (state: any) => {
+  const updateMembersStatus = useCallback((state: any) => {
     const updatedMembers = [...members];
     
     // For each user in the presence state
@@ -132,10 +117,10 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
     });
     
     setMembers(updatedMembers);
-  };
+  }, [members, updateMemberStatus]);
   
   // Update a single member's status
-  const updateMemberStatus = (userId: string, status: 'online' | 'idle' | 'dnd' | 'offline') => {
+  const updateMemberStatus = useCallback((userId: string, status: 'online' | 'idle' | 'dnd' | 'offline') => {
     setMembers(currentMembers => {
       return currentMembers.map(member => {
         if (member.id === userId) {
@@ -144,7 +129,23 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
         return member;
       });
     });
-  };
+  }, []);
+  
+  useEffect(() => {
+    const channel = supabase
+      .channel('presence')
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        Object.keys(state).forEach(userId => {
+          updateMemberStatus(userId, 'online');
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [updateMemberStatus]);
   
   // Group members by role
   const groupedMembers = members.reduce((groups, member) => {
@@ -278,17 +279,30 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
                     onClick={() => handleMemberClick(member.id)}
                   >
                     <div className="member-avatar w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center relative">
-                      {typeof member.avatar === 'string' && member.avatar.length === 1 ? (
-                        <span className="text-text-primary font-semibold">{member.avatar}</span>
-                      ) : (
-                        <img src={member.avatar} alt={member.name} className="w-full h-full rounded-full" />
-                      )}
-                      {renderMemberStatus(member.status)}
-                    </div>
-                    <div className="member-name ml-2 flex-1">
-                      <div className={`font-medium ${member.isBot ? 'text-green-400' : 'text-text-primary'}`}>
-                        {member.name}
-                        {member.isBot && <span className="text-xs ml-1 bg-green-400 text-black px-1 rounded">BOT</span>}
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <Image
+                            src={member.avatar}
+                            alt={member.name}
+                            width={40}
+                            height={40}
+                            className="rounded-full"
+                          />
+                          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(member.status)}`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">{member.name}</span>
+                            {member.role && (
+                              <span className={`text-xs px-2 py-1 rounded-full ${getRoleColor(member.role)}`}>
+                                {member.role}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-text-muted">
+                            {member.status}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -299,12 +313,31 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
                       <div className="profile-header p-3 border-b border-background-primary text-center">
                         <div className="flex justify-center mb-2">
                           <div className="member-avatar w-12 h-12 rounded-full bg-background-secondary flex items-center justify-center relative">
-                            {typeof member.avatar === 'string' && member.avatar.length === 1 ? (
-                              <span className="text-text-primary font-semibold text-lg">{member.avatar}</span>
-                            ) : (
-                              <img src={member.avatar} alt={member.name} className="w-full h-full rounded-full" />
-                            )}
-                            {renderMemberStatus(member.status)}
+                            <div className="flex items-center space-x-3">
+                              <div className="relative">
+                                <Image
+                                  src={member.avatar}
+                                  alt={member.name}
+                                  width={40}
+                                  height={40}
+                                  className="rounded-full"
+                                />
+                                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(member.status)}`} />
+                              </div>
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium">{member.name}</span>
+                                  {member.role && (
+                                    <span className={`text-xs px-2 py-1 rounded-full ${getRoleColor(member.role)}`}>
+                                      {member.role}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-text-muted">
+                                  {member.status}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <div className={`font-semibold ${member.isBot ? 'text-green-400' : 'text-text-primary'}`}>

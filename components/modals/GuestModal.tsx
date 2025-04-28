@@ -2,11 +2,14 @@ import React from 'react';
 import Link from 'next/link';
 
 interface GuestModalProps {
+  isOpen: boolean;
   onClose: () => void;
   onSignIn?: () => void;
 }
 
-const GuestModal = ({ onClose, onSignIn }: GuestModalProps) => {
+const GuestModal = ({ isOpen, onClose, onSignIn }: GuestModalProps) => {
+  if (!isOpen) return null;
+
   return (
     <div className="modal-overlay fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
       <div className="modal bg-background-secondary rounded-lg p-4 max-w-md w-full">

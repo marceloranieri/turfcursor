@@ -21,16 +21,20 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
   
   // Add effect to focus on first input when modal opens
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (isOpen) {
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         const firstInput = document.querySelector<HTMLInputElement>('.auth-modal input');
         if (firstInput) {
           firstInput.focus();
         }
       }, 100);
-      
-      return () => clearTimeout(timer);
     }
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, [isOpen]);
   
   // Add effect to handle escape key

@@ -83,7 +83,7 @@ export default function Chat() {
       const circlesData = await getCircles();
       setCircles(circlesData);
       
-      if (circlesData.length > 0 && !activeCircleId) {
+      if (circlesData.length > 0 && !activeCircleId && circlesData[0]?.id) {
         setActiveCircleId(circlesData[0].id);
       }
     } catch (error) {

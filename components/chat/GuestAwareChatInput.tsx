@@ -6,6 +6,7 @@ import { FaLock, FaPaperPlane, FaSmile, FaImage, FaCheck, FaTimes } from 'react-
 import { motion, AnimatePresence } from 'framer-motion';
 import { EmojiPicker } from './EmojiPicker';
 import { ImageUpload } from './ImageUpload';
+import Image from 'next/image';
 
 interface GuestAwareChatInputProps {
   onSendMessage: (message: string, imageUrl?: string) => void;
@@ -197,9 +198,11 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
               className="absolute bottom-full mb-2 left-0 bg-background-secondary rounded-lg shadow-lg p-2"
             >
               <div className="relative">
-                <img
+                <Image
                   src={imageUrl}
                   alt="Upload preview"
+                  width={200}
+                  height={200}
                   className="rounded-lg max-w-[200px] max-h-[200px] object-contain"
                 />
                 <button

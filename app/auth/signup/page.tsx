@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
-import { FaGoogle, FaFacebook, FaGithub } from 'react-icons/fa';
+import { Chrome, Facebook, Github } from 'lucide-react';
 import { signInWithGoogle, signInWithFacebook, signInWithGithub } from '@/lib/auth/oauth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -140,22 +140,25 @@ export default function SignUpPage() {
               onClick={() => handleOAuthSignUp('google')}
               disabled={isLoading}
               className="w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-background-primary text-text-primary hover:bg-background-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign up with Google"
             >
-              <FaGoogle className="mx-auto h-5 w-5" />
+              <Chrome className="mx-auto h-5 w-5" />
             </button>
             <button
               onClick={() => handleOAuthSignUp('facebook')}
               disabled={isLoading}
               className="w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-background-primary text-text-primary hover:bg-background-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign up with Facebook"
             >
-              <FaFacebook className="mx-auto h-5 w-5" />
+              <Facebook className="mx-auto h-5 w-5" />
             </button>
             <button
               onClick={() => handleOAuthSignUp('github')}
               disabled={isLoading}
               className="w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-background-primary text-text-primary hover:bg-background-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Sign up with GitHub"
             >
-              <FaGithub className="mx-auto h-5 w-5" />
+              <Github className="mx-auto h-5 w-5" />
             </button>
           </div>
         </div>
@@ -169,4 +172,4 @@ export default function SignUpPage() {
       </div>
     </div>
   );
-} 
+}

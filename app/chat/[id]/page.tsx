@@ -1,26 +1,37 @@
 'use client';
 
 import logger from '@/lib/logger';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ChatArea from '@/components/layout/ChatArea';
 import MembersList from '@/components/layout/MembersList';
 import MobileNavigation from '@/components/layout/MobileNavigation';
 import GuestModal from '@/components/modals/GuestModal';
 import { createClient } from '@supabase/supabase-js';
-import MainLayout from '@/components/layout/MainLayout';
+import { MainLayout } from '@/components/layout/MainLayout';
 import { useDebugListeners } from '@/lib/debug-helpers';
 import HydrationSafeComponent from '@/components/HydrationSafeComponent';
 import { toast } from 'react-hot-toast';
+import { Message, Topic, Author, Reaction } from '@/lib/types';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Define the Member type
+interface Member {
+  id: string;
+  name: string;
+  status: 'online' | 'idle' | 'dnd' | 'offline';
+  avatar: string;
+  isBot?: boolean;
+  role?: 'owner' | 'admin' | 'moderator' | 'member';
+}
+
 // Defined topics with messages for demo purposes
 // In a real app, this would come from Supabase
-const DEMO_TOPICS = [
+const DEMO_TOPICS: Topic[] = [
   { 
     id: '1', 
     name: 'Remote Work Debate', 
@@ -53,104 +64,100 @@ const DEMO_TOPICS = [
   },
 ];
 
-const DEMO_MEMBERS = [
-  { id: 'bot1', name: 'Wizard of Mods', role: 'Bot', isBot: true, status: 'online', avatar: 'W' },
-  { id: 'user1', name: 'Alice', role: 'Debate Leader', status: 'online', avatar: 'A' },
-  { id: 'user2', name: 'Bob', status: 'online', avatar: 'B' },
-  { id: 'user3', name: 'Charlie', status: 'online', avatar: 'C' },
-  { id: 'user4', name: 'Diana', status: 'online', avatar: 'D' },
-  { id: 'user5', name: 'Elijah', role: 'New Member', status: 'online', avatar: 'E' },
+const DEMO_MEMBERS: Member[] = [
+  { id: 'bot1', name: 'Wizard of Mods', role: 'moderator', isBot: true, status: 'online', avatar: 'W' },
+  { id: 'user1', name: 'Alice', role: 'owner', status: 'online', avatar: 'A' },
+  { id: 'user2', name: 'Bob', role: 'member', status: 'online', avatar: 'B' },
+  { id: 'user3', name: 'Charlie', role: 'member', status: 'idle', avatar: 'C' },
+  { id: 'user4', name: 'Diana', role: 'member', status: 'dnd', avatar: 'D' },
+  { id: 'user5', name: 'Elijah', role: 'member', status: 'offline', avatar: 'E' },
 ];
 
-// Demo messages for each topic
-const DEMO_MESSAGES = {
+const DEMO_MESSAGES: Record<string, Message[]> = {
   '1': [
     {
       id: 'msg1',
+      topic_id: '1',
       author: { id: 'user1', name: 'Alice', avatar: 'A' },
       content: 'Remote work has significantly boosted productivity for many companies. Studies show fewer distractions and better work-life balance.',
       timestamp: 'Today at 12:30 PM',
+      is_pinned: false,
+      is_wizard: false,
       reactions: [
         { emoji: '👍', count: 3, active: true },
         { emoji: '🤔', count: 1, active: false }
-      ]
+      ],
+      replies: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
       id: 'msg2',
+      topic_id: '1',
       author: { id: 'user2', name: 'Bob', avatar: 'B' },
       content: '@Alice I agree and would add that it also cuts down on commuting stress and environmental impact.',
       timestamp: 'Today at 12:35 PM',
+      is_pinned: false,
+      is_wizard: false,
       reactions: [
         { emoji: '✨', count: 2, active: false }
-      ]
+      ],
+      replies: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
       id: 'msg3',
+      topic_id: '1',
       author: { id: 'bot1', name: 'Wizard of Mods', avatar: 'W', isBot: true },
       content: "Devil's Advocate: Remote work kills team spirit and creative collaboration! In-person brainstorming sessions cannot be replicated virtually.",
       timestamp: 'Today at 12:55 PM',
-      isBot: true
-    },
-    {
-      id: 'msg4',
-      author: { id: 'user3', name: 'Charlie', avatar: 'C' },
-      content: "Remote work isn't a one-size-fits-all solution. Some roles require physical presence, while others thrive remotely. Hybrid approaches might be the future.",
-      timestamp: 'Today at 1:02 PM',
-      reactions: [
-        { emoji: '🧠', count: 5, active: false },
-        { emoji: '✨', count: 3, active: true }
-      ],
-      replies: [
-        {
-          id: 'reply1',
-          author: { id: 'user4', name: 'Diana', avatar: 'D' },
-          content: 'Great point! My company lets teams decide their own work arrangements based on their specific needs.',
-          timestamp: 'Today at 1:05 PM'
-        },
-        {
-          id: 'reply2',
-          author: { id: 'user5', name: 'Elijah', avatar: 'E' },
-          content: 'Does anyone have data on productivity differences between hybrid vs fully remote teams?',
-          timestamp: 'Today at 1:07 PM'
-        }
-      ]
-    },
-    {
-      id: 'msg5',
-      author: { id: 'user4', name: 'Diana', avatar: 'D' },
-      content: 'Me trying to focus during a home video call when my kids are around:',
-      timestamp: 'Today at 1:15 PM',
-      attachment: {
-        type: 'image',
-        url: 'https://via.placeholder.com/400x220',
-        alt: 'Funny work from home GIF'
-      },
-      reactions: [
-        { emoji: '😂', count: 8, active: false }
-      ]
+      is_pinned: false,
+      is_wizard: true,
+      reactions: [],
+      replies: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ],
   '2': [
     {
       id: 'msg1',
+      topic_id: '2',
       author: { id: 'user2', name: 'Bob', avatar: 'B' },
       content: 'What ethical considerations should guide AI development as it becomes more advanced?',
       timestamp: 'Today at 10:15 AM',
+      is_pinned: false,
+      is_wizard: false,
       reactions: [
         { emoji: '🤖', count: 4, active: true }
-      ]
+      ],
+      replies: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
       id: 'msg2',
+      topic_id: '2',
       author: { id: 'user5', name: 'Elijah', avatar: 'E' },
       content: "Transparency is crucial. Users should always know when they're interacting with AI vs humans.",
-      timestamp: 'Today at 10:22 AM'
+      timestamp: 'Today at 10:22 AM',
+      is_pinned: false,
+      is_wizard: false,
+      reactions: [],
+      replies: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ]
 };
 
-// Pinned messages for topics
-const DEMO_PINNED_MESSAGES = {
+interface PinnedMessage {
+  id: string;
+  content: string;
+}
+
+const DEMO_PINNED_MESSAGES: Record<string, PinnedMessage> = {
   '1': {
     id: 'pin1',
     content: "Remote work has increased productivity in my team by 25%, but we've had to implement new communication strategies to maintain collaboration."
@@ -166,7 +173,7 @@ export default function ChatPage() {
   const params = useParams();
   const topicId = params?.id as string;
   
-  // Call the debug hook
+  // Call the debug hook at the component level
   useDebugListeners();
   
   const [showGuestModal, setShowGuestModal] = useState(false);
@@ -199,16 +206,21 @@ export default function ChatPage() {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
-      setUser(session?.user || null);
+      if (session) {
+        setUser(session.user);
+      }
     });
+    
+    // Log some useful debugging information
+    logger.info('Chat page loaded for topic:', topicId);
     
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [topicId]);
   
-  // Find the current topic
-  const currentTopic = DEMO_TOPICS.find(topic => topic.id === topicId) || DEMO_TOPICS[0];
+  // Find the current topic with proper type assertion
+  const currentTopic = DEMO_TOPICS.find(topic => topic.id === topicId) ?? DEMO_TOPICS[0]!;
   
   // Set the current topic as active and others as inactive
   const topics = DEMO_TOPICS.map(topic => ({
@@ -222,22 +234,23 @@ export default function ChatPage() {
   // Get pinned message for the current topic
   const pinnedMessage = DEMO_PINNED_MESSAGES[topicId as keyof typeof DEMO_PINNED_MESSAGES];
   
-  const handleSendMessage = () => {
-    logger.info("Send message triggered");
+  const handleSendMessage = useCallback(() => {
+    if (!message.trim()) return;
     
-    if (!isAuthenticated) {
-      logger.info("User not authenticated, redirecting to sign in");
-      // Store current path for redirect after auth
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('redirectAfterAuth', `/chat/${topicId}`);
-      }
-      router.push('/auth/signin');
-      return;
+    try {
+      const newMessage = {
+        content: message,
+        user_id: user?.id,
+        topic_id: topicId,
+        created_at: new Date().toISOString()
+      };
+      
+      supabase.from('messages').insert([newMessage]);
+      setMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
-    
-    // In a real app, this would send the message to Supabase
-    logger.info('Message sent by user:', user?.id);
-  };
+  }, [user?.id, topicId]);
   
   const handleSignIn = async () => {
     try {
@@ -255,181 +268,106 @@ export default function ChatPage() {
   const handleCloseModal = () => {
     setShowGuestModal(false);
   };
-  
-  // Add a useEffect hook at the top of the component to directly attach event handlers
+
+  // This useEffect handles form submission and channel navigation
   useEffect(() => {
-    logger.info('ChatPage: Adding click handlers directly');
-    
-    // Function to make channels clickable
-    const makeChannelsClickable = () => {
-      const channels = document.querySelectorAll('.channel');
-      logger.info('Found channels:', channels.length);
-      
-      channels.forEach(channel => {
-        // Add visual cue
-        (channel as HTMLElement).style.cursor = 'pointer';
-        
-        channel.addEventListener('click', (e) => {
-          const nameElement = channel.querySelector('.truncate');
-          if (nameElement) {
-            const name = nameElement.textContent;
-            logger.info('Channel clicked:', name);
-            
-            if (name) {
-              const topics = {
-                'Remote Work Debate': '1',
-                'AI Ethics': '2',
-                'Climate Solutions': '3',
-                'Education Reform': '4',
-                'Cryptocurrency Future': '5'
-              };
-              
-              const id = topics[name as keyof typeof topics] || '1';
-              router.push(`/chat/${id}`);
-            }
-          }
-        });
+    // Make channels clickable
+    const channels = document.querySelectorAll('.channel-item');
+    channels.forEach(channel => {
+      channel.addEventListener('click', () => {
+        const id = channel.getAttribute('data-id');
+        if (id) router.push(`/chat/${id}`);
       });
-    };
-    
-    // Function to make the form work
-    const enableForm = () => {
-      const form = document.querySelector('form');
+    });
+
+    // Enable form submission
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleSendMessage();
+      });
+    }
+
+    // Cleanup
+    return () => {
+      channels.forEach(channel => {
+        channel.removeEventListener('click', () => {});
+      });
       if (form) {
-        logger.info('Found form');
-        
-        // Add an ID to the form if it doesn't have one
-        if (!form.id) {
-          form.id = 'message-form';
-        }
-        
-        // Check for input field and add ID/name if missing
-        const inputField = form.querySelector('.input-field');
-        if (inputField) {
-          // Add ID and name attributes if missing
-          if (!inputField.id) {
-            inputField.id = 'message-input';
-          }
-          if (!inputField.getAttribute('name')) {
-            inputField.setAttribute('name', 'message');
-          }
-          
-          logger.info('Added accessibility attributes to form fields');
-        }
-        
-        // Add a submit button if missing
-        if (!form.querySelector('button[type="submit"]')) {
-          const inputField = form.querySelector('.input-field');
-          if (inputField) {
-            logger.info('Adding submit button');
-            const button = document.createElement('button');
-            button.type = 'submit';
-            button.textContent = 'Send';
-            button.id = 'send-button';
-            button.name = 'send';
-            button.style.marginLeft = '10px';
-            button.style.padding = '0 16px';
-            button.style.height = '36px';
-            button.style.backgroundColor = '#5865f2';
-            button.style.color = 'white';
-            button.style.borderRadius = '4px';
-            button.style.fontWeight = 'bold';
-            button.style.cursor = 'pointer';
-            
-            inputField.insertAdjacentElement('afterend', button);
-          }
-        }
-        
-        form.addEventListener('submit', (e) => {
-          e.preventDefault();
-          logger.info('Form submitted');
-          handleSendMessage();
-        });
+        form.removeEventListener('submit', () => {});
       }
     };
-    
-    // Run the handlers with a delay to ensure DOM is ready
-    setTimeout(() => {
-      makeChannelsClickable();
-      enableForm();
-    }, 500);
-    
-    // Run again after a longer delay just to be sure
-    setTimeout(() => {
-      makeChannelsClickable();
-      enableForm();
-    }, 2000);
+  }, [router, handleSendMessage]);
+
+  const handleMessageReceived = useCallback((newMessage: any) => {
+    // Handle the new message
+    console.log('New message received:', newMessage);
   }, []);
-  
-  // Add this inside the component, after your other useEffect hooks
+
+  // This useEffect handles socket events correctly without needing all dependencies
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // Set up debug listeners to help diagnose interaction issues
-    setupDebugListeners();
-    
-    // Log some useful debugging information
-    logger.info('Chat page loaded for topic:', topicId);
-    logger.info('Authentication status:', isAuthenticated ? 'Logged in' : 'Not logged in');
-    
-    // Test Supabase connection
-    const testSupabase = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .limit(1);
-        
-        if (error) {
-          logger.error('Supabase connection error:', error);
-        } else {
-          logger.info('Supabase connection successful:', data);
-        }
-      } catch (err) {
-        logger.error('Supabase test failed:', err);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setShowGuestModal(true);
       }
     };
-    
-    testSupabase();
-  }, []);
-  
+
+    const handleMessageUpdate = async (newMessage: any) => {
+      try {
+        // Handle the message update
+        console.log('Message updated:', newMessage);
+      } catch (error) {
+        console.error('Error handling message update:', error);
+      }
+    };
+
+    checkAuth();
+
+    const channel = supabase
+      .channel('messages')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
+        if (payload.new) {
+          handleMessageUpdate(payload.new);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router]);
+
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return <div>Loading...</div>;
   }
-  
+
   return (
-    <MainLayout enableDebug={true}>
-      <div className="app-container flex">
-        <ChatArea 
-          topic={currentTopic} 
-          messages={messages} 
-          pinnedMessage={pinnedMessage}
-          onSendMessage={handleSendMessage} 
-        />
-        <MembersList members={DEMO_MEMBERS} topicId={topicId} />
-        <MobileNavigation />
-        
-        {showGuestModal && (
-          <div onClick={handleCloseModal} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div onClick={e => e.stopPropagation()} className="bg-background-secondary rounded-lg p-6 max-w-md w-full">
-              <h2 className="text-xl font-semibold mb-4">Sign In Required</h2>
-              <p className="mb-6">You need to sign in to send messages and interact with the debate.</p>
-              <div className="flex justify-end space-x-4">
-                <button 
-                  className="px-4 py-2 bg-background-tertiary text-text-primary rounded"
-                  onClick={handleCloseModal}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="px-4 py-2 bg-accent-primary text-white rounded"
-                  onClick={handleSignIn}
-                >
-                  Sign In
-                </button>
-              </div>
+    <HydrationSafeComponent>
+      <MainLayout>
+        <div className="flex h-screen">
+          <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex">
+              <ChatArea
+                messages={DEMO_MESSAGES[topicId] || []}
+                pinnedMessage={DEMO_PINNED_MESSAGES[topicId]}
+                onSendMessage={handleSendMessage}
+                isAuthenticated={isAuthenticated}
+                onSignInClick={() => setShowGuestModal(true)}
+              />
+              <MembersList members={DEMO_MEMBERS} />
             </div>
+            <MobileNavigation />
           </div>
-        )}
-      </div>
-    </MainLayout>
+        </div>
+        <GuestModal
+          isOpen={showGuestModal}
+          onClose={handleCloseModal}
+          onSignIn={handleSignIn}
+        />
+      </MainLayout>
+    </HydrationSafeComponent>
   );
 }

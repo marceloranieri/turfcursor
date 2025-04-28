@@ -247,7 +247,7 @@ export default function InteractionDebugger() {
             <ul>
               {clickEvents.map((event, i) => (
                 <li key={i}>
-                  {event.time}: {event.target} - "{event.text}"
+                  {event.time}: {event.target} - &quot;{event.text}&quot;
                 </li>
               ))}
             </ul>

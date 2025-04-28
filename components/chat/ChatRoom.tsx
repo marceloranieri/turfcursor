@@ -13,6 +13,10 @@ import { MembersList } from './MembersList';
 import { motion, AnimatePresence } from 'framer-motion';
 import { debounce } from 'lodash';
 
+interface ExtendedMessage extends Message {
+  parent_id?: string;
+}
+
 interface ChatRoomProps {
   topic: Topic;
   onOpenSidebar: () => void;
@@ -20,7 +24,7 @@ interface ChatRoomProps {
 
 export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [members, setMembers] = useState<User[]>([]);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
   const [newMessage, setNewMessage] = useState('');
@@ -84,31 +88,38 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
 
   // Handle typing indicator
   const updateTypingStatus = useCallback(
-    debounce(async (isTyping: boolean) => {
-      if (!user) return;
-      try {
-        await supabase
-          .from('typing_status')
-          .upsert({ user_id: user.id, topic_id: topic.id, is_typing: isTyping });
-      } catch (error) {
-        logger.error('Error updating typing status:', error);
-      }
-    }, 500),
+    (isTyping: boolean) => {
+      debounce(async () => {
+        if (!user) return;
+        try {
+          await supabase
+            .from('typing_status')
+            .upsert({
+              user_id: user.id,
+              topic_id: topic.id,
+              is_typing: isTyping,
+              last_updated: new Date().toISOString()
+            });
+        } catch (error) {
+          console.error('Error updating typing status:', error);
+        }
+      }, 500)();
+    },
     [user, topic.id]
   );
 
   useEffect(() => {
-    const channel = supabase
+    const typingChannel = supabase
       .channel('typing')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
-          event: '*',
+          event: 'typing',
           schema: 'public',
           table: 'typing_status',
           filter: `topic_id=eq.${topic.id}`,
         },
-        (payload) => {
+        (payload: { new: { user_id: string; is_typing: boolean } }) => {
           const { user_id, is_typing } = payload.new;
           setTypingUsers((prev) => {
             const next = new Set(prev);
@@ -124,41 +135,44 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      typingChannel.unsubscribe();
       updateTypingStatus.cancel();
     };
   }, [topic.id, updateTypingStatus]);
 
   const handleNewMessage = (message: Message) => {
-    if (message.parent_id) {
+    const extendedMessage: ExtendedMessage = {
+      ...message,
+      parent_id: message.replies?.[0]?.id,
+    };
+
+    if (extendedMessage.parent_id) {
       setMessages((prev) =>
         prev.map((m) => {
-          if (m.id === message.parent_id) {
+          if (m.id === extendedMessage.parent_id) {
             return {
               ...m,
-              replies: [...(m.replies || []), message],
+              replies: [...(m.replies || []), extendedMessage],
             };
           }
           return m;
         })
       );
     } else {
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => [...prev, extendedMessage]);
     }
   };
 
   const handleUpdateMessage = (message: Message) => {
+    const extendedMessage: ExtendedMessage = {
+      ...message,
+      parent_id: message.replies?.[0]?.id,
+    };
+
     setMessages((prev) =>
       prev.map((m) => {
-        if (m.id === message.id) {
-          return { ...m, ...message };
-        } else if (m.replies?.some((r) => r.id === message.id)) {
-          return {
-            ...m,
-            replies: m.replies.map((r) =>
-              r.id === message.id ? { ...r, ...message } : r
-            ),
-          };
+        if (m.id === extendedMessage.id) {
+          return extendedMessage;
         }
         return m;
       })
@@ -206,7 +220,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
 
   const typingIndicator = Array.from(typingUsers)
     .map((userId) => members.find((m) => m.id === userId)?.username)
-    .filter((name) => name && name !== user?.username);
+    .filter((username) => username && members.find(m => m.id === user?.id)?.username !== username);
 
   return (
     <div className="flex h-screen bg-background-primary">

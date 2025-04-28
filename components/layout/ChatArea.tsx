@@ -49,10 +49,12 @@ interface PinnedMessage {
 }
 
 interface ChatAreaProps {
-  topic: Topic;
+  topic?: Topic;
   messages: Message[];
   pinnedMessage?: PinnedMessage;
   onSendMessage: (content: string) => void;
+  isAuthenticated: boolean;
+  onSignInClick: () => void;
 }
 
 interface GifPickerProps {
@@ -125,10 +127,12 @@ const GifPicker: React.FC<GifPickerProps> = ({ onGifSelect, onClose }) => {
           <div className="text-center py-4 text-text-muted">Loading...</div>
         ) : gifs.length > 0 ? (
           gifs.map((url, index) => (
-            <img 
+            <Image 
               key={index}
               src={url}
               alt="GIF option"
+              width={200}
+              height={200}
               className="cursor-pointer hover:brightness-90 rounded w-full"
               onClick={() => {
                 onClose();
@@ -148,7 +152,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   topic,
   messages: initialMessages,
   pinnedMessage: initialPinnedMessage,
-  onSendMessage
+  onSendMessage,
+  isAuthenticated,
+  onSignInClick
 }) => {
   const [messageInput, setMessageInput] = useState('');
   const [messagesList, setMessagesList] = useState<Message[]>(initialMessages);
@@ -156,18 +162,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-    };
-    checkAuth();
-  }, []);
   
   // Update messages when the prop changes (e.g. when topic changes)
   useEffect(() => {
@@ -187,12 +183,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Set up real-time message subscription
   useEffect(() => {
     const channel = supabase
-      .channel(`public:messages:topic_id=eq.${topic.id}`)
+      .channel(`public:messages:topic_id=eq.${topic?.id}`)
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
         table: 'messages',
-        filter: `topic_id=eq.${topic.id}` 
+        filter: `topic_id=eq.${topic?.id}` 
       }, (payload) => {
         // Add new message to the UI
         const newMessage = payload.new;
@@ -218,7 +214,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [topic.id]);
+  }, [topic?.id]);
   
   // Function to scroll to bottom of messages
   const scrollToBottom = () => {
@@ -436,10 +432,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       <div className="flex items-center px-4 py-3 border-b border-background-tertiary">
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-bold text-text-primary truncate">
-            {topic.name}
+            {topic?.name}
           </h2>
           <p className="text-sm text-text-secondary truncate">
-            {topic.description}
+            {topic?.description}
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -496,7 +492,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             className="input-field flex-1 p-2 bg-background-secondary text-text-primary rounded-md focus:outline-none focus:ring-1 focus:ring-accent-primary"
-            placeholder={`Message ${topic.name}...`}
+            placeholder={`Message ${topic?.name}...`}
             aria-label="Type a message"
           />
           <button 

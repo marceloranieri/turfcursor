@@ -22,7 +22,19 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      setProfile(user);
+      const userProfile: User = {
+        id: user.id,
+        username: user.user_metadata?.username || '',
+        email: user.email || '',
+        avatar_url: user.user_metadata?.avatar_url,
+        created_at: user.created_at || new Date().toISOString(),
+        harmony_points: user.user_metadata?.harmony_points || 0,
+        genius_awards_received: 0,
+        genius_awards_remaining: user.user_metadata?.genius_awards_remaining || 0,
+        is_debate_maestro: user.user_metadata?.is_debate_maestro || false,
+        user_metadata: user.user_metadata
+      };
+      setProfile(userProfile);
       setUsername(user.user_metadata?.username || '');
       setAvatarUrl(user.user_metadata?.avatar_url || '');
     }

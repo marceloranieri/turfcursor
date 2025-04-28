@@ -1,5 +1,5 @@
 import logger from '@/lib/logger';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
@@ -42,13 +42,8 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
     setAvailableTopics(topics);
     
     const channel = supabase
-      .channel('public:topics')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'topics'
-      }, (payload) => {
-        // Refresh topics
+      .channel('topics')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'topics' }, () => {
         fetchTopics();
       })
       .subscribe();
@@ -56,10 +51,10 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [topics]);
+  }, [topics, fetchTopics]);
   
   // Fetch topics from Supabase
-  const fetchTopics = async () => {
+  const fetchTopics = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('topics')
@@ -91,7 +86,11 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
     } catch (error) {
       logger.error('Error fetching topics:', error);
     }
-  };
+  }, [availableTopics]);
+  
+  useEffect(() => {
+    fetchTopics();
+  }, [topics, fetchTopics]);
   
   const handleTopicClick = (id: string) => {
     logger.info("Topic clicked:", id);

@@ -33,13 +33,15 @@ export default function MessageBubble({
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   
   // Group reactions by content
-  const groupedReactions = reactions.reduce((acc, reaction) => {
-    if (!acc[reaction.content]) {
-      acc[reaction.content] = [];
+  const groupedReactions = reactions.reduce<Record<string, Reaction[]>>((acc, reaction) => {
+    const content = reaction.content ?? '';
+    if (!(content in acc)) {
+      acc[content] = [];
     }
-    acc[reaction.content].push(reaction);
+    // At this point, we know acc[content] exists
+    acc[content]!.push(reaction);
     return acc;
-  }, {} as Record<string, Reaction[]>);
+  }, {});
   
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
