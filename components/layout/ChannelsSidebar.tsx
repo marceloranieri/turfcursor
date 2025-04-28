@@ -27,6 +27,8 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
   const [showServerDropdown, setShowServerDropdown] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [availableTopics, setAvailableTopics] = useState<Topic[]>(topics);
+  const [allTopics, setAllTopics] = useState<Topic[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Check authentication
   useEffect(() => {
@@ -37,60 +39,46 @@ const ChannelsSidebar = ({ topics }: ChannelsSidebarProps) => {
     checkAuth();
   }, []);
   
-  // Subscribe to topic changes
-  useEffect(() => {
-    setAvailableTopics(topics);
-    
-    const channel = supabase
-      .channel('topics')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'topics' }, () => {
-        fetchTopics();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [topics, fetchTopics]);
-  
   // Fetch topics from Supabase
   const fetchTopics = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('topics')
         .select('*')
-        .order('created_at', { ascending: false });
-      
+        .order('created_at', { ascending: true });
+
       if (error) throw error;
-      
-      if (data) {
-        // Transform to match our Topic interface
-        const transformedTopics = data.map(topic => ({
-          id: topic.id,
-          name: topic.name,
-          description: topic.description || '',
-          isActive: false // Will be set by the parent component
-        }));
-        
-        // Preserve the active state from the current topics
-        const updatedTopics = transformedTopics.map(newTopic => {
-          const matchingTopic = availableTopics.find(t => t.id === newTopic.id);
-          return {
-            ...newTopic,
-            isActive: matchingTopic ? matchingTopic.isActive : false
-          };
-        });
-        
-        setAvailableTopics(updatedTopics);
-      }
+      setAllTopics(data || []);
     } catch (error) {
       logger.error('Error fetching topics:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [availableTopics]);
+  }, []);
   
+  // Subscribe to topics changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('topics')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'topics' }, () => {
+        fetchTopics();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [allTopics, fetchTopics]);
+  
+  // Initial fetch
   useEffect(() => {
     fetchTopics();
-  }, [topics, fetchTopics]);
+  }, [fetchTopics]);
+  
+  // Update available topics when all topics change
+  useEffect(() => {
+    setAvailableTopics(allTopics);
+  }, [allTopics]);
   
   const handleTopicClick = (id: string) => {
     logger.info("Topic clicked:", id);

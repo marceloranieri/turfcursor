@@ -31,6 +31,7 @@ export interface Reaction {
   emoji: string;
   count: number;
   active?: boolean;
+  user_id?: string;
 }
 
 // Reply type for message replies

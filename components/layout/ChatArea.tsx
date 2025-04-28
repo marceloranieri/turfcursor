@@ -191,20 +191,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         filter: `topic_id=eq.${topic?.id}` 
       }, (payload) => {
         // Add new message to the UI
-        const newMessage = payload.new;
-        
-        // Format the message to match our UI format
-        // This is a simplified example - you'd need to fetch author info too
-        const formattedMessage = {
-          id: newMessage.id,
+        const formattedMessage: Message = {
+          id: payload.new.id,
+          topic_id: payload.new.topic_id,
           author: {
-            id: newMessage.user_id,
-            name: "New User", // In a real app, fetch this from users table
-            avatar: "U"
+            id: payload.new.user_id,
+            name: payload.new.username || 'Anonymous',
+            avatar: payload.new.avatar_url || '/default-avatar.png'
           },
-          content: newMessage.content,
-          timestamp: 'Just now',
-          reactions: []
+          content: payload.new.content,
+          timestamp: payload.new.created_at,
+          is_pinned: false,
+          is_wizard: false,
+          reactions: [],
+          created_at: payload.new.created_at,
+          updated_at: payload.new.updated_at || payload.new.created_at
         };
         
         setMessagesList(currentMessages => [...currentMessages, formattedMessage]);
@@ -239,10 +240,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   };
   
-  const handleReplyClick = (message: Message) => {
+  const handleReply = (message: Message) => {
     setReplyingTo(message);
     // Focus the input field
-    document.querySelector('.input-field')?.focus();
+    const inputField = document.querySelector('.input-field') as HTMLElement;
+    inputField?.focus();
   };
   
   const cancelReply = () => {
@@ -268,40 +270,41 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       // For demo purposes, update reaction count locally first for better UX
       const updatedMessages = messagesList.map(message => {
         if (message.id === messageId) {
-          let updatedReactions = [...(message.reactions || [])];
+          let updatedReactions = [...(message.reactions || [])] as Reaction[];
           
           // Find if this emoji already exists in reactions
           const existingIndex = updatedReactions.findIndex(r => r.emoji === emoji);
           
-          if (existingIndex >= 0) {
-            // Emoji already exists
-            if (isActive) {
-              // User has already reacted, remove their reaction
-              if (updatedReactions[existingIndex].count > 1) {
-                updatedReactions[existingIndex] = {
-                  ...updatedReactions[existingIndex],
-                  count: updatedReactions[existingIndex].count - 1,
-                  active: false
-                };
-              } else {
-                // If count would be 0, remove the reaction
-                updatedReactions = updatedReactions.filter((_, i) => i !== existingIndex);
-              }
-            } else {
-              // User has not reacted, add their reaction
+          if (isActive) {
+            // User has already reacted, remove their reaction
+            const reaction = updatedReactions[existingIndex];
+            if (existingIndex >= 0 && reaction && reaction.count > 1) {
               updatedReactions[existingIndex] = {
-                ...updatedReactions[existingIndex],
-                count: updatedReactions[existingIndex].count + 1,
-                active: true
+                ...reaction,
+                count: reaction.count - 1,
+                active: false
               };
+            } else if (existingIndex >= 0) {
+              updatedReactions.splice(existingIndex, 1);
             }
           } else {
-            // Emoji doesn't exist yet, add it
-            updatedReactions.push({
-              emoji,
-              count: 1,
-              active: true
-            });
+            // Add new reaction
+            if (existingIndex >= 0) {
+              const reaction = updatedReactions[existingIndex];
+              if (reaction) {
+                updatedReactions[existingIndex] = {
+                  ...reaction,
+                  count: reaction.count + 1,
+                  active: true
+                };
+              }
+            } else {
+              updatedReactions.push({
+                emoji: emoji,
+                count: 1,
+                active: true
+              });
+            }
           }
           
           return {
@@ -337,16 +340,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     }
   };
   
-  const addNewReaction = (messageId: string) => {
-    // Check authentication first
-    if (!isAuthenticated) {
-      onSendMessage(''); // This will trigger the auth modal in the parent
-      return;
-    }
-    
-    // Simulate adding a new reaction - in a real app this would open an emoji picker
+  const handleRandomReaction = (messageId: string) => {
     const emojis = ['👍', '❤️', '🔥', '😂', '🎉', '👀', '😍', '🚀'];
-    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)] || '👍';
     handleReactionClick(messageId, randomEmoji, false);
   };
   

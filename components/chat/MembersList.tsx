@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { User } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes } from '@react-icons/all-files/fa/FaTimes';
 
 interface MembersListProps {
   members: User[];
@@ -77,7 +77,7 @@ export const MembersList: React.FC<MembersListProps> = ({
                     />
                     <div
                       className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background-secondary ${
-                        member.online ? 'bg-success' : 'bg-text-muted'
+                        member.status === 'online' ? 'bg-success' : 'bg-text-muted'
                       }`}
                       aria-hidden="true"
                     />
@@ -87,7 +87,7 @@ export const MembersList: React.FC<MembersListProps> = ({
                       {member.username}
                     </p>
                     <p className="text-xs text-text-secondary truncate">
-                      {member.online ? 'Online' : 'Offline'}
+                      {member.status === 'online' ? 'Online' : 'Offline'}
                     </p>
                   </div>
                 </motion.div>

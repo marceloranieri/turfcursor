@@ -87,26 +87,31 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
   }, [messages, scrollToBottom]);
 
   // Handle typing indicator
-  const updateTypingStatus = useCallback(
-    (isTyping: boolean) => {
-      debounce(async () => {
-        if (!user) return;
-        try {
-          await supabase
-            .from('typing_status')
-            .upsert({
-              user_id: user.id,
-              topic_id: topic.id,
-              is_typing: isTyping,
-              last_updated: new Date().toISOString()
-            });
-        } catch (error) {
-          console.error('Error updating typing status:', error);
-        }
-      }, 500)();
-    },
-    [user, topic.id]
-  );
+  const debouncedUpdate = useCallback((isTyping: boolean) => {
+    const update = async () => {
+      if (!user) return;
+      try {
+        await supabase
+          .from('typing_status')
+          .upsert({
+            user_id: user.id,
+            topic_id: topic.id,
+            is_typing: isTyping,
+            last_updated: new Date().toISOString()
+          });
+      } catch (error) {
+        console.error('Error updating typing status:', error);
+      }
+    };
+    const debouncedFn = debounce(update, 500);
+    debouncedFn();
+    return debouncedFn;
+  }, [user, topic.id]);
+
+  const updateTypingStatus = useCallback((isTyping: boolean) => {
+    const debouncedFn = debouncedUpdate(isTyping);
+    return () => debouncedFn.cancel();
+  }, [debouncedUpdate]);
 
   useEffect(() => {
     const typingChannel = supabase
@@ -136,9 +141,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
 
     return () => {
       typingChannel.unsubscribe();
-      updateTypingStatus.cancel();
+      debouncedUpdate(false).cancel();
     };
-  }, [topic.id, updateTypingStatus]);
+  }, [topic.id, debouncedUpdate]);
 
   const handleNewMessage = (message: Message) => {
     const extendedMessage: ExtendedMessage = {

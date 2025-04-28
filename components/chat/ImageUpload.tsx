@@ -4,7 +4,7 @@ import logger from '@/lib/logger';
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase/client';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes } from '@react-icons/all-files/fa/FaTimes';
 import Image from 'next/image';
 
 interface ImageUploadProps {

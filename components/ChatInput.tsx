@@ -1,6 +1,7 @@
-import React, { useState, FormEvent, useRef, useEffect } from 'react';
+import React, { useState, FormEvent, useRef, useEffect, useCallback } from 'react';
 import { FaceSmileIcon, PhotoIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import dynamic from 'next/dynamic';
+import { IGif } from '@giphy/js-types';
 
 const GiphySearch = dynamic(() => import('./GiphySearch'), { ssr: false });
 
@@ -72,7 +73,8 @@ export default function ChatInput({
     inputRef.current?.focus();
   };
   
-  const handleGifSelect = (gifUrl: string) => {
+  const handleGifSelect = (gif: IGif) => {
+    const gifUrl = gif.images.original.url;
     onSendMessage(gifUrl, 'gif');
     setShowGifSearch(false);
     // Re-focus the input after sending

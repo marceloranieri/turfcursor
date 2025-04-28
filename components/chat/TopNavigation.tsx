@@ -4,7 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { FaBars, FaUsers } from 'react-icons/fa';
+import { FaBars } from '@react-icons/all-files/fa/FaBars';
+import { FaUsers } from '@react-icons/all-files/fa/FaUsers';
 import { motion } from 'framer-motion';
 
 interface TopNavigationProps {
@@ -59,13 +60,13 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
             className="relative flex items-center justify-center w-8 h-8"
           >
             <Image
-              src={user?.avatar_url || '/default-avatar.png'}
-              alt={user?.username || 'User'}
+              src={user?.user_metadata?.avatar_url || '/default-avatar.png'}
+              alt={user?.user_metadata?.username || 'User'}
               width={32}
               height={32}
-              className="rounded-full ring-2 ring-background-tertiary"
+              className="rounded-full"
             />
-            {user?.online && (
+            {user?.user_metadata?.status === 'online' && (
               <div
                 className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success rounded-full border-2 border-background-primary"
                 aria-hidden="true"

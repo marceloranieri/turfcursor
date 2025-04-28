@@ -28,8 +28,45 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
   const [activeProfile, setActiveProfile] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Check current user and fetch online members
+  // Update a single member's status
+  const updateMemberStatus = useCallback((userId: string, status: 'online' | 'idle' | 'dnd' | 'offline') => {
+    setMembers(currentMembers => {
+      return currentMembers.map(member => {
+        if (member.id === userId) {
+          return { ...member, status };
+        }
+        return member;
+      });
+    });
+  }, []);
+  
+  // Fetch online members from Supabase
+  const fetchOnlineMembers = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('online_members')
+        .select('*')
+        .eq('topic_id', topicId);
+
+      if (error) throw error;
+
+      // Update member status
+      const updatedMembers = members.map(member => ({
+        ...member,
+        status: data?.some(online => online.user_id === member.id) ? 'online' : 'offline'
+      }));
+
+      setMembers(updatedMembers);
+    } catch (error) {
+      logger.error('Error fetching online members:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [members, topicId]);
+  
+  // Check current user and set up presence subscription
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -57,95 +94,23 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [initialMembers, topicId, currentUser, fetchOnlineMembers, updateMemberStatus]);
+  }, [initialMembers, topicId, fetchOnlineMembers, updateMemberStatus]);
   
-  // Fetch online members from Supabase
-  const fetchOnlineMembers = useCallback(async () => {
-    if (!topicId) return;
-    
-    try {
-      // In a real app, you'd query for users in this topic/circle
-      const { data, error } = await supabase
-        .from('topic_members')
-        .select('user_id, users(id, full_name, avatar_url, user_metadata)')
-        .eq('topic_id', topicId);
-      
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        // Transform users to member format
-        const onlineMembers = data.map(record => {
-          const user = record.users;
-          return {
-            id: user.id,
-            name: user.full_name || 'Anonymous',
-            avatar: user.avatar_url || user.full_name?.charAt(0) || 'A',
-            status: 'online',
-            role: user.user_metadata?.role || 'member'
-          };
-        });
-        
-        // Combine with existing members, prioritizing online status
-        const combinedMembers = [...initialMembers];
-        
-        onlineMembers.forEach(onlineMember => {
-          const existingIndex = combinedMembers.findIndex(m => m.id === onlineMember.id);
-          if (existingIndex >= 0) {
-            combinedMembers[existingIndex] = {
-              ...combinedMembers[existingIndex],
-              status: 'online'
-            };
-          } else {
-            combinedMembers.push(onlineMember);
-          }
-        });
-        
-        setMembers(combinedMembers);
-      }
-    } catch (error) {
-      logger.error('Error fetching online members:', error);
-    }
-  }, [initialMembers, topicId]);
-  
-  // Update members status from presence state
-  const updateMembersStatus = useCallback((state: any) => {
-    const updatedMembers = [...members];
-    
-    // For each user in the presence state
-    Object.keys(state).forEach(userId => {
-      updateMemberStatus(userId, 'online');
-    });
-    
-    setMembers(updatedMembers);
-  }, [members, updateMemberStatus]);
-  
-  // Update a single member's status
-  const updateMemberStatus = useCallback((userId: string, status: 'online' | 'idle' | 'dnd' | 'offline') => {
-    setMembers(currentMembers => {
-      return currentMembers.map(member => {
-        if (member.id === userId) {
-          return { ...member, status };
-        }
-        return member;
-      });
-    });
-  }, []);
-  
+  // Set up online members subscription
   useEffect(() => {
+    if (!topicId) return;
+
     const channel = supabase
-      .channel('presence')
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        Object.keys(state).forEach(userId => {
-          updateMemberStatus(userId, 'online');
-        });
+      .channel('online_members')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'online_members' }, () => {
+        fetchOnlineMembers();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [updateMemberStatus]);
+  }, [topicId, fetchOnlineMembers]);
   
   // Group members by role
   const groupedMembers = members.reduce((groups, member) => {

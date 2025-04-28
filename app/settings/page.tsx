@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/ToastContext';
-import logger from '@/lib/logger';
+import { ActivityFeed } from '@/components/github/ActivityFeed';
+// import logger from '@/lib/logger';
 
 type GithubRepo = {
   id: number;
@@ -15,6 +16,9 @@ type GithubRepo = {
   private: boolean;
   html_url: string;
   description: string | null;
+  updated_at?: string;
+  language?: string;
+  stargazers_count?: number;
 };
 
 export default function SettingsPage() {
@@ -33,26 +37,77 @@ export default function SettingsPage() {
   const [githubRepos, setGithubRepos] = useState<GithubRepo[]>([]);
   const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [rateLimit, setRateLimit] = useState<{ remaining: number; reset: Date } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'updated' | 'stars'>('updated');
 
   const fetchGithubRepos = useCallback(async (accessToken: string) => {
     try {
       setIsLoadingRepos(true);
-      const response = await fetch('https://api.github.com/user/repos', {
+      
+      // First check rate limit
+      const rateResponse = await fetch('https://api.github.com/rate_limit', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
+      
+      const rateData = await rateResponse.json();
+      setRateLimit({
+        remaining: rateData.rate.remaining,
+        reset: new Date(rateData.rate.reset * 1000),
+      });
+      
+      if (rateData.rate.remaining === 0) {
+        showToast({
+          message: `API rate limit exceeded. Resets at ${new Date(rateData.rate.reset * 1000).toLocaleTimeString()}`,
+          type: 'error',
+        });
+        return;
+      }
+
+      const response = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+      
       const data = await response.json();
       setGithubRepos(data);
     } catch (error) {
       showToast({
-        message: 'Error fetching GitHub repositories',
+        message: error instanceof Error ? error.message : 'Error fetching GitHub repositories',
         type: 'error',
       });
     } finally {
       setIsLoadingRepos(false);
     }
   }, [showToast]);
+
+  // Filter and sort repositories
+  const filteredRepos = useMemo(() => {
+    return githubRepos
+      .filter(repo => 
+        repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        repo.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'stars':
+            return (b.stargazers_count || 0) - (a.stargazers_count || 0);
+          case 'updated':
+          default:
+            return new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime();
+        }
+      });
+  }, [githubRepos, searchQuery, sortBy]);
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -86,7 +141,7 @@ export default function SettingsPage() {
           }
         }
       } catch (error) {
-        logger.error('Error loading user settings:', error);
+        // logger.error('Error loading user settings:', error);
         showToast({
           message: 'Failed to load settings',
           type: 'error',
@@ -210,6 +265,31 @@ export default function SettingsPage() {
     });
   };
 
+  const handleRefreshRepos = async () => {
+    if (!user) return;
+    
+    setIsRefreshing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const githubAccessToken = session?.provider_token;
+      
+      if (githubAccessToken) {
+        await fetchGithubRepos(githubAccessToken);
+        showToast({
+          message: 'Repositories refreshed successfully',
+          type: 'success',
+        });
+      }
+    } catch (error) {
+      showToast({
+        message: 'Failed to refresh repositories',
+        type: 'error',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-primary">
@@ -284,7 +364,26 @@ export default function SettingsPage() {
 
           {/* GitHub Integration Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-medium text-text-primary">GitHub Integration</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium text-text-primary">GitHub Integration</h2>
+              {githubConnected && (
+                <button
+                  type="button"
+                  onClick={handleRefreshRepos}
+                  disabled={isRefreshing || (rateLimit?.remaining === 0)}
+                  className="text-sm text-accent-primary hover:text-accent-primary-dark disabled:opacity-50"
+                >
+                  {isRefreshing ? 'Refreshing...' : 'Refresh Repos'}
+                </button>
+              )}
+            </div>
+            
+            {rateLimit && rateLimit.remaining < 20 && (
+              <div className="text-sm text-yellow-500">
+                API rate limit: {rateLimit.remaining} requests remaining. Resets at {rateLimit.reset.toLocaleTimeString()}
+              </div>
+            )}
+
             <div className="space-y-4">
               {githubConnected ? (
                 <>
@@ -365,30 +464,79 @@ export default function SettingsPage() {
                   {githubSyncEnabled && (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-text-primary mb-2">
-                          Select Repositories to Sync
-                        </label>
-                        <p className="text-sm text-text-secondary mb-4">
-                          Choose which repositories to sync with Turf
-                        </p>
-                        <div className="max-h-60 overflow-y-auto space-y-2">
-                          {githubRepos.map((repo) => (
-                            <div
-                              key={repo.full_name}
-                              className="flex items-center space-x-3 p-2 rounded-md hover:bg-background-tertiary"
+                        <div className="flex items-center justify-between mb-4">
+                          <label className="block text-text-primary">
+                            Select Repositories to Sync
+                          </label>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              placeholder="Search repositories..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="px-3 py-1 text-sm bg-background-tertiary rounded-md border border-background-primary focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                            />
+                            <select
+                              value={sortBy}
+                              onChange={(e) => setSortBy(e.target.value as 'name' | 'updated' | 'stars')}
+                              className="px-3 py-1 text-sm bg-background-tertiary rounded-md border border-background-primary focus:outline-none focus:ring-1 focus:ring-accent-primary"
                             >
-                              <input
-                                type="checkbox"
-                                id={repo.full_name}
-                                checked={selectedRepos.includes(repo.full_name)}
-                                onChange={() => handleRepoSelection(repo.full_name)}
-                                className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-gray-300 rounded"
-                              />
-                              <label htmlFor={repo.full_name} className="text-text-primary">
-                                {repo.full_name}
-                              </label>
+                              <option value="updated">Recently Updated</option>
+                              <option value="name">Name</option>
+                              <option value="stars">Stars</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        <div className="max-h-60 overflow-y-auto space-y-2">
+                          {isLoadingRepos ? (
+                            <div className="text-center py-4 text-text-secondary">Loading repositories...</div>
+                          ) : filteredRepos.length > 0 ? (
+                            filteredRepos.map((repo) => (
+                              <div
+                                key={repo.full_name}
+                                className="flex items-center space-x-3 p-3 rounded-md hover:bg-background-tertiary border border-background-tertiary"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={repo.full_name}
+                                  checked={selectedRepos.includes(repo.full_name)}
+                                  onChange={() => handleRepoSelection(repo.full_name)}
+                                  className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-gray-300 rounded"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <label htmlFor={repo.full_name} className="block text-text-primary font-medium">
+                                    {repo.full_name}
+                                  </label>
+                                  {repo.description && (
+                                    <p className="text-sm text-text-secondary truncate">
+                                      {repo.description}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center space-x-4 mt-1 text-xs text-text-secondary">
+                                    {repo.language && (
+                                      <span>{repo.language}</span>
+                                    )}
+                                    {repo.stargazers_count !== undefined && (
+                                      <span>⭐ {repo.stargazers_count}</span>
+                                    )}
+                                    {repo.updated_at && (
+                                      <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                {repo.private && (
+                                  <span className="px-2 py-1 text-xs font-medium bg-background-primary rounded-full">
+                                    Private
+                                  </span>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center py-4 text-text-secondary">
+                              {searchQuery ? 'No repositories found' : 'No repositories available'}
                             </div>
-                          ))}
+                          )}
                         </div>
                       </div>
                     </div>
@@ -413,6 +561,14 @@ export default function SettingsPage() {
               )}
             </div>
           </div>
+
+          {/* After repository selection section */}
+          {githubSyncEnabled && selectedRepos.length > 0 && (
+            <div className="mt-8 space-y-4">
+              <h3 className="text-lg font-medium text-text-primary">Recent Activity</h3>
+              <ActivityFeed selectedRepos={selectedRepos} limit={5} />
+            </div>
+          )}
 
           {/* Appearance Section */}
           <div className="space-y-4">

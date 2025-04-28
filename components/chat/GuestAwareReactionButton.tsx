@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useGuestMode } from '@/lib/hooks/useGuestMode';
-import { FaLock } from 'react-icons/fa';
+import { FaLock } from '@react-icons/all-files/fa/FaLock';
 import { motion } from 'framer-motion';
+import { useGuestMode } from '@/lib/hooks/useGuestMode';
 
 interface GuestAwareReactionButtonProps {
   emoji: string;
@@ -22,20 +22,26 @@ export const GuestAwareReactionButton: React.FC<GuestAwareReactionButtonProps> =
 }) => {
   const { isGuest, handleGuestAction, SignInModalComponent } = useGuestMode();
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleClick = () => {
-    if (!isGuest && !isAnimating) {
+    if (isGuest) {
+      setIsModalOpen(true);
+      return;
+    }
+    if (!isAnimating) {
       setIsAnimating(true);
-      handleGuestAction(onClick, '/chat');
-      setTimeout(() => setIsAnimating(false), 400); // Match animation duration
-    } else {
-      handleGuestAction(onClick, '/chat');
+      onClick();
+      setTimeout(() => setIsAnimating(false), 200);
     }
   };
 
   return (
     <div className="relative">
-      {SignInModalComponent}
+      <SignInModalComponent 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
       
       <motion.button
         onClick={handleClick}
@@ -71,4 +77,4 @@ export const GuestAwareReactionButton: React.FC<GuestAwareReactionButtonProps> =
       </motion.button>
     </div>
   );
-}; 
+} 

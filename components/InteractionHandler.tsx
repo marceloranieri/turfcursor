@@ -169,8 +169,8 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
             inputField.insertAdjacentElement('afterend', button);
             
             // Add enter key handler
-            inputField.addEventListener('keydown', (e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+            inputField.addEventListener('keydown', (e: Event) => {
+              if (e instanceof KeyboardEvent && e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 button.click();
               }
@@ -257,7 +257,7 @@ export default function InteractionHandler({ debug = false }: InteractionHandler
         }
         
         // Track interaction for analytics
-        if (event.currentTarget) {
+        if (event.currentTarget && event.currentTarget instanceof HTMLElement) {
           event.currentTarget.setAttribute('data-interacted', 'true');
           event.currentTarget.setAttribute('data-time', Date.now().toString());
         }

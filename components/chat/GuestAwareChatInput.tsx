@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useGuestMode } from '@/lib/hooks/useGuestMode';
-import { FaLock, FaPaperPlane, FaSmile, FaImage, FaCheck, FaTimes } from 'react-icons/fa';
+import { Smile, Image as ImageIcon, Check, Send, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EmojiPicker } from './EmojiPicker';
 import { ImageUpload } from './ImageUpload';
@@ -29,6 +29,7 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showSignInModal, setShowSignInModal] = useState(false);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -61,7 +62,7 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
       } finally {
         setIsSending(false);
       }
-    }, '/chat');
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -101,9 +102,18 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
     setShowImageUpload(false);
   };
 
+  const closeSignInModal = () => {
+    setShowSignInModal(false);
+  };
+
   return (
     <div className="relative">
-      {SignInModalComponent}
+      {SignInModalComponent && (
+        <SignInModalComponent
+          isOpen={showSignInModal}
+          onClose={closeSignInModal}
+        />
+      )}
 
       <div className={`relative ${isGuest ? 'opacity-70' : ''} ${className}`}>
         <div className="flex items-end gap-2 bg-background-tertiary rounded-lg p-2">
@@ -131,7 +141,7 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
               disabled={isGuest}
               aria-label="Add emoji"
             >
-              <FaSmile className="w-5 h-5" />
+              <Smile size={20} />
             </motion.button>
 
             <motion.button
@@ -142,7 +152,7 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
               disabled={isGuest}
               aria-label="Upload image"
             >
-              <FaImage className="w-5 h-5" />
+              <ImageIcon size={20} />
             </motion.button>
 
             <motion.button
@@ -160,9 +170,9 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
               {isSending ? (
                 <div className="w-5 h-5 loading-spinner" />
               ) : isSent ? (
-                <FaCheck className="w-5 h-5" />
+                <Check size={20} />
               ) : (
-                <FaPaperPlane className="w-5 h-5" />
+                <Send size={20} />
               )}
             </motion.button>
           </div>
@@ -206,11 +216,13 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
                   className="rounded-lg max-w-[200px] max-h-[200px] object-contain"
                 />
                 <button
-                  onClick={() => setImageUrl(null)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-background-primary/80 text-text-secondary hover:text-text-primary transition-colors"
-                  aria-label="Remove image"
+                  onClick={() => {
+                    setShowImageUpload(false);
+                    setImageUrl(null);
+                  }}
+                  className="absolute -top-2 -right-2 bg-background-primary rounded-full p-1 text-text-secondary hover:text-text-primary"
                 >
-                  <FaTimes className="w-4 h-4" />
+                  <X size={16} />
                 </button>
               </div>
             </motion.div>
@@ -221,7 +233,7 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
         {isGuest && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="bg-black/50 rounded-lg p-2 flex items-center gap-2">
-              <FaLock className="text-accent-secondary" />
+              <Lock size={20} className="mr-2" />
               <span className="text-white text-sm font-medium">Sign in to chat</span>
             </div>
           </div>

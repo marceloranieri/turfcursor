@@ -180,6 +180,7 @@ export default function ChatPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
   
   // Check authentication with Supabase
   useEffect(() => {
@@ -250,7 +251,7 @@ export default function ChatPage() {
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  }, [user?.id, topicId]);
+  }, [user?.id, topicId, message]);
   
   const handleSignIn = async () => {
     try {
