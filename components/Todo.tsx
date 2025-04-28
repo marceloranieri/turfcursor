@@ -1,9 +1,9 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase/client';
-import { useAuth } from '../lib/auth/AuthContext';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/AuthContext';
 import toast from 'react-hot-toast';
 
 export interface TodoItem {

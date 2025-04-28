@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 type Topic = {
   id: string;

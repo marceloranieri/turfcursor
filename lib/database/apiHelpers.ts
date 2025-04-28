@@ -1,6 +1,6 @@
 import logger from '@/lib/logger';
-import { supabase } from '../supabase/client';
-import { User, Message, Reaction, Circle, Notification } from '../supabase/client';
+import { supabase } from '@/lib/supabase/client';
+import { User, Message, Reaction, Circle, Notification } from '@/lib/supabase/client';
 
 /**
  * Retry a function with exponential backoff

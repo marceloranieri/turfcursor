@@ -19,7 +19,7 @@ interface SignInModalProps {
 const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose, redirectPath = '/chat' }) => {
   const router = useRouter();
   const { signInWithOAuth } = useAuth();
-  const { ConfettiComponent } = useConfetti();
+  const { play: playConfetti, ConfettiComponent } = useConfetti();
   const [isEmailMode, setIsEmailMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

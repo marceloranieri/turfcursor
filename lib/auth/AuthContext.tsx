@@ -3,7 +3,7 @@
 import logger from '@/lib/logger';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
-import { supabase } from '../supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
 import { handleAuthSuccess } from './authEffects';
 import { useRouter } from 'next/navigation';

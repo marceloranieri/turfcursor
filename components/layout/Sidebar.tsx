@@ -1,31 +1,64 @@
 import logger from '@/lib/logger';
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createElement } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTheme } from '@/lib/theme/ThemeContext';
 import { FaHome, FaComments, FaUser, FaCog, FaSignOutAlt, FaSun, FaMoon, FaBars, FaTimes } from 'react-icons/fa';
+import { supabase } from '@/lib/supabase/client';
+import type { IconType } from 'react-icons';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: IconType;
+}
+
+const renderIcon = (Icon: IconType, className: string) => {
+  const IconComponent = Icon as React.FC<{ className: string }>;
+  return <IconComponent className={className} />;
+};
+
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
   const { theme, setTheme, isDarkMode } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ avatar_url?: string } | null>(null);
 
   // Handle hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const navItems = [
+  // Fetch user profile
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data) {
+        setUserProfile(data);
+      }
+    };
+
+    fetchProfile();
+  }, [user?.id]);
+
+  const navItems: NavItem[] = [
     { href: '/', label: 'Home', icon: FaHome },
     { href: '/chat', label: 'Chat', icon: FaComments },
     { href: '/profile', label: 'Profile', icon: FaUser },
@@ -70,15 +103,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               className="flex items-center gap-3 p-2 rounded-lg hover:bg-background-tertiary transition-colors"
             >
               <Image
-                src={user?.avatar_url || '/default-avatar.png'}
-                alt={user?.username || 'User'}
+                src={userProfile?.avatar_url || '/default-avatar.png'}
+                alt={user?.email || 'User'}
                 width={40}
                 height={40}
                 className="rounded-full ring-2 ring-background-tertiary"
               />
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-text-primary truncate">
-                  {user?.username || 'Guest'}
+                  {user?.email?.split('@')[0] || 'Guest'}
                 </h3>
                 <p className="text-sm text-text-secondary truncate">
                   {user?.email || 'Sign in to chat'}
@@ -90,7 +123,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
             {navItems.map((item) => {
-              const Icon = item.icon;
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -102,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                       : 'text-text-secondary hover:bg-background-tertiary'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  {renderIcon(item.icon, "w-5 h-5")}
                   <span>{item.label}</span>
                 </Link>
               );
@@ -119,12 +151,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             >
               {isDarkMode ? (
                 <>
-                  <FaSun className="w-5 h-5" />
+                  {renderIcon(FaSun, "w-5 h-5")}
                   <span>Light Mode</span>
                 </>
               ) : (
                 <>
-                  <FaMoon className="w-5 h-5" />
+                  {renderIcon(FaMoon, "w-5 h-5")}
                   <span>Dark Mode</span>
                 </>
               )}
@@ -136,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 onClick={handleSignOut}
                 className="flex items-center gap-3 p-2 w-full rounded-lg text-text-secondary hover:bg-background-tertiary transition-colors"
               >
-                <FaSignOutAlt className="w-5 h-5" />
+                {renderIcon(FaSignOutAlt, "w-5 h-5")}
                 <span>Sign Out</span>
               </button>
             )}
@@ -150,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         onClick={() => onClose()}
         aria-label={isOpen ? 'Close menu' : 'Open menu'}
       >
-        {isOpen ? <FaTimes className="w-5 h-5" /> : <FaBars className="w-5 h-5" />}
+        {isOpen ? renderIcon(FaTimes, "w-5 h-5") : renderIcon(FaBars, "w-5 h-5")}
       </button>
     </>
   );

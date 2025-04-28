@@ -7,17 +7,14 @@ import ChatArea from '@/components/layout/ChatArea';
 import MembersList from '@/components/layout/MembersList';
 import MobileNavigation from '@/components/layout/MobileNavigation';
 import GuestModal from '@/components/modals/GuestModal';
-import { createClient } from '@supabase/supabase-js';
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useDebugListeners } from '@/lib/debug-helpers';
 import HydrationSafeComponent from '@/components/HydrationSafeComponent';
 import { toast } from 'react-hot-toast';
 import { Message, Topic, Author, Reaction } from '@/lib/types';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Define the Member type
 interface Member {

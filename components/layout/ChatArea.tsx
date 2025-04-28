@@ -1,14 +1,9 @@
 import logger from '@/lib/logger';
 import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import Image from 'next/image';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import MessageList from '@/components/MessageList';
 import { Message } from '@/lib/types';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Topic {
   id: string;

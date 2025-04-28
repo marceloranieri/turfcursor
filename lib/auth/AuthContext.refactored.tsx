@@ -1,8 +1,8 @@
-import logger from '@/lib/logger';
 'use client';
 
+import logger from '@/lib/logger';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '../supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 // User type definition
 interface User {

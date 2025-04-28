@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { User, Reaction, Message as MessageType } from '../lib/supabase/client';
+import { User, Reaction, Message as MessageType } from '@/lib/supabase/client';
 import { ArrowUturnLeftIcon, HandThumbUpIcon, HandThumbDownIcon, GiftIcon, FaceSmileIcon } from '@heroicons/react/24/outline';
 import ReactionPicker from './ReactionPicker';
 
@@ -33,6 +33,7 @@ export default function Message({
   
   // Group reactions by content
   const groupedReactions = reactions.reduce((acc, reaction) => {
+    if (!reaction.content) return acc;
     if (!acc[reaction.content]) {
       acc[reaction.content] = [];
     }

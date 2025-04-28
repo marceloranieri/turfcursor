@@ -1,7 +1,7 @@
 'use client';
 
 import logger from '@/lib/logger';
-import { supabase } from '../supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { Topic, TopicHistory } from './types';
 import toast from 'react-hot-toast';
 

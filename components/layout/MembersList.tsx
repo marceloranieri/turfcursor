@@ -1,13 +1,8 @@
 import logger from '@/lib/logger';
 import React, { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Member {
   id: string;
@@ -55,7 +50,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
       // Update member status
       const updatedMembers = members.map(member => ({
         ...member,
-        status: data?.some(online => online.user_id === member.id) ? 'online' : 'offline'
+        status: data?.some(online => online.user_id === member.id) ? 'online' as const : 'offline' as const
       }));
 
       setMembers(updatedMembers);
@@ -118,7 +113,7 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
     if (!groups[role]) {
       groups[role] = [];
     }
-    groups[role].push(member);
+    (groups[role] as Member[]).push(member);
     return groups;
   }, {} as Record<string, Member[]>);
   
@@ -223,6 +218,19 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
         return 'text-text-muted';
     }
   };
+
+  const getStatusColor = (status: Member['status']) => {
+    switch (status) {
+      case 'online':
+        return 'bg-green-500';
+      case 'idle':
+        return 'bg-yellow-500';
+      case 'dnd':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
   
   return (
     <div className="members-container bg-background-secondary w-60 h-screen hidden md:block overflow-y-auto">
@@ -234,10 +242,10 @@ const MembersList = ({ members: initialMembers, topicId }: MembersListProps) => 
         {sortedRoles.map(role => (
           <div key={role} className="member-category mb-6">
             <h4 className={`text-xs mb-2 ${getRoleColor(role)} uppercase font-semibold`}>
-              {role === 'member' ? 'Members' : `${role}s`} - {groupedMembers[role].length}
+              {role === 'member' ? 'Members' : `${role}s`} - {(groupedMembers[role] || []).length}
             </h4>
             <div className="space-y-2">
-              {groupedMembers[role].map(member => (
+              {(groupedMembers[role] || []).map(member => (
                 <div key={member.id} className="relative">
                   <div 
                     className="member-item flex items-center p-2 rounded-md hover:bg-background-primary cursor-pointer border border-transparent hover:border-background-primary transition-all"

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { supabase } from '../lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 interface AuthModalProps {
   isOpen: boolean;
