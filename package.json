@@ -26,6 +26,7 @@
     "@eslint/object-schema": "2.1.6",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "@octokit/rest": "21.1.1",
     "@radix-ui/react-slot": "1.2.0",
     "@react-icons/all-files": "4.1.0",
     "@sentry/nextjs": "^7.101.1",
