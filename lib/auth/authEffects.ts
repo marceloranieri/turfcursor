@@ -1,53 +1,86 @@
 // lib/auth/authEffects.ts
 
+'use client';
+
 import { toast } from 'react-hot-toast'
 import { useState, useCallback } from 'react'
 import confetti from 'canvas-confetti'
 
-export function useConfetti() {
-  const [isPlaying, setIsPlaying] = useState(false)
+// Sound effect for success (client-side only)
+const SUCCESS_SOUND = typeof Audio !== 'undefined' ? new Audio('/sounds/success-chime.mp3') : null;
 
-  const play = useCallback(() => {
-    if (isPlaying) return
-    setIsPlaying(true)
-    
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    })
-    
-    setTimeout(() => setIsPlaying(false), 2000)
-  }, [isPlaying])
-
-  // We don't actually need a component since we're using canvas-confetti
-  // Just return null as the component to maintain API compatibility
-  const ConfettiComponent = () => null
-
-  return { play, ConfettiComponent }
-}
-
-export function handleAuthSuccess(type: 'signin' | 'signup' | 'reset') {
-  trackLoginCount()
-  
-  const messages = {
-    signin: 'Welcome back! 👋',
-    signup: 'Welcome to Turf! 🌱',
-    reset: 'Password reset successful! 🔐'
+export const playSuccessSound = () => {
+  if (SUCCESS_SOUND) {
+    SUCCESS_SOUND.play().catch(() => {
+      // Ignore if sound fails (e.g., user hasn't interacted to allow audio)
+    });
   }
-  
-  toast.success(messages[type])
+};
+
+export const showSuccessToast = (message: string, emoji: string) => {
+  toast.success(`${emoji} ${message}`);
+};
+
+// Hook to trigger confetti animation
+export function useConfetti() {
+  return useCallback(() => {
+    const end = Date.now() + 1000;
+
+    const colors = ['#ff0000', '#00ff00', '#0000ff'];
+
+    (function frame() {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: colors
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: colors
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    })();
+  }, []);
 }
 
+// Track login streak in localStorage (fun feature)
 export function trackLoginCount() {
-  const count = localStorage.getItem('turf-login-count')
-  const newCount = count ? parseInt(count, 10) + 1 : 1
-  localStorage.setItem('turf-login-count', String(newCount))
+  const currentCount = parseInt(localStorage.getItem('turf-login-count') || '0', 10);
+  const newCount = currentCount + 1;
+  localStorage.setItem('turf-login-count', String(newCount));
 
   if (newCount === 5) {
     toast("You're on a roll! 🛹 5 logins in a row!", {
       icon: '🔥',
       duration: 4000
-    })
+    });
+  } else if (newCount === 10) {
+    toast('Wow! 10 logins! You must really like us! 🎉', {
+      icon: '🌟',
+      duration: 4000
+    });
+    useConfetti()();
   }
+}
+
+// Call this on successful auth events to give user feedback
+export function handleAuthSuccess(type: 'signin' | 'signup' | 'reset') {
+  const launchConfetti = useConfetti();
+
+  if (type === 'signup') {
+    toast.success('Welcome to Turf! 🌱', {
+      duration: 5000,
+    });
+    launchConfetti();
+  }
+
+  trackLoginCount();
 }

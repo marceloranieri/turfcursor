@@ -1,238 +1,138 @@
-import logger from '@/lib/logger';
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Message as MessageComponent } from './Message';
-import { Message, Topic, User } from '@/lib/types';
+import Message from './Message';
+import { Message as MessageType, Profile } from '@/lib/types/database.types';
 import { useSupabaseRealtime } from '@/lib/hooks/useSupabaseRealtime';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { supabase } from '@/lib/supabase/client';
-import { GuestAwareChatInput } from './GuestAwareChatInput';
+import { supabase } from '@/lib/supabaseClient';
+import logger from '@/lib/logger';
+import GuestAwareChatInput from './GuestAwareChatInput';
 import { TopNavigation } from './TopNavigation';
 import { MembersList } from './MembersList';
 import { motion, AnimatePresence } from 'framer-motion';
 import { debounce } from 'lodash';
 
-interface ExtendedMessage extends Message {
-  parent_id?: string;
-}
-
 interface ChatRoomProps {
-  topic: Topic;
-  onOpenSidebar: () => void;
+  circleId: string;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
+export default function ChatRoom({ circleId }: ChatRoomProps) {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<ExtendedMessage[]>([]);
-  const [members, setMembers] = useState<User[]>([]);
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  const [newMessage, setNewMessage] = useState('');
-  const [replyTo, setReplyTo] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [users, setUsers] = useState<Record<string, Profile>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+  };
 
   const fetchMessages = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select(`
-          *,
-          user:profiles(*),
-          reactions(*),
-          replies:messages(
-            *,
-            user:profiles(*),
-            reactions(*)
-          )
-        `)
-        .eq('topic_id', topic.id)
-        .is('parent_id', null)
+        .select('*')
+        .eq('circle_id', circleId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
-    } catch (error) {
-      logger.error('Error fetching messages:', error);
-    }
-  }, [topic.id]);
 
-  const fetchMembers = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
+      setMessages(data as MessageType[]);
+
+      // Fetch user profiles for all message authors
+      const userIds = [...new Set(data.map(m => m.user_id))];
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
-        .order('username');
+        .in('id', userIds);
 
-      if (error) throw error;
-      setMembers(data || []);
+      if (profilesError) throw profilesError;
+
+      const userMap = profiles.reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, Profile>);
+
+      setUsers(userMap);
     } catch (error) {
-      logger.error('Error fetching members:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchMessages();
-    fetchMembers();
-  }, [fetchMessages, fetchMembers]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  // Handle typing indicator
-  const debouncedUpdate = useCallback((isTyping: boolean) => {
-    const update = async () => {
-      if (!user) return;
-      try {
-        await supabase
-          .from('typing_status')
-          .upsert({
-            user_id: user.id,
-            topic_id: topic.id,
-            is_typing: isTyping,
-            last_updated: new Date().toISOString()
-          });
-      } catch (error) {
-        console.error('Error updating typing status:', error);
-      }
-    };
-    const debouncedFn = debounce(update, 500);
-    debouncedFn();
-    return debouncedFn;
-  }, [user, topic.id]);
-
-  const updateTypingStatus = useCallback((isTyping: boolean) => {
-    const debouncedFn = debouncedUpdate(isTyping);
-    return () => debouncedFn.cancel();
-  }, [debouncedUpdate]);
-
-  useEffect(() => {
-    const typingChannel = supabase
-      .channel('typing')
-      .on(
-        'postgres_changes' as any,
-        {
-          event: 'typing',
-          schema: 'public',
-          table: 'typing_status',
-          filter: `topic_id=eq.${topic.id}`,
-        },
-        (payload: { new: { user_id: string; is_typing: boolean } }) => {
-          const { user_id, is_typing } = payload.new;
-          setTypingUsers((prev) => {
-            const next = new Set(prev);
-            if (is_typing) {
-              next.add(user_id);
-            } else {
-              next.delete(user_id);
-            }
-            return next;
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      typingChannel.unsubscribe();
-      debouncedUpdate(false).cancel();
-    };
-  }, [topic.id, debouncedUpdate]);
-
-  const handleNewMessage = (message: Message) => {
-    const extendedMessage: ExtendedMessage = {
-      ...message,
-      parent_id: message.replies?.[0]?.id,
-    };
-
-    if (extendedMessage.parent_id) {
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.id === extendedMessage.parent_id) {
-            return {
-              ...m,
-              replies: [...(m.replies || []), extendedMessage],
-            };
-          }
-          return m;
-        })
-      );
-    } else {
-      setMessages((prev) => [...prev, extendedMessage]);
-    }
-  };
-
-  const handleUpdateMessage = (message: Message) => {
-    const extendedMessage: ExtendedMessage = {
-      ...message,
-      parent_id: message.replies?.[0]?.id,
-    };
-
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id === extendedMessage.id) {
-          return extendedMessage;
-        }
-        return m;
-      })
-    );
-  };
-
-  useSupabaseRealtime({
-    topicId: topic.id,
-    onNewMessage: handleNewMessage,
-    onUpdateMessage: handleUpdateMessage,
-  });
-
-  const handleSendMessage = async (content: string) => {
-    if (!user || !content.trim()) return;
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.from('messages').insert({
-        topic_id: topic.id,
-        user_id: user.id,
-        content: content.trim(),
-        parent_id: replyTo,
-      });
-
-      if (error) throw error;
-
-      setNewMessage('');
-      setReplyTo(null);
-      updateTypingStatus(false);
-    } catch (error) {
-      logger.error('Error sending message:', error);
+      logger.error('Error fetching messages:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [circleId]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Subscribe to new messages
+  useSupabaseRealtime(
+    {
+      table: 'messages',
+      event: '*',
+      filter: `circle_id=eq.${circleId}`,
+    },
+    fetchMessages
+  );
 
   const handleReply = (messageId: string) => {
-    setReplyTo(messageId);
+    // TODO: Implement reply functionality
   };
 
-  const handleInputChange = (content: string) => {
-    setNewMessage(content);
-    updateTypingStatus(content.length > 0);
+  const handleReact = async (messageId: string, reaction: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('reactions')
+        .upsert({
+          message_id: messageId,
+          user_id: user.id,
+          content: reaction,
+          created_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      logger.error('Error adding reaction:', error);
+    }
   };
 
-  const typingIndicator = Array.from(typingUsers)
-    .map((userId) => members.find((m) => m.id === userId)?.username)
-    .filter((username) => username && members.find(m => m.id === user?.id)?.username !== username);
+  const handleGeniusAward = async (messageId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase.rpc('award_genius', {
+        p_message_id: messageId,
+        p_from_user_id: user.id,
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      logger.error('Error awarding genius:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="w-8 h-8 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background-primary">
       <div className="flex-1 flex flex-col">
         <TopNavigation
-          title={topic.name}
-          onMenuClick={onOpenSidebar}
+          title={circleId}
           onMembersClick={() => setIsMembersOpen(true)}
         />
 
@@ -241,61 +141,22 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
           ref={chatContainerRef}
           className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
         >
-          <AnimatePresence>
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <MessageComponent
-                  message={message}
-                  onReply={handleReply}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {messages.map((message) => (
+            <Message
+              key={message.id}
+              message={message}
+              user={users[message.user_id]}
+              onReply={handleReply}
+              onReact={handleReact}
+              onGeniusAward={handleGeniusAward}
+            />
+          ))}
           <div ref={messagesEndRef} />
         </div>
-
-        {/* Typing indicator */}
-        <AnimatePresence>
-          {typingIndicator.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="px-4 py-2 text-sm text-text-secondary"
-            >
-              {typingIndicator.length === 1
-                ? `${typingIndicator[0]} is typing...`
-                : `${typingIndicator.length} people are typing...`}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Reply indicator */}
-        {replyTo && (
-          <div className="px-4 py-2 bg-background-secondary border-t border-background-tertiary flex items-center justify-between">
-            <span className="text-sm text-text-secondary">
-              Replying to message
-            </span>
-            <button
-              onClick={() => setReplyTo(null)}
-              className="button bg-background-tertiary hover:bg-background-secondary text-text-secondary text-sm"
-              aria-label="Cancel reply"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
 
         {/* Chat input */}
         <div className="p-4 border-t border-background-tertiary bg-background-primary pb-safe">
           <GuestAwareChatInput
-            onSendMessage={handleSendMessage}
-            onChange={handleInputChange}
             placeholder="Type a message..."
             className="w-full"
           />
@@ -304,10 +165,10 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ topic, onOpenSidebar }) => {
 
       {/* Members list */}
       <MembersList
-        members={members}
+        members={Object.values(users)}
         isOpen={isMembersOpen}
         onClose={() => setIsMembersOpen(false)}
       />
     </div>
   );
-}; 
+} 

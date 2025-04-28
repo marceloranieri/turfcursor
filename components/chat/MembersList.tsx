@@ -1,101 +1,62 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
-import { User } from '@/lib/types';
+import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes } from '@react-icons/all-files/fa/FaTimes';
+import type { Profile } from '@/lib/types/database.types';
 
 interface MembersListProps {
-  members: User[];
+  members: Profile[];
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const MembersList: React.FC<MembersListProps> = ({
-  members,
-  isOpen,
-  onClose,
-}) => {
+export function MembersList({ members, isOpen, onClose }: MembersListProps) {
   return (
-    <>
-      {/* Mobile overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={onClose}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Members list sidebar */}
-      <motion.aside
-        role="complementary"
-        aria-label="Members list"
-        className={`fixed right-0 top-0 h-screen w-64 bg-background-secondary border-l border-background-tertiary z-50 lg:relative lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-        initial={false}
-        animate={{ x: isOpen ? 0 : '100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      >
-        <div className="flex flex-col h-full">
-          {/* Header */}
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', damping: 20 }}
+          className="fixed top-0 right-0 h-full w-64 bg-background-secondary border-l border-background-tertiary shadow-lg"
+        >
           <div className="flex items-center justify-between p-4 border-b border-background-tertiary">
-            <h2 className="font-semibold text-text-primary">Members</h2>
+            <h2 className="text-lg font-semibold text-text-primary">Members</h2>
             <button
               onClick={onClose}
-              className="lg:hidden button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
+              className="p-2 -mr-2 text-text-secondary hover:text-text-primary rounded-full hover:bg-background-tertiary"
               aria-label="Close members list"
             >
-              <FaTimes className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
-
-          {/* Members list */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            <AnimatePresence>
+          
+          <div className="p-4">
+            <div className="space-y-4">
               {members.map((member) => (
-                <motion.div
-                  key={member.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-background-tertiary transition-colors"
-                >
-                  <div className="relative">
-                    <Image
-                      src={member.avatar_url || '/default-avatar.png'}
-                      alt={member.username || 'User'}
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
-                    <div
-                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background-secondary ${
-                        member.status === 'online' ? 'bg-success' : 'bg-text-muted'
-                      }`}
-                      aria-hidden="true"
-                    />
+                <div key={member.id} className="flex items-center">
+                  <div className="flex-shrink-0 mr-3">
+                    <div className="w-8 h-8 rounded-full bg-background-tertiary flex items-center justify-center text-sm font-semibold text-text-primary">
+                      {member.username.charAt(0).toUpperCase()}
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-text-primary truncate font-medium">
+                    <p className="text-sm font-medium text-text-primary truncate">
                       {member.username}
                     </p>
-                    <p className="text-xs text-text-secondary truncate">
-                      {member.status === 'online' ? 'Online' : 'Offline'}
-                    </p>
+                    {member.is_debate_maestro && (
+                      <p className="text-xs text-accent-primary">
+                        Debate Maestro
+                      </p>
+                    )}
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
+            </div>
           </div>
-        </div>
-      </motion.aside>
-    </>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
-}; 
+} 

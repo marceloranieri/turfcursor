@@ -1,6 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import logger from '@/lib/logger';
+import React, { useState, useEffect } from 'react';
+import { getActiveTopics, getTopicHistory, manuallyRefreshTopics, addTopic } from '../../lib/topics/topicHelpers';
 import { supabase } from "@/lib/supabase/client";
 
 type Topic = {

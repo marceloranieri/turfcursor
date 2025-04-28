@@ -7,18 +7,15 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { FaBars } from '@react-icons/all-files/fa/FaBars';
 import { FaUsers } from '@react-icons/all-files/fa/FaUsers';
 import { motion } from 'framer-motion';
+import { Menu, Users } from 'lucide-react';
 
 interface TopNavigationProps {
   title: string;
-  onMenuClick: () => void;
   onMembersClick: () => void;
+  onMenuClick?: () => void;
 }
 
-export const TopNavigation: React.FC<TopNavigationProps> = ({
-  title,
-  onMenuClick,
-  onMembersClick,
-}) => {
+export function TopNavigation({ title, onMembersClick, onMenuClick }: TopNavigationProps) {
   const { user } = useAuth();
 
   return (
@@ -30,13 +27,15 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
     >
       <div className="flex items-center justify-between px-4 h-14">
         {/* Left side - Menu button */}
-        <button
-          onClick={onMenuClick}
-          className="md:hidden button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
-          aria-label="Open menu"
-        >
-          <FaBars className="w-5 h-5" />
-        </button>
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="md:hidden button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Center - Title */}
         <h1 className="text-lg font-semibold text-text-primary truncate mx-4">
@@ -51,7 +50,7 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
             className="lg:hidden button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
             aria-label="Show members"
           >
-            <FaUsers className="w-5 h-5" />
+            <Users className="w-5 h-5" />
           </button>
 
           {/* Profile link */}
@@ -77,4 +76,4 @@ export const TopNavigation: React.FC<TopNavigationProps> = ({
       </div>
     </motion.header>
   );
-}; 
+} 

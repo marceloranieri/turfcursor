@@ -1,186 +1,178 @@
-import logger from '@/lib/logger';
+'use client';
+
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Message as MessageType, Reply, Reaction } from '@/lib/types';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { supabase } from '@/lib/supabase/client';
-import { EmojiPicker } from '@/components/chat/EmojiPicker';
+import { supabase } from '@/lib/supabaseClient';
 import DiscordButton from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
-import { GuestAwareReactionButton } from './GuestAwareReactionButton';
+import GuestAwareReactionButton from './GuestAwareReactionButton';
 import { FaReply } from '@react-icons/all-files/fa/FaReply';
 import { FaRegSmile } from '@react-icons/all-files/fa/FaRegSmile';
+import { FaThumbsUp } from '@react-icons/all-files/fa/FaThumbsUp';
+import { FaThumbsDown } from '@react-icons/all-files/fa/FaThumbsDown';
+import { FaGift } from '@react-icons/all-files/fa/FaGift';
+import { EmojiPicker } from './EmojiPicker';
+import logger from '@/lib/logger';
+import type { Message as MessageType, Profile } from '@/lib/types/database.types';
 
 interface ReplyMessageProps {
-  reply: Reply;
-  onReply: (messageId: string) => void;
-}
-
-const ReplyMessage: React.FC<ReplyMessageProps> = ({ reply, onReply }) => {
-  return (
-    <div className="flex items-start gap-4 py-2">
-      <div className="flex-shrink-0">
-        <Image
-          src={reply.author.avatar || '/default-avatar.png'}
-          alt={reply.author.name || 'User'}
-          width={32}
-          height={32}
-          className="rounded-full"
-        />
-      </div>
-      <div className="flex-grow">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-semibold text-text-primary truncate">
-            {reply.author.name}
-          </span>
-          <span className="text-xs text-text-muted whitespace-nowrap">
-            {formatDistanceToNow(new Date(reply.timestamp), { addSuffix: true })}
-          </span>
-        </div>
-        <div className="text-text-primary">{reply.content}</div>
-      </div>
-    </div>
-  );
-};
-
-interface MessageProps {
   message: MessageType;
   onReply: (messageId: string) => void;
 }
 
-export const Message: React.FC<MessageProps> = ({ message, onReply }) => {
-  const { user } = useAuth();
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isReplying, setIsReplying] = useState(false);
+interface MessageProps {
+  message: MessageType;
+  user?: Profile;
+  onReply: (messageId: string) => void;
+  onReact: (messageId: string, reaction: string) => void;
+  onGeniusAward: (messageId: string) => void;
+  isWizardMessage?: boolean;
+  isPinned?: boolean;
+}
 
-  const handleReaction = async (emoji: string) => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('reactions')
-        .upsert({
-          message_id: message.id,
-          user_id: user.id,
-          emoji: emoji
-        });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error adding reaction:', error);
-    }
+export default function Message({
+  message,
+  user,
+  onReply,
+  onReact,
+  onGeniusAward,
+  isWizardMessage = false,
+  isPinned = false,
+}: MessageProps) {
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  const handleReactionClick = () => {
+    setShowReactionPicker(!showReactionPicker);
+  };
+  
+  const handleEmojiSelect = (emoji: string) => {
+    onReact(message.id, emoji);
+    setShowReactionPicker(false);
   };
 
-  const handleReply = () => {
-    onReply(message.id);
-    setIsReplying(true);
-  };
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-start gap-4">
-        {/* Avatar */}
-        <div className="flex-shrink-0">
-          <Image
-            src={message.author.avatar || '/default-avatar.png'}
-            alt={message.author.name || 'User'}
-            width={40}
-            height={40}
-            className="rounded-full"
-          />
-        </div>
-
-        {/* Message content */}
-        <div className="flex-grow min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-text-primary truncate">
-              {message.author.name}
-            </span>
-            <span className="text-xs text-text-muted whitespace-nowrap">
-              {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-            </span>
-          </div>
-
-          <div className="text-text-primary break-words">{message.content}</div>
-
-          {/* Reactions */}
-          {message.reactions && message.reactions.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {Object.entries(
-                message.reactions.reduce((acc, reaction) => {
-                  acc[reaction.emoji] = (acc[reaction.emoji] || 0) + 1;
-                  return acc;
-                }, {} as Record<string, number>)
-              ).map(([emoji, count]) => (
-                <GuestAwareReactionButton
-                  key={emoji}
-                  emoji={emoji}
-                  count={count}
-                  onClick={() => handleReaction(emoji as string)}
-                  isActive={message.reactions?.some(r => r.user_id === user?.id && r.emoji === emoji)}
-                />
-              ))}
+  if (!user) {
+    return (
+      <div className="my-4 opacity-50">
+        <div className="flex items-start">
+          <div className="flex-shrink-0 mr-3">
+            <div className="w-10 h-10 rounded-full bg-background-tertiary flex items-center justify-center text-lg font-semibold text-text-primary">
+              ?
             </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 mt-2">
-            <GuestAwareReactionButton
-              emoji="👍"
-              count={0}
-              onClick={() => handleReaction('👍')}
-              isActive={message.reactions?.some(r => r.user_id === user?.id && r.emoji === '👍')}
-            />
-            <GuestAwareReactionButton
-              emoji="👎"
-              count={0}
-              onClick={() => handleReaction('👎')}
-              isActive={message.reactions?.some(r => r.user_id === user?.id && r.emoji === '👎')}
-            />
-            <GuestAwareReactionButton
-              emoji="🌟"
-              count={0}
-              onClick={() => handleReaction('🌟')}
-              isActive={message.reactions?.some(r => r.user_id === user?.id && r.emoji === '🌟')}
-            />
-            <button
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
-              aria-label="Add reaction"
-            >
-              <FaRegSmile className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleReply}
-              className="button bg-background-tertiary hover:bg-background-secondary text-text-secondary"
-              aria-label="Reply to message"
-            >
-              <FaReply className="w-4 h-4" />
-            </button>
           </div>
-
-          {showEmojiPicker && (
-            <div className="relative mt-2">
-              <EmojiPicker
-                onSelect={(emoji) => {
-                  handleReaction(emoji);
-                  setShowEmojiPicker(false);
-                }}
-                onClose={() => setShowEmojiPicker(false)}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center">
+              <span className="font-semibold text-text-primary">Deleted User</span>
+              <span className="ml-2 text-sm text-text-muted">
+                {formatTime(message.created_at)}
+              </span>
+            </div>
+            <div className="mt-1 text-text-primary whitespace-pre-wrap break-words">
+              {message.content}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={`my-4 ${isWizardMessage ? 'message-bubble wizard' : ''}`}>
+      <div className="flex items-start">
+        {/* User avatar */}
+        <div className="flex-shrink-0 mr-3">
+          <div className="w-10 h-10 rounded-full bg-background-tertiary flex items-center justify-center text-lg font-semibold text-text-primary">
+            {user.username.charAt(0).toUpperCase()}
+          </div>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center">
+            {/* Username */}
+            <span className="font-semibold text-text-primary">
+              {user.username}
+              {user.is_debate_maestro && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gold text-background">
+                  Debate Maestro
+                </span>
+              )}
+            </span>
+            
+            {/* Timestamp */}
+            <span className="ml-2 text-sm text-text-muted">
+              {formatTime(message.created_at)}
+            </span>
+          </div>
+          
+          {/* Message content */}
+          <div className="mt-1 text-text-primary whitespace-pre-wrap break-words">
+            {message.content}
+          </div>
+          
+          {/* Action buttons */}
+          <div className="mt-2 flex items-center space-x-2 text-text-muted">
+            <GuestAwareReactionButton
+              onClick={() => onReply(message.id)}
+              className="flex items-center text-xs hover:text-accent-primary transition-colors"
+            >
+              <FaReply className="w-4 h-4 mr-1" />
+              Reply
+            </GuestAwareReactionButton>
+            
+            <GuestAwareReactionButton
+              onClick={() => onReact(message.id, '👍')}
+              className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
+                message.upvotes > 0 ? 'text-accent-primary' : ''
+              }`}
+            >
+              <FaThumbsUp className="w-4 h-4 mr-1" />
+              {message.upvotes > 0 ? message.upvotes : ''}
+            </GuestAwareReactionButton>
+            
+            <GuestAwareReactionButton
+              onClick={() => onReact(message.id, '👎')}
+              className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
+                message.downvotes > 0 ? 'text-danger' : ''
+              }`}
+            >
+              <FaThumbsDown className="w-4 h-4 mr-1" />
+              {message.downvotes > 0 ? message.downvotes : ''}
+            </GuestAwareReactionButton>
+            
+            <GuestAwareReactionButton
+              onClick={handleReactionClick}
+              className="flex items-center text-xs hover:text-accent-primary transition-colors"
+            >
+              <FaRegSmile className="w-4 h-4 mr-1" />
+              React
+            </GuestAwareReactionButton>
+            
+            <GuestAwareReactionButton
+              onClick={() => onGeniusAward(message.id)}
+              className="flex items-center text-xs hover:text-gold transition-colors"
+            >
+              <FaGift className="w-4 h-4 mr-1" />
+              Genius
+            </GuestAwareReactionButton>
+          </div>
+          
+          {/* Emoji picker */}
+          {showReactionPicker && (
+            <div className="mt-2 relative">
+              <EmojiPicker 
+                onSelect={handleEmojiSelect} 
+                onClose={() => setShowReactionPicker(false)} 
               />
             </div>
           )}
         </div>
       </div>
-
-      {/* Replies */}
-      {message.replies && message.replies.length > 0 && (
-        <div className="ml-14 mt-2 border-l-2 border-background-tertiary pl-4">
-          {message.replies.map((reply) => (
-            <ReplyMessage key={reply.id} reply={reply} onReply={onReply} />
-          ))}
-        </div>
-      )}
     </div>
   );
-}; 
+} 

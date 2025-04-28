@@ -2,16 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { Github, GitPullRequest, GitCommit, Star, AlertCircle, GitBranch, Tag, Eye } from 'lucide-react';
+import Image from 'next/image';
 
 interface GitHubEvent {
   id: string;
-  type: 'push' | 'pull_request' | 'issue' | 'star';
+  type: 'push' | 'pull_request' | 'issue' | 'star' | 'gist' | 'fork' | 'release' | 'watch';
   repo_name: string;
   action?: string;
   branch?: string;
   commit_count?: number;
   details: any;
   created_at: string;
+  actor?: {
+    login: string;
+    avatar_url: string;
+  };
 }
 
 interface ActivityFeedProps {
@@ -67,6 +73,29 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedRepos, limit
     };
   }, [selectedRepos, limit]);
 
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'push':
+        return <GitCommit className="w-5 h-5 text-green-500" />;
+      case 'pull_request':
+        return <GitPullRequest className="w-5 h-5 text-blue-500" />;
+      case 'issue':
+        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+      case 'star':
+        return <Star className="w-5 h-5 text-yellow-400" />;
+      case 'gist':
+        return <Github className="w-5 h-5 text-purple-500" />;
+      case 'fork':
+        return <GitBranch className="w-5 h-5 text-indigo-500" />;
+      case 'release':
+        return <Tag className="w-5 h-5 text-pink-500" />;
+      case 'watch':
+        return <Eye className="w-5 h-5 text-cyan-500" />;
+      default:
+        return <Github className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
   const renderEventContent = (event: GitHubEvent) => {
     switch (event.type) {
       case 'push':
@@ -108,6 +137,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedRepos, limit
             </Link>
             {' '}
             {event.action}: {event.details.title}
+            {event.details.body && (
+              <p className="mt-1 text-sm text-text-secondary line-clamp-2">
+                {event.details.body}
+              </p>
+            )}
           </div>
         );
 
@@ -124,6 +158,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedRepos, limit
             </Link>
             {' '}
             {event.action}: {event.details.title}
+            {event.details.body && (
+              <p className="mt-1 text-sm text-text-secondary line-clamp-2">
+                {event.details.body}
+              </p>
+            )}
           </div>
         );
 
@@ -131,6 +170,65 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedRepos, limit
         return (
           <div>
             Repository {event.action === 'created' ? 'starred' : 'unstarred'} (now has {event.details.stars} stars)
+          </div>
+        );
+
+      case 'gist':
+        return (
+          <div>
+            <Link
+              href={event.details.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-primary hover:underline"
+            >
+              Gist {event.details.id}
+            </Link>
+            {' '}
+            {event.action}: {event.details.description || 'Untitled gist'}
+          </div>
+        );
+
+      case 'fork':
+        return (
+          <div>
+            Forked repository to{' '}
+            <Link
+              href={event.details.fork_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-primary hover:underline"
+            >
+              {event.details.fork_name}
+            </Link>
+          </div>
+        );
+
+      case 'release':
+        return (
+          <div>
+            <Link
+              href={event.details.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-primary hover:underline"
+            >
+              Released version {event.details.tag_name}
+            </Link>
+            {event.details.name && `: ${event.details.name}`}
+            {event.details.body && (
+              <p className="mt-1 text-sm text-text-secondary line-clamp-2">
+                {event.details.body}
+              </p>
+            )}
+          </div>
+        );
+
+      case 'watch':
+        return (
+          <div>
+            Started watching the repository
+            {event.details.stars_count && ` (${event.details.stars_count} total watchers)`}
           </div>
         );
 
@@ -162,21 +260,44 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ selectedRepos, limit
       {events.map((event) => (
         <div
           key={event.id}
-          className="p-4 bg-background-tertiary rounded-lg border border-background-secondary"
+          className="p-4 bg-background-tertiary rounded-lg border border-background-secondary hover:border-accent-primary/30 transition-colors"
         >
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="text-text-primary font-medium">{event.repo_name}</div>
-              <div className="text-text-secondary text-sm">
-                {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+          <div className="flex items-start space-x-4">
+            {event.actor && (
+              <Image
+                src={event.actor.avatar_url}
+                alt={event.actor.login}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href={`https://github.com/${event.repo_name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-primary font-medium hover:text-accent-primary"
+                  >
+                    {event.repo_name}
+                  </Link>
+                  <div className="text-text-secondary text-sm">
+                    {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {getEventIcon(event.type)}
+                  <div className="text-xs font-medium px-2 py-1 rounded-full bg-background-secondary text-text-secondary">
+                    {event.type.replace('_', ' ')}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 text-text-primary">
+                {renderEventContent(event)}
               </div>
             </div>
-            <div className="text-xs font-medium px-2 py-1 rounded-full bg-background-secondary text-text-secondary">
-              {event.type}
-            </div>
-          </div>
-          <div className="mt-2 text-text-primary">
-            {renderEventContent(event)}
           </div>
         </div>
       ))}

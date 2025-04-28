@@ -247,7 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             prompt: 'consent',
           },
           scopes: provider === 'github' 
-            ? 'read:user user:email repo' 
+            ? 'read:user user:email repo notifications gist' 
             : undefined,
         },
       });

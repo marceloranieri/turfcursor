@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/ToastContext';
 import { ActivityFeed } from '@/components/github/ActivityFeed';
+import { RepositoryCard } from '@/components/github/RepositoryCard';
+import { NotificationsList } from '@/components/github/NotificationsList';
 // import logger from '@/lib/logger';
 
 type GithubRepo = {
@@ -19,6 +21,10 @@ type GithubRepo = {
   updated_at?: string;
   language?: string;
   stargazers_count?: number;
+  forks_count?: number;
+  watchers_count?: number;
+  topics?: string[];
+  default_branch?: string;
 };
 
 export default function SettingsPage() {
@@ -41,6 +47,8 @@ export default function SettingsPage() {
   const [rateLimit, setRateLimit] = useState<{ remaining: number; reset: Date } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'updated' | 'stars'>('updated');
+  const [githubProfile, setGithubProfile] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   const fetchGithubRepos = useCallback(async (accessToken: string) => {
     try {
@@ -86,6 +94,32 @@ export default function SettingsPage() {
       });
     } finally {
       setIsLoadingRepos(false);
+    }
+  }, [showToast]);
+
+  const fetchGithubProfile = useCallback(async (accessToken: string) => {
+    try {
+      setIsLoadingProfile(true);
+      
+      const response = await fetch('https://api.github.com/user', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setGithubProfile(data);
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : 'Error fetching GitHub profile',
+        type: 'error',
+      });
+    } finally {
+      setIsLoadingProfile(false);
     }
   }, [showToast]);
 
@@ -138,6 +172,7 @@ export default function SettingsPage() {
           
           if (githubAccessToken) {
             await fetchGithubRepos(githubAccessToken);
+            await fetchGithubProfile(githubAccessToken);
           }
         }
       } catch (error) {
@@ -150,7 +185,7 @@ export default function SettingsPage() {
     };
 
     loadUserSettings();
-  }, [user, showToast, fetchGithubRepos]);
+  }, [user, showToast, fetchGithubRepos, fetchGithubProfile]);
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,7 +244,7 @@ export default function SettingsPage() {
         provider: 'github',
         options: {
           redirectTo: `${window.location.origin}/settings`,
-          scopes: 'read:user user:email repo',
+          scopes: 'read:user user:email repo notifications gist',
         },
       });
 
@@ -275,14 +310,15 @@ export default function SettingsPage() {
       
       if (githubAccessToken) {
         await fetchGithubRepos(githubAccessToken);
+        await fetchGithubProfile(githubAccessToken);
         showToast({
-          message: 'Repositories refreshed successfully',
+          message: 'GitHub data refreshed successfully',
           type: 'success',
         });
       }
     } catch (error) {
       showToast({
-        message: 'Failed to refresh repositories',
+        message: 'Failed to refresh GitHub data',
         type: 'error',
       });
     } finally {
@@ -373,7 +409,7 @@ export default function SettingsPage() {
                   disabled={isRefreshing || (rateLimit?.remaining === 0)}
                   className="text-sm text-accent-primary hover:text-accent-primary-dark disabled:opacity-50"
                 >
-                  {isRefreshing ? 'Refreshing...' : 'Refresh Repos'}
+                  {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
                 </button>
               )}
             </div>
@@ -408,6 +444,112 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* GitHub Profile Section */}
+                  {githubProfile && (
+                    <div className="p-4 bg-background-tertiary rounded-lg border border-background-secondary">
+                      <div className="flex items-start space-x-4">
+                        <Image
+                          src={githubProfile.avatar_url}
+                          alt="GitHub Profile"
+                          width={80}
+                          height={80}
+                          className="rounded-full"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-lg font-medium text-text-primary">
+                              {githubProfile.name || githubProfile.login}
+                            </h3>
+                            <a
+                              href={`https://github.com/${githubProfile.login}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-accent-primary hover:text-accent-primary-dark"
+                            >
+                              @{githubProfile.login}
+                            </a>
+                            {githubProfile.hireable && (
+                              <span className="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full">
+                                Open to Work
+                              </span>
+                            )}
+                          </div>
+                          {githubProfile.bio && (
+                            <p className="text-sm text-text-secondary mt-1">{githubProfile.bio}</p>
+                          )}
+                          <div className="flex flex-wrap gap-4 mt-2 text-sm text-text-secondary">
+                            {githubProfile.company && (
+                              <a
+                                href={`https://github.com/${githubProfile.company.replace('@', '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center hover:text-accent-primary"
+                              >
+                                <span className="mr-1">🏢</span> {githubProfile.company}
+                              </a>
+                            )}
+                            {githubProfile.location && (
+                              <div className="flex items-center">
+                                <span className="mr-1">📍</span> {githubProfile.location}
+                              </div>
+                            )}
+                            {githubProfile.blog && (
+                              <a 
+                                href={githubProfile.blog.startsWith('http') ? githubProfile.blog : `https://${githubProfile.blog}`}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center text-accent-primary hover:underline"
+                              >
+                                <span className="mr-1">🌐</span> Website
+                              </a>
+                            )}
+                            {githubProfile.twitter_username && (
+                              <a
+                                href={`https://twitter.com/${githubProfile.twitter_username}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-accent-primary hover:underline"
+                              >
+                                <span className="mr-1">🐦</span> @{githubProfile.twitter_username}
+                              </a>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-4 gap-4 mt-4 p-3 bg-background-secondary rounded-lg">
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-text-primary">
+                                {githubProfile.followers.toLocaleString()}
+                              </div>
+                              <div className="text-xs text-text-secondary">Followers</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-text-primary">
+                                {githubProfile.following.toLocaleString()}
+                              </div>
+                              <div className="text-xs text-text-secondary">Following</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-text-primary">
+                                {githubProfile.public_repos.toLocaleString()}
+                              </div>
+                              <div className="text-xs text-text-secondary">Repositories</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-semibold text-text-primary">
+                                {githubProfile.public_gists.toLocaleString()}
+                              </div>
+                              <div className="text-xs text-text-secondary">Gists</div>
+                            </div>
+                          </div>
+                          {githubProfile.created_at && (
+                            <div className="mt-3 text-sm text-text-secondary">
+                              Member since {new Date(githubProfile.created_at).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between">
                     <div>
@@ -461,84 +603,22 @@ export default function SettingsPage() {
                     </button>
                   </div>
 
-                  {githubSyncEnabled && (
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <label className="block text-text-primary">
-                            Select Repositories to Sync
-                          </label>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="text"
-                              placeholder="Search repositories..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="px-3 py-1 text-sm bg-background-tertiary rounded-md border border-background-primary focus:outline-none focus:ring-1 focus:ring-accent-primary"
-                            />
-                            <select
-                              value={sortBy}
-                              onChange={(e) => setSortBy(e.target.value as 'name' | 'updated' | 'stars')}
-                              className="px-3 py-1 text-sm bg-background-tertiary rounded-md border border-background-primary focus:outline-none focus:ring-1 focus:ring-accent-primary"
-                            >
-                              <option value="updated">Recently Updated</option>
-                              <option value="name">Name</option>
-                              <option value="stars">Stars</option>
-                            </select>
-                          </div>
-                        </div>
-                        
-                        <div className="max-h-60 overflow-y-auto space-y-2">
-                          {isLoadingRepos ? (
-                            <div className="text-center py-4 text-text-secondary">Loading repositories...</div>
-                          ) : filteredRepos.length > 0 ? (
-                            filteredRepos.map((repo) => (
-                              <div
-                                key={repo.full_name}
-                                className="flex items-center space-x-3 p-3 rounded-md hover:bg-background-tertiary border border-background-tertiary"
-                              >
-                                <input
-                                  type="checkbox"
-                                  id={repo.full_name}
-                                  checked={selectedRepos.includes(repo.full_name)}
-                                  onChange={() => handleRepoSelection(repo.full_name)}
-                                  className="h-4 w-4 text-accent-primary focus:ring-accent-primary border-gray-300 rounded"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <label htmlFor={repo.full_name} className="block text-text-primary font-medium">
-                                    {repo.full_name}
-                                  </label>
-                                  {repo.description && (
-                                    <p className="text-sm text-text-secondary truncate">
-                                      {repo.description}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center space-x-4 mt-1 text-xs text-text-secondary">
-                                    {repo.language && (
-                                      <span>{repo.language}</span>
-                                    )}
-                                    {repo.stargazers_count !== undefined && (
-                                      <span>⭐ {repo.stargazers_count}</span>
-                                    )}
-                                    {repo.updated_at && (
-                                      <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
-                                    )}
-                                  </div>
-                                </div>
-                                {repo.private && (
-                                  <span className="px-2 py-1 text-xs font-medium bg-background-primary rounded-full">
-                                    Private
-                                  </span>
-                                )}
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center py-4 text-text-secondary">
-                              {searchQuery ? 'No repositories found' : 'No repositories available'}
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                  {/* GitHub Notifications Section */}
+                  {githubNotifications && (
+                    <div className="mt-6 space-y-4">
+                      <h3 className="text-lg font-medium text-text-primary">GitHub Notifications</h3>
+                      <NotificationsList
+                        accessToken={session?.provider_token || ''}
+                        onError={(message) => showToast({ message, type: 'error' })}
+                      />
+                    </div>
+                  )}
+
+                  {/* GitHub Activity Feed Section */}
+                  {githubSyncEnabled && selectedRepos.length > 0 && (
+                    <div className="mt-8 space-y-4">
+                      <h3 className="text-lg font-medium text-text-primary">Recent Activity</h3>
+                      <ActivityFeed selectedRepos={selectedRepos} limit={5} />
                     </div>
                   )}
                 </>
@@ -561,14 +641,6 @@ export default function SettingsPage() {
               )}
             </div>
           </div>
-
-          {/* After repository selection section */}
-          {githubSyncEnabled && selectedRepos.length > 0 && (
-            <div className="mt-8 space-y-4">
-              <h3 className="text-lg font-medium text-text-primary">Recent Activity</h3>
-              <ActivityFeed selectedRepos={selectedRepos} limit={5} />
-            </div>
-          )}
 
           {/* Appearance Section */}
           <div className="space-y-4">

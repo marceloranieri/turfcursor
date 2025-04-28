@@ -1,102 +1,39 @@
-import logger from '@/lib/logger';
-import { useEffect } from 'react';
-import { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
-import { Message, Reaction, Notification } from '@/lib/types';
+'use client';
 
-interface UseSupabaseRealtimeProps {
-  topicId?: string;
-  onNewMessage?: (message: Message) => void;
-  onUpdateMessage?: (message: Message) => void;
-  onNewReaction?: (reaction: Reaction) => void;
-  onDeleteReaction?: (reaction: Reaction) => void;
-  onNewNotification?: (notification: Notification) => void;
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import logger from '@/lib/logger';
+
+interface RealtimeConfig {
+  table: string;
+  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  filter?: string;
 }
 
-export function useSupabaseRealtime({
-  topicId,
-  onNewMessage,
-  onUpdateMessage,
-  onNewReaction,
-  onDeleteReaction,
-  onNewNotification,
-}: UseSupabaseRealtimeProps) {
+export function useSupabaseRealtime(config: RealtimeConfig, callback: () => void) {
   useEffect(() => {
-    let channel: RealtimeChannel;
-
-    const setupRealtimeSubscriptions = () => {
-      channel = supabase.channel(`room:${topicId}`);
-
-      // Messages subscription
-      if (topicId) {
-        channel
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'messages',
-              filter: `topic_id=eq.${topicId}`,
-            },
-            (payload) => onNewMessage?.(payload.new as Message)
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'messages',
-              filter: `topic_id=eq.${topicId}`,
-            },
-            (payload) => onUpdateMessage?.(payload.new as Message)
-          );
-      }
-
-      // Reactions subscription
-      channel
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'reactions',
-          },
-          (payload) => onNewReaction?.(payload.new as Reaction)
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'DELETE',
-            schema: 'public',
-            table: 'reactions',
-          },
-          (payload) => onDeleteReaction?.(payload.old as Reaction)
-        );
-
-      // Notifications subscription
-      channel.on(
+    const channel = supabase
+      .channel('db-changes')
+      .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: config.event,
           schema: 'public',
-          table: 'notifications',
+          table: config.table,
+          filter: config.filter,
         },
-        (payload) => onNewNotification?.(payload.new as Notification)
-      );
-
-      channel.subscribe((status) => {
+        () => {
+          callback();
+        }
+      )
+      .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          logger.info('Connected to realtime channel');
+          logger.info(`Subscribed to ${config.table} changes`);
         }
       });
-    };
-
-    setupRealtimeSubscriptions();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      channel.unsubscribe();
     };
-  }, [topicId, onNewMessage, onUpdateMessage, onNewReaction, onDeleteReaction, onNewNotification]);
+  }, [config, callback]);
 } 

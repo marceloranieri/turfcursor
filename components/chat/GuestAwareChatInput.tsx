@@ -7,21 +7,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { EmojiPicker } from './EmojiPicker';
 import { ImageUpload } from './ImageUpload';
 import Image from 'next/image';
+import { useAuth } from '@/lib/auth/AuthContext';
+import dynamic from 'next/dynamic';
+
+const SignInModal = dynamic(() => import('@/components/auth/SignInModal'), {
+  loading: () => <div>Loading...</div>,
+});
 
 interface GuestAwareChatInputProps {
-  onSendMessage: (message: string, imageUrl?: string) => void;
+  onSendMessage?: (message: string, imageUrl?: string) => void;
   onChange?: (content: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
+export default function GuestAwareChatInput({
   onSendMessage,
   onChange,
   placeholder = "Type a message...",
   className = "",
-}) => {
-  const { isGuest, handleGuestAction, SignInModalComponent } = useGuestMode();
+}: GuestAwareChatInputProps) {
+  const { isGuest, handleGuestAction } = useGuestMode();
+  const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -45,13 +52,19 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
     return () => textarea.removeEventListener('input', adjustHeight);
   }, []);
 
-  const handleSendMessage = async () => {
-    if (message.trim() === '' && !imageUrl) return;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    if (!user) {
+      setShowSignInModal(true);
+      return;
+    }
 
     handleGuestAction(async () => {
       setIsSending(true);
       try {
-        await onSendMessage(message, imageUrl || undefined);
+        await onSendMessage?.(message, imageUrl || undefined);
         setMessage('');
         setImageUrl(null);
         if (textareaRef.current) {
@@ -63,13 +76,6 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
         setIsSending(false);
       }
     });
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -102,27 +108,18 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
     setShowImageUpload(false);
   };
 
-  const closeSignInModal = () => {
-    setShowSignInModal(false);
-  };
-
   return (
     <div className="relative">
-      {SignInModalComponent && (
-        <SignInModalComponent
-          isOpen={showSignInModal}
-          onClose={closeSignInModal}
-        />
+      {showSignInModal && (
+        <SignInModal onClose={() => setShowSignInModal(false)} />
       )}
 
       <div className={`relative ${isGuest ? 'opacity-70' : ''} ${className}`}>
-        <div className="flex items-end gap-2 bg-background-tertiary rounded-lg p-2">
-          {/* Message input */}
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4 border-t">
           <textarea
             ref={textareaRef}
             value={message}
             onChange={handleChange}
-            onKeyDown={handleKeyDown}
             placeholder={isGuest ? "Sign in to send messages..." : placeholder}
             className={`flex-1 p-2 bg-transparent text-text-primary placeholder-text-secondary resize-none focus:outline-none min-h-[40px] max-h-[150px] ${
               isGuest ? 'cursor-not-allowed' : ''
@@ -131,7 +128,6 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
             rows={1}
           />
 
-          {/* Action buttons */}
           <div className="flex items-center gap-2 py-1">
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -158,10 +154,10 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={handleSendMessage}
-              disabled={message.trim() === '' && !imageUrl || isGuest}
+              type="submit"
+              disabled={!message.trim() || isGuest}
               className={`p-2 rounded-full transition-colors relative ${
-                message.trim() === '' && !imageUrl || isGuest
+                !message.trim() || isGuest
                   ? 'text-text-secondary'
                   : 'text-accent-secondary hover:bg-background-secondary'
               }`}
@@ -176,9 +172,8 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
               )}
             </motion.button>
           </div>
-        </div>
+        </form>
 
-        {/* Emoji picker */}
         {showEmojiPicker && (
           <EmojiPicker
             onSelect={handleEmojiSelect}
@@ -187,58 +182,35 @@ export const GuestAwareChatInput: React.FC<GuestAwareChatInputProps> = ({
           />
         )}
 
-        {/* Image upload */}
         {showImageUpload && (
           <ImageUpload
             onUpload={handleImageUpload}
-            onCancel={() => {
-              setShowImageUpload(false);
-              setImageUrl(null);
-            }}
+            onClose={() => setShowImageUpload(false)}
           />
         )}
 
-        {/* Image preview */}
-        <AnimatePresence>
-          {imageUrl && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute bottom-full mb-2 left-0 bg-background-secondary rounded-lg shadow-lg p-2"
+        {imageUrl && (
+          <div className="relative mt-2 inline-block">
+            <Image
+              src={imageUrl}
+              alt="Upload preview"
+              width={200}
+              height={200}
+              className="rounded-lg max-h-[200px] w-auto object-contain"
+            />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setImageUrl(null);
+              }}
+              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
+              aria-label="Remove image"
             >
-              <div className="relative">
-                <Image
-                  src={imageUrl}
-                  alt="Upload preview"
-                  width={200}
-                  height={200}
-                  className="rounded-lg max-w-[200px] max-h-[200px] object-contain"
-                />
-                <button
-                  onClick={() => {
-                    setShowImageUpload(false);
-                    setImageUrl(null);
-                  }}
-                  className="absolute -top-2 -right-2 bg-background-primary rounded-full p-1 text-text-secondary hover:text-text-primary"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Guest overlay */}
-        {isGuest && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/50 rounded-lg p-2 flex items-center gap-2">
-              <Lock size={20} className="mr-2" />
-              <span className="text-white text-sm font-medium">Sign in to chat</span>
-            </div>
+              <X size={16} />
+            </button>
           </div>
         )}
       </div>
     </div>
   );
-}; 
+} 
