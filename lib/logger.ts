@@ -1,27 +1,27 @@
 // lib/logger.ts
 
 const logger = {
-  log: (...args: any[]) => {
+  log: (...args: unknown[]) => {
     if (process.env.NODE_ENV !== 'production') {
       console.log(...args);
     }
   },
-  
-  info: (...args: any[]) => {
+
+  error: (...args: unknown[]) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.info(...args);
+      console.error(...args);
     }
   },
-  
-  warn: (...args: any[]) => {
+
+  warn: (...args: unknown[]) => {
     if (process.env.NODE_ENV !== 'production') {
       console.warn(...args);
     }
   },
-  
-  error: (...args: any[]) => {
+
+  info: (...args: unknown[]) => {
     if (process.env.NODE_ENV !== 'production') {
-      console.error(...args);
+      console.info(...args);
     }
   },
 };
