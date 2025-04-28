@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
-import { Bell, GitPullRequest, GitIssueOpened, Eye, MessageSquare, GitCommit } from 'lucide-react';
+import { Bell, GitPullRequest, AlertCircle, Eye, MessageSquare, GitCommit } from 'lucide-react';
 
 interface GitHubNotification {
   id: string;
@@ -30,7 +29,7 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ accessToke
   const [notifications, setNotifications] = useState<GitHubNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const response = await fetch('https://api.github.com/notifications', {
         headers: {
@@ -45,27 +44,27 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ accessToke
 
       const data = await response.json();
       setNotifications(data);
-    } catch (error) {
+    } catch {
       onError('Failed to load notifications');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [accessToken, onError]);
 
   useEffect(() => {
     fetchNotifications();
-    
+
     // Poll for new notifications every 60 seconds
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
-  }, [accessToken]);
+  }, [fetchNotifications]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'PullRequest':
         return <GitPullRequest className="w-5 h-5 text-blue-500" />;
       case 'Issue':
-        return <GitIssueOpened className="w-5 h-5 text-green-500" />;
+        return <AlertCircle className="w-5 h-5 text-green-500" />;
       case 'Commit':
         return <GitCommit className="w-5 h-5 text-purple-500" />;
       case 'Discussion':
@@ -87,12 +86,10 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ accessToke
         },
       });
 
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === id ? { ...notif, unread: false } : notif
-        )
+      setNotifications(prev =>
+        prev.map(notif => (notif.id === id ? { ...notif, unread: false } : notif))
       );
-    } catch (error) {
+    } catch {
       onError('Failed to mark notification as read');
     }
   };
@@ -106,16 +103,12 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ accessToke
   }
 
   if (notifications.length === 0) {
-    return (
-      <div className="text-center py-8 text-text-secondary">
-        No new notifications
-      </div>
-    );
+    return <div className="text-center py-8 text-text-secondary">No new notifications</div>;
   }
 
   return (
     <div className="space-y-4">
-      {notifications.map((notification) => (
+      {notifications.map(notification => (
         <div
           key={notification.id}
           className={`p-4 rounded-lg border ${
@@ -171,4 +164,4 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({ accessToke
       ))}
     </div>
   );
-}; 
+};
