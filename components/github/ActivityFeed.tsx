@@ -45,7 +45,7 @@ interface ActivityFeedProps {
   limit?: number;
 }
 
-const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5 }) => {
+export const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5 }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
