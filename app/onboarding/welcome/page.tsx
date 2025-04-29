@@ -33,7 +33,7 @@ const features = [
   },
 ];
 
-export default function OnboardingWelcome() {
+export default function OnboardingWelcome(): JSX.Element {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
   

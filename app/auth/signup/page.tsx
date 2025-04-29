@@ -9,7 +9,7 @@ import { Chrome, Facebook, Github } from 'lucide-react';
 import { signInWithGoogle, signInWithFacebook, signInWithGithub } from '@/lib/auth/oauth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export default function SignUpPage() {
+export default function SignUpPage(): JSX.Element {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

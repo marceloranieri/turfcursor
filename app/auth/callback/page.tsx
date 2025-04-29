@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 import { handleAuthSuccess } from '@/lib/auth/authEffects';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export default function OAuthCallbackPage() {
+export default function OAuthCallbackPage(): JSX.Element {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

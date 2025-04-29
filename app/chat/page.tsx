@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 import MessageList from './components/MessageList';
 import MessageForm from './components/MessageForm';
 
-export default function Chat() {
+export default function Chat(): JSX.Element {
   const router = useRouter();
   const { session, isLoading } = useAuth();
   const [activeCircleId, setActiveCircleId] = useState<string>('');

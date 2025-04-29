@@ -1,49 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
   "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": ".next",
   "regions": ["iad1"],
-  "builds": [
-    {
-      "src": "next.config.js",
-      "use": "@vercel/next"
-    }
-  ],
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://xqjvxqjvxqjvxqjvxqjv.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxanZ4cWp2eHFqdnF4cWp2eHFqdiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM5NjY5NjAwLCJleHAiOjIwNTUyNDU2MDB9.2QZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQ",
-    "NEXT_PUBLIC_APP_URL": "https://turfcursor.vercel.app",
-    "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com",
-    "NEXT_PUBLIC_GOOGLE_CLIENT_SECRET": "GOCSPX-abcdefghijklmnopqrstuvwxyz",
-    "PUBLIC_GITHUB_CLIENT_ID": "abcdefghijklmnopqrstuvwxyz",
-    "GITHUB_CLIENT_SECRET": "abcdefghijklmnopqrstuvwxyz1234567890",
-    "GIPHY_API_KEY": "abcdefghijklmnopqrstuvwxyz123456",
-    "HUSKY_SKIP_INSTALL": "1"
+    "NEXT_TELEMETRY_DISABLED": "1"
   },
   "github": {
     "silent": true
   },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    }
-  ],
   "git": {
     "deploymentEnabled": {
       "main": true

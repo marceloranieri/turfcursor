@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 
-export default function LoginPage() {
+export default function LoginPage(): JSX.Element {
   const router = useRouter();
 
   useEffect(() => {

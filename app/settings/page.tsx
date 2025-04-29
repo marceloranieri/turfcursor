@@ -27,7 +27,7 @@ type GithubRepo = {
   default_branch?: string;
 };
 
-export default function SettingsPage() {
+export default function SettingsPage(): JSX.Element {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { showToast } = useToast();

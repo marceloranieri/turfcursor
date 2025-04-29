@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-const OnboardingPage = () => {
+const OnboardingPage = (): JSX.Element => {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
 

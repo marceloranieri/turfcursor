@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase/client';
 import { User } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/ToastContext';
 
-export default function ProfilePage() {
+export default function ProfilePage(): JSX.Element {
   const router = useRouter();
   const { user, signOut, isLoading } = useAuth();
   const { showToast } = useToast();
