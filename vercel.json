@@ -1,9 +1,16 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "installCommand": "npm install --legacy-peer-deps",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["iad1"],
+  "builds": [
+    {
+      "src": "next.config.js",
+      "use": "@vercel/next"
+    }
+  ],
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://xqjvxqjvxqjvxqjvxqjv.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxanZ4cWp2eHFqdnF4cWp2eHFqdiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM5NjY5NjAwLCJleHAiOjIwNTUyNDU2MDB9.2QZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQ",
@@ -14,14 +21,6 @@
     "GITHUB_CLIENT_SECRET": "abcdefghijklmnopqrstuvwxyz1234567890",
     "GIPHY_API_KEY": "abcdefghijklmnopqrstuvwxyz123456",
     "HUSKY_SKIP_INSTALL": "1"
-  },
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_SUPABASE_URL": "https://xqjvxqjvxqjvxqjvxqjv.supabase.co",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxanZ4cWp2eHFqdnF4cWp2eHFqdiIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM5NjY5NjAwLCJleHAiOjIwNTUyNDU2MDB9.2QZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQ",
-      "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxanZ4cWp2eHFqdnF4cWp2eHFqdiIsInJvbGUiOiJzZXJ2aWNlX3JvbGUiLCJpYXQiOjE3Mzk2Njk2MDAsImV4cCI6MjA1NTI0NTYwMH0.2QZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQZQ",
-      "HUSKY_SKIP_INSTALL": "1"
-    }
   },
   "github": {
     "silent": true
@@ -45,11 +44,9 @@
       ]
     }
   ],
-  "ignoreCommand": "echo 'Skip check'",
   "git": {
     "deploymentEnabled": {
       "main": true
     }
-  },
-  "outputDirectory": ".next"
+  }
 } 

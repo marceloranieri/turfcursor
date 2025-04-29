@@ -1,4 +1,6 @@
-export default function DashboardPage() {
+import { Metadata } from 'next';
+
+export default function DashboardPage(): JSX.Element {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

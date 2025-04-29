@@ -1,57 +1,60 @@
+#!/usr/bin/env node
+
+/**
+ * This script checks for required environment variables
+ * Run with: node scripts/check-env.js
+ */
+
 const fs = require('fs');
 const path = require('path');
 
-// Check if .env.local exists
-const envPath = path.join(process.cwd(), '.env.local');
-const envExists = fs.existsSync(envPath);
-
-console.log('Checking environment variables...');
-
-if (!envExists) {
-  console.log('❌ .env.local file not found.');
-  console.log('Please create a .env.local file with the following variables:');
-  console.log(`
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# OAuth Providers
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
-NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=your-google-client-secret
-  `);
-  process.exit(1);
-}
-
-// Read .env.local
-const envContent = fs.readFileSync(envPath, 'utf8');
-const envLines = envContent.split('\n');
-
-// Check for required variables
-const requiredVars = [
+// Required environment variables
+const requiredEnvVars = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'NEXT_PUBLIC_APP_URL',
-  'NEXT_PUBLIC_GOOGLE_CLIENT_ID',
-  'NEXT_PUBLIC_GOOGLE_CLIENT_SECRET',
 ];
 
-const missingVars = [];
+// Optional but recommended environment variables
+const recommendedEnvVars = [
+  'GITHUB_CLIENT_ID',
+  'GITHUB_CLIENT_SECRET',
+  'NEXT_PUBLIC_GITHUB_APP_URL',
+];
 
-for (const varName of requiredVars) {
-  const varExists = envLines.some(line => line.startsWith(`${varName}=`));
-  if (!varExists) {
-    missingVars.push(varName);
-  }
+console.log('🔍 Checking environment variables...');
+
+// Load .env file if it exists
+const envPath = path.join(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  require('dotenv').config({ path: envPath });
+  console.log('✅ Loaded .env file');
+} else {
+  console.log('⚠️ No .env file found');
 }
 
-if (missingVars.length > 0) {
+// Check required environment variables
+const missingRequired = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingRequired.length > 0) {
   console.log('❌ Missing required environment variables:');
-  for (const varName of missingVars) {
-    console.log(`  - ${varName}`);
-  }
-  console.log('\nPlease add these variables to your .env.local file.');
+  missingRequired.forEach(varName => {
+    console.log(`   - ${varName}`);
+  });
   process.exit(1);
+} else {
+  console.log('✅ All required environment variables are set');
 }
 
-console.log('✅ All required environment variables are set.');
-console.log('\nEnvironment check complete!'); 
+// Check recommended environment variables
+const missingRecommended = recommendedEnvVars.filter(varName => !process.env[varName]);
+if (missingRecommended.length > 0) {
+  console.log('⚠️ Missing recommended environment variables:');
+  missingRecommended.forEach(varName => {
+    console.log(`   - ${varName}`);
+  });
+  console.log('   These are not required but may affect functionality');
+} else {
+  console.log('✅ All recommended environment variables are set');
+}
+
+console.log('\n✅ Environment check complete'); 

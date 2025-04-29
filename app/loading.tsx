@@ -1,7 +1,11 @@
 'use client';
 
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-export default function Loading() {
-  return <LoadingSpinner />;
+export default function Loading(): JSX.Element {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <LoadingSpinner size="lg" />
+    </div>
+  );
 } 

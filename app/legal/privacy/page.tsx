@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: 'Privacy policy for the Turf App',
 };
 
-export default function PrivacyPolicyPage() {
+export default function PrivacyPolicyPage(): JSX.Element {
   return (
     <article className="space-y-6">
       <h1 className="text-3xl font-bold">Privacy Policy</h1>

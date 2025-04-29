@@ -101,12 +101,14 @@ const nextConfig = {
       },
     ];
   },
-  // Enable SWC minification
-  swcMinify: true,
-  // Experimental features
+  // Enable experimental features that might help with deployment
   experimental: {
     optimizeCss: true,
-    scrollRestoration: true,
+    serverActions: {
+      allowedOrigins: ['localhost:3000', process.env.NEXT_PUBLIC_APP_URL],
+      bodySizeLimit: '2mb'
+    },
+    serverComponents: true
   },
   // Transpile packages
   transpilePackages: [

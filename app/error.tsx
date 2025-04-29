@@ -10,7 +10,7 @@ export default function GlobalError({
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}): JSX.Element {
   useEffect(() => {
     // Log the error to an error reporting service
     logger.error('Global error:', error);
