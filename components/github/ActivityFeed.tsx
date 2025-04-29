@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createLogger } from '@/lib/logger';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
+import { ActivityFeedProps } from '@/types';
 
 interface Event {
   id: string;
@@ -40,24 +41,29 @@ interface Event {
   created_at: string;
 }
 
-interface ActivityFeedProps {
-  username: string;
-  token?: string; // Optional GitHub token for increased rate limits
-  limit?: number;
-}
+const logger = createLogger('ActivityFeed');
 
-export function ActivityFeed({ username, token, limit = 10 }: ActivityFeedProps) {
+export const ActivityFeed: React.FC<ActivityFeedProps> = ({
+  username,
+  token,
+  limit = 10,
+  selectedRepos,
+  onError,
+  onRateLimitExceeded,
+  className = '',
+  showAvatar = true,
+  showRepoName = true,
+  showEventType = true,
+  showTimestamp = true,
+}) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [rateLimit, setRateLimit] = useState<{ remaining: number; reset: Date } | null>(null);
 
-  // Create a tagged logger for this component
-  const componentLogger = createLogger('ActivityFeed');
-
   useEffect(() => {
     const fetchEvents = async () => {
-      componentLogger.info(`Fetching GitHub events for user: ${username}`);
+      logger.info(`Fetching GitHub events for user: ${username}`);
       setLoading(true);
       setError(null);
 
@@ -96,11 +102,11 @@ export function ActivityFeed({ username, token, limit = 10 }: ActivityFeedProps)
         }
 
         const data = await response.json();
-        componentLogger.info(`Successfully fetched ${data.length} events for ${username}`);
+        logger.info(`Successfully fetched ${data.length} events for ${username}`);
         setEvents(data);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-        componentLogger.error(`Failed to fetch GitHub events: ${errorMessage}`);
+        logger.error(`Failed to fetch GitHub events: ${errorMessage}`);
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -112,7 +118,7 @@ export function ActivityFeed({ username, token, limit = 10 }: ActivityFeedProps)
     } else {
       setError('Username is required');
     }
-  }, [username, token, limit, componentLogger]);
+  }, [username, token, limit, logger]);
 
   const renderEventContent = (event: Event) => {
     switch (event.type) {
@@ -281,3 +287,5 @@ export function ActivityFeed({ username, token, limit = 10 }: ActivityFeedProps)
     </div>
   );
 }
+
+export default ActivityFeed;

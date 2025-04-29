@@ -1,52 +1,32 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
-import { useToast } from './ToastContext';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+import { FaSun, FaMoon } from 'react-icons/fa';
 
-export const ThemeToggle: React.FC = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const { showToast } = useToast();
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Check for saved theme preference or system preference
-    const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme) {
-      setTheme(savedTheme as 'light' | 'dark');
-    } else {
-      setTheme(systemPrefersDark ? 'dark' : 'light');
-    }
+    setMounted(true);
   }, []);
 
-  useEffect(() => {
-    // Update theme when it changes
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    showToast({
-      message: `Switched to ${newTheme} mode`,
-      type: 'info',
-      duration: 2000
-    });
-  };
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <button
-      onClick={toggleTheme}
-      className="p-2 rounded-full hover:bg-background-tertiary transition-colors focus-ring"
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      className="rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
+      aria-label="Toggle theme"
     >
-      {theme === 'light' ? (
-        <MoonIcon className="w-5 h-5 text-text-primary" />
+      {theme === 'dark' ? (
+        <FaSun className="h-5 w-5" />
       ) : (
-        <SunIcon className="w-5 h-5 text-text-primary" />
+        <FaMoon className="h-5 w-5" />
       )}
     </button>
   );
-}; 
+} 

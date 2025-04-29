@@ -7,15 +7,17 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import DiscordButton from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
-import GuestAwareReactionButton from './GuestAwareReactionButton';
+import { GuestAwareReactionButton } from './GuestAwareReactionButton';
 import { FaReply } from '@react-icons/all-files/fa/FaReply';
 import { FaRegSmile } from '@react-icons/all-files/fa/FaRegSmile';
 import { FaThumbsUp } from '@react-icons/all-files/fa/FaThumbsUp';
 import { FaThumbsDown } from '@react-icons/all-files/fa/FaThumbsDown';
 import { FaGift } from '@react-icons/all-files/fa/FaGift';
-import { EmojiPicker } from './EmojiPicker';
-import logger from '@/lib/logger';
+import EmojiPicker from './EmojiPicker';
+import { createLogger } from '@/lib/logger';
 import type { Message as MessageType, Profile, Reaction } from '@/lib/types/database.types';
+
+const logger = createLogger('Message');
 
 interface MessageProps {
   message: MessageType;
@@ -26,6 +28,7 @@ interface MessageProps {
   onGeniusAward: (messageId: string) => void;
   isWizardMessage?: boolean;
   isPinned?: boolean;
+  isGuest?: boolean;
 }
 
 export default function Message({
@@ -37,6 +40,7 @@ export default function Message({
   onGeniusAward,
   isWizardMessage = false,
   isPinned = false,
+  isGuest = false,
 }: MessageProps) {
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   
@@ -117,18 +121,18 @@ export default function Message({
             <GuestAwareReactionButton
               onClick={() => onReply(message.id)}
               className="flex items-center text-xs hover:text-accent-primary transition-colors"
-            >
-              <FaReply className="w-4 h-4 mr-1" />
-              Reply
-            </GuestAwareReactionButton>
+              isGuest={isGuest}
+              icon={FaRegSmile}
+            />
             
             <GuestAwareReactionButton
               onClick={() => onReact(message.id, '👍')}
               className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
                 message.upvotes > 0 ? 'text-accent-primary' : ''
               }`}
+              isGuest={isGuest}
+              icon={FaThumbsUp}
             >
-              <FaThumbsUp className="w-4 h-4 mr-1" />
               {message.upvotes > 0 ? message.upvotes : ''}
             </GuestAwareReactionButton>
             
@@ -137,24 +141,27 @@ export default function Message({
               className={`flex items-center text-xs hover:text-accent-primary transition-colors ${
                 message.downvotes > 0 ? 'text-danger' : ''
               }`}
+              isGuest={isGuest}
+              icon={FaThumbsDown}
             >
-              <FaThumbsDown className="w-4 h-4 mr-1" />
               {message.downvotes > 0 ? message.downvotes : ''}
             </GuestAwareReactionButton>
             
             <GuestAwareReactionButton
               onClick={handleReactionClick}
               className="flex items-center text-xs hover:text-accent-primary transition-colors"
+              isGuest={isGuest}
+              icon={FaRegSmile}
             >
-              <FaRegSmile className="w-4 h-4 mr-1" />
               React
             </GuestAwareReactionButton>
             
             <GuestAwareReactionButton
               onClick={() => onGeniusAward(message.id)}
               className="flex items-center text-xs hover:text-gold transition-colors"
+              isGuest={isGuest}
+              icon={FaGift}
             >
-              <FaGift className="w-4 h-4 mr-1" />
               Genius
             </GuestAwareReactionButton>
           </div>

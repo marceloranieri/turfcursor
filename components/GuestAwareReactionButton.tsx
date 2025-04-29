@@ -1,50 +1,41 @@
 'use client';
 
-import { useAuth } from '@/lib/auth/AuthContext';
-import { useRouter } from 'next/navigation';
-import { Button } from './ui/button';
-import { cn } from '@/lib/utils';
 import { IconType } from 'react-icons';
+import { toast } from 'react-hot-toast';
 
 interface GuestAwareReactionButtonProps {
-  icon: IconType;
   onClick: () => void;
-  isActive?: boolean;
-  count?: number;
+  isGuest: boolean;
+  icon: IconType;
   className?: string;
+  children?: React.ReactNode;
 }
 
-export function GuestAwareReactionButton({
-  icon: Icon,
+export const GuestAwareReactionButton: React.FC<GuestAwareReactionButtonProps> = ({
   onClick,
-  isActive = false,
-  count = 0,
-  className,
-}: GuestAwareReactionButtonProps) {
-  const { user } = useAuth();
-  const router = useRouter();
-
+  isGuest,
+  icon: Icon,
+  className = '',
+  children,
+}) => {
   const handleClick = () => {
-    if (!user) {
-      router.push('/login');
+    if (isGuest) {
+      toast.error('Please sign in to add reactions');
       return;
     }
     onClick();
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(
-        'flex items-center gap-1 px-2 py-1 hover:bg-muted',
-        isActive && 'text-primary',
-        className
-      )}
+    <button
       onClick={handleClick}
+      className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${className}`}
+      aria-label="Add reaction"
     >
-      <Icon className={cn('h-4 w-4', isActive && 'text-primary')} />
-      {count > 0 && <span className="text-xs">{count}</span>}
-    </Button>
+      <Icon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+      {children}
+    </button>
   );
-} 
+};
+
+export default GuestAwareReactionButton; 

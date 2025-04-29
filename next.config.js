@@ -13,16 +13,13 @@ const nextConfig = {
       'github.com',
       'raw.githubusercontent.com',
       'user-images.githubusercontent.com',
-      // Add other image domains as needed
     ],
   },
   // Enable TypeScript and ESLint checks during build
   typescript: {
-    // Needed for Vercel deployment to succeed even with type errors
     ignoreBuildErrors: true,
   },
   eslint: {
-    // Warning only in production, error in development
     ignoreDuringBuilds: true,
   },
   // Configure output for optimal Vercel deployment
@@ -64,15 +61,6 @@ const nextConfig = {
 
     return config;
   },
-  // Optimize serverless function
-  serverRuntimeConfig: {
-    maxMemory: 950, // MB (leaving some buffer from the 1GB limit)
-    // Add error handling for memory issues
-    onError: (err) => {
-      console.error('Runtime error:', err);
-      // Log to your error tracking service here
-    },
-  },
   // Add headers for security and caching
   async headers() {
     return [
@@ -81,8 +69,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.com https://*.vercel.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.github.com; img-src 'self' data: https:; font-src 'self' data:;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.com https://*.vercel.com https://*.github.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co https://*.github.com https://api.github.com https://raw.githubusercontent.com https://gist.githubusercontent.com https://*.githubusercontent.com; img-src 'self' data: https:; font-src 'self' data:;",
           },
           {
             key: 'X-Content-Type-Options',
@@ -104,51 +91,6 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
-          // Add compression and caching headers
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'Vary',
-            value: 'Accept-Encoding',
-          },
-        ],
-      },
-      {
-        source: '/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/_next/image(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, max-age=0',
-          },
         ],
       },
       {
@@ -157,7 +99,7 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
           { key: 'Access-Control-Allow-Origin', value: '*' },
           { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
+          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-GitHub-Api-Version, X-GitHub-Event, X-GitHub-Delivery, X-GitHub-Hook-ID' },
         ],
       },
     ];
@@ -168,21 +110,27 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    // Enable modern optimizations
-    optimizePackageImports: ['@heroicons/react', '@radix-ui/react-slot', 'date-fns'],
+    optimizePackageImports: ['@heroicons/react', '@radix-ui/react-slot', 'date-fns', '@octokit/rest', '@octokit/webhooks'],
   },
   // Add build optimizations
   compiler: {
-    // Remove console.log in production
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  // Add powered by header
   poweredByHeader: false,
-  // Transpile specified modules
   transpilePackages: [
     'react-hot-toast',
     'canvas-confetti',
-    // Add other packages that need transpilation
+    '@octokit/rest',
+    '@octokit/auth-token',
+    '@octokit/webhooks',
+    '@octokit/plugin-throttling',
+    '@octokit/plugin-retry',
+    '@octokit/plugin-paginate-rest',
+    '@octokit/plugin-log-level',
+    '@octokit/plugin-request-log',
+    '@octokit/plugin-rest-endpoint-methods',
+    '@octokit/plugin-enterprise-compatibility',
+    '@octokit/plugin-enterprise-server'
   ],
 };
 

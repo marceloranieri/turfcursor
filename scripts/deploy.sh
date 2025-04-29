@@ -1,51 +1,74 @@
 #!/bin/bash
 
-# Exit on error
+# Exit on any error
 set -e
 
-echo "🚀 Deploying Turf App to Vercel..."
+# Colors for terminal output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-# Check if .env.local exists
-if [ ! -f .env.local ]; then
-  echo "❌ .env.local file not found. Creating a template file..."
-  cat > .env.local << EOL
-NEXT_PUBLIC_SUPABASE_URL=https://csfdshydwdzexxosevml.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzZmRzaHlkd2R6ZXh4b3Nldm1sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUzNjY1MTUsImV4cCI6MjA2MDk0MjUxNX0.psZNkXCiyhIgHetnjF1NxwY40jYSZb3qlor78T-FPcg
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Function to log messages
+log() {
+  local level=$1
+  local message=$2
+  local color=$NC
+  
+  case $level in
+    "info") color=$GREEN ;;
+    "warn") color=$YELLOW ;;
+    "error") color=$RED ;;
+  esac
+  
+  echo -e "${color}[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message${NC}"
+}
 
-# OAuth Providers
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
-NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=your-google-client-secret
-EOL
-  echo "✅ Created .env.local template. Please update with your actual values."
+# Check for required environment variables
+if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+  log "error" "Missing required environment variables"
+  log "info" "Please ensure the following environment variables are set:"
+  log "info" "- NEXT_PUBLIC_SUPABASE_URL"
+  log "info" "- NEXT_PUBLIC_SUPABASE_ANON_KEY"
   exit 1
 fi
 
-# Check if vercel CLI is installed
-if ! command -v vercel &> /dev/null; then
-  echo "❌ Vercel CLI not found. Installing..."
-  npm install -g vercel
-fi
+# Display deployment information
+log "info" "===== Starting Deployment Process ====="
+log "info" "Node version: $(node -v)"
+log "info" "NPM version: $(npm -v)"
 
-# Check if user is logged in to Vercel
-if ! vercel whoami &> /dev/null; then
-  echo "❌ Not logged in to Vercel. Please run 'vercel login' first."
+# Install dependencies
+log "info" "===== Installing Dependencies ====="
+npm install --legacy-peer-deps
+
+# Run linting
+log "info" "===== Running Linter ====="
+if ! npm run lint; then
+  log "error" "Linting failed. Please fix the issues and try again."
   exit 1
 fi
 
-# Build the app
-echo "📦 Building the app..."
+# Type checking
+log "info" "===== Type Checking ====="
+if ! npm run type-check; then
+  log "error" "Type checking failed. Please fix the issues and try again."
+  exit 1
+fi
+
+# Build the application
+log "info" "===== Building Application ====="
 if ! npm run build; then
-  echo "❌ Build failed. Please fix the errors and try again."
+  log "error" "Build failed. Please fix the issues and try again."
   exit 1
 fi
 
 # Deploy to Vercel
-echo "🚀 Deploying to Vercel..."
-if ! vercel --prod --force; then
-  echo "❌ Deployment failed. Please check the error messages above."
+log "info" "===== Deploying to Vercel ====="
+if ! vercel --prod; then
+  log "error" "Deployment failed. Please check the error messages above."
   exit 1
 fi
 
-echo "✅ Deployment complete!"
-echo "🌐 Your app is live at https://turf-ruddy.vercel.app" 
+log "info" "===== Deployment Complete ====="
+log "info" "Your application has been successfully deployed to Vercel." 

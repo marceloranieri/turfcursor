@@ -1,64 +1,56 @@
-import logger from '@/lib/logger';
-'use client';
+import { Logger } from '@/types'
 
-import * as Sentry from '@sentry/nextjs';
+export const createLogger = (tag: string): Logger => {
+  const logLevel = process.env.NEXT_PUBLIC_LOG_LEVEL || 'info'
+  const levels = {
+    debug: 0,
+    info: 1,
+    warn: 2,
+    error: 3,
+  }
 
-type LogLevel = 'info' | 'warn' | 'error';
+  const shouldLog = (level: keyof typeof levels) => {
+    return levels[level] >= levels[logLevel as keyof typeof levels]
+  }
 
-interface LogOptions {
-  context?: Record<string, any>;
-  shouldReport?: boolean;
+  const formatMessage = (level: string, message: string, args: unknown[]) => {
+    const timestamp = new Date().toISOString()
+    const formattedArgs = args.length > 0 ? ` ${JSON.stringify(args)}` : ''
+    return `[${timestamp}] [${level.toUpperCase()}] [${tag}] ${message}${formattedArgs}`
+  }
+
+  const logger: Logger = {
+    info: (message: string, ...args: unknown[]) => {
+      if (shouldLog('info')) {
+        console.info(formatMessage('info', message, args))
+      }
+    },
+    warn: (message: string, ...args: unknown[]) => {
+      if (shouldLog('warn')) {
+        console.warn(formatMessage('warn', message, args))
+      }
+    },
+    error: (message: string, ...args: unknown[]) => {
+      if (shouldLog('error')) {
+        console.error(formatMessage('error', message, args))
+      }
+    },
+    debug: (message: string, ...args: unknown[]) => {
+      if (shouldLog('debug')) {
+        console.debug(formatMessage('debug', message, args))
+      }
+    },
+    tagged: (newTag: string) => createLogger(`${tag}:${newTag}`),
+    setLevel: (level: 'debug' | 'info' | 'warn' | 'error') => {
+      process.env.NEXT_PUBLIC_LOG_LEVEL = level
+    },
+    getLevel: () => logLevel,
+    withContext: (context: Record<string, unknown>) => {
+      return createLogger(`${tag}:${JSON.stringify(context)}`)
+    },
+  }
+
+  return logger
 }
 
-class Logger {
-  private isDevelopment = process.env.NODE_ENV === 'development';
-
-  private formatMessage(level: LogLevel, message: string, context?: Record<string, any>): string {
-    const timestamp = new Date().toISOString();
-    const contextStr = context ? ` | Context: ${JSON.stringify(context)}` : '';
-    return `[${timestamp}] ${level.toUpperCase()}: ${message}${contextStr}`;
-  }
-
-  info(message: string, options: LogOptions = {}) {
-    if (this.isDevelopment) {
-      logger.info(this.formatMessage('info', message, options.context));
-    }
-  }
-
-  warn(message: string, options: LogOptions = {}) {
-    if (this.isDevelopment) {
-      logger.warn(this.formatMessage('warn', message, options.context));
-    }
-
-    if (options.shouldReport) {
-      Sentry.addBreadcrumb({
-        category: 'warning',
-        message,
-        level: 'warning',
-        data: options.context,
-      });
-    }
-  }
-
-  error(error: Error | string, options: LogOptions = {}) {
-    const errorObj = typeof error === 'string' ? new Error(error) : error;
-    const message = errorObj.message || String(errorObj);
-
-    if (this.isDevelopment) {
-      logger.error(this.formatMessage('error', message, options.context));
-    }
-
-    if (options.shouldReport) {
-      Sentry.captureException(errorObj, {
-        extra: options.context,
-      });
-    }
-  }
-
-  // For critical errors that should always be reported
-  critical(error: Error | string, context?: Record<string, any>) {
-    this.error(error, { context, shouldReport: true });
-  }
-}
-
-export const logger = new Logger(); 
+export type { Logger } 

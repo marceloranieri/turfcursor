@@ -1,22 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Message } from '@/lib/types';
 import Image from 'next/image';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('MessageList');
 
 interface MessageListProps {
   messages: Message[];
   onReply?: (message: Message) => void;
   onReaction?: (messageId: string, emoji: string) => void;
   onPin?: (message: Message) => void;
+  isGuest?: boolean;
 }
 
-const MessageList: React.FC<MessageListProps> = ({
+export const MessageList: React.FC<MessageListProps> = ({
   messages,
   onReply,
   onReaction,
-  onPin
+  onPin,
+  isGuest = false
 }) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   // Function to handle reply button click
   const handleReplyClick = (message: Message) => {
     if (onReply) {
@@ -38,17 +49,23 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
   
+  const renderMessage = (message: Message) => {
+    return (
+      <MessageItem 
+        key={message.id} 
+        message={message} 
+        onReply={handleReplyClick}
+        onReaction={handleReactionClick}
+        onPin={handlePinClick}
+        isGuest={isGuest}
+      />
+    );
+  };
+
   return (
-    <div className="messages space-y-6">
-      {messages.map((message) => (
-        <MessageItem 
-          key={message.id} 
-          message={message} 
-          onReply={handleReplyClick}
-          onReaction={handleReactionClick}
-          onPin={handlePinClick}
-        />
-      ))}
+    <div className="flex flex-col space-y-4 overflow-y-auto">
+      {messages.map(renderMessage)}
+      <div ref={messagesEndRef} />
     </div>
   );
 };
@@ -58,13 +75,15 @@ interface MessageItemProps {
   onReply: (message: Message) => void;
   onReaction: (messageId: string, emoji: string) => void;
   onPin: (message: Message) => void;
+  isGuest?: boolean;
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({
   message,
   onReply,
   onReaction,
-  onPin
+  onPin,
+  isGuest = false
 }) => {
   const [showActions, setShowActions] = useState(false);
   
