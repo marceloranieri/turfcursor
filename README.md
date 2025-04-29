@@ -15,7 +15,7 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 - **Modern Discord-inspired UI**: Clean and intuitive interface following Discord's design patterns
 - **Authentication**: Secure email/password authentication with user profiles
 - **Real-time Chat**: Instant message updates using Supabase's real-time subscriptions
-- **Topics System**: 
+- **Topics System**:
   - Organized discussions through categorized topics
   - Automated daily rotation with 5 new topics every 24 hours
 - **Responsive Design**: Fully responsive layout that works on desktop and mobile
@@ -52,19 +52,21 @@ A modern debate platform where users can engage in thoughtful discussions on dai
 ### Setting up Supabase
 
 1. Create a new Supabase project at [supabase.com](https://supabase.com)
-2. In your Supabase project, go to the SQL Editor and run the contents of `lib/database/supabaseRpc.sql` 
+2. In your Supabase project, go to the SQL Editor and run the contents of `lib/database/supabaseRpc.sql`
 3. Then run the contents of `supabase_schema.sql` to set up the database schema
 4. Finally, run the contents of `lib/database/migrations/daily_topics_schema.sql` to set up the daily topics system
 
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/yourusername/turf-app.git
    cd turf-app
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    # or
@@ -72,6 +74,7 @@ A modern debate platform where users can engage in thoughtful discussions on dai
    ```
 
 3. Create a `.env.local` file in the project root with your Supabase credentials:
+
    ```
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -79,6 +82,7 @@ A modern debate platform where users can engage in thoughtful discussions on dai
    ```
 
 4. Run the development server:
+
    ```bash
    npm run dev
    # or
@@ -137,11 +141,13 @@ The Turf app features an automated system that rotates 5 unique debate topics ev
 ### Deploying the Daily Topics System
 
 1. Deploy the Edge Function for topic rotation:
+
    ```bash
    npx supabase functions deploy refreshTopics --no-verify-jwt
    ```
 
 2. Set up a scheduled job to trigger the function daily (using GitHub Actions or a cron service)
+
    - Detailed setup instructions in `docs/EDGE_FUNCTION_DEPLOYMENT.md`
 
 3. Add GitHub repository secrets for automated deployments:
@@ -161,6 +167,7 @@ The application is configured for deployment on Vercel.
 3. Deploy! Vercel will automatically detect the Next.js configuration and deploy appropriately
 
 Required environment variables:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_GIPHY_API_KEY`
@@ -172,6 +179,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
 # Updated on Thu Apr 24 16:15:04 -03 2025
+
 # Fresh deployment attempt - Thu Apr 24 16:17:16 -03 2025
+
+// Test comment
 // Test comment
