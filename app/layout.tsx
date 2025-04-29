@@ -12,38 +12,26 @@ import '@/styles/globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Turf - Your AI Chat Assistant',
-  description: 'Chat with AI about anything, anytime.',
-  keywords: ['AI', 'chat', 'assistant', 'turf'],
-  authors: [{ name: 'Turf Team' }],
-  creator: 'Turf Team',
-  publisher: 'Turf',
-  robots: 'index, follow',
+  title: 'Turf - Your GitHub Companion',
+  description: 'A modern GitHub client with powerful features and a beautiful interface.',
+  keywords: ['github', 'client', 'git', 'repository', 'code', 'collaboration'],
+  authors: [{ name: 'Turf Team', url: 'https://turf.dev' }],
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://turf.app',
-    title: 'Turf - Your AI Chat Assistant',
-    description: 'Chat with AI about anything, anytime.',
+    title: 'Turf - Your GitHub Companion',
+    description: 'A modern GitHub client with powerful features and a beautiful interface.',
+    url: 'https://turf.dev',
     siteName: 'Turf',
+    images: [
+      {
+        url: 'https://turf.dev/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'Turf - Your GitHub Companion',
+      },
+    ],
+    locale: 'en-US',
+    type: 'website',
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Turf - Your AI Chat Assistant',
-    description: 'Chat with AI about anything, anytime.',
-    creator: '@turfapp',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
-  },
-  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({
