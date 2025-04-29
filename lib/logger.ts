@@ -26,6 +26,10 @@ export class Logger {
       console.debug(`[${this.context}] ${message}`, ...args);
     }
   }
+
+  tagged(tag: string): Logger {
+    return new Logger(`${this.context}:${tag}`);
+  }
 }
 
 export function createLogger(context: string): Logger {

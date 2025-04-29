@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 import { createLogger } from '@/lib/logger';
 import Image from 'next/image';
-import { formatDistanceToNow } from 'date-fns';
-import { ActivityFeedProps } from '@/types';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Event {
   id: string;
@@ -16,274 +17,151 @@ interface Event {
   repo: {
     name: string;
   };
+  payload: any;
+  created_at: string;
+}
+
+interface ActivityFeedProps {
+  username: string;
+}
+
+interface GithubEvent {
+  id: string;
+  type: string;
+  created_at: string;
+  repo: {
+    name: string;
+  };
   payload: {
-    commits?: Array<{
-      message: string;
-      sha: string;
-    }>;
     action?: string;
-    issue?: {
-      number: number;
-      title: string;
-    };
-    pull_request?: {
-      number: number;
-      title: string;
-    };
     ref?: string;
     ref_type?: string;
     description?: string;
-    release?: {
-      tag_name: string;
-      name: string;
-    };
+    master_branch?: string;
+    pusher_type?: string;
+    push_id?: number;
+    size?: number;
+    distinct_size?: number;
+    head?: string;
+    before?: string;
+    commits?: Array<{
+      sha: string;
+      message: string;
+      author: {
+        name: string;
+        email: string;
+      };
+    }>;
   };
-  created_at: string;
 }
 
 const logger = createLogger('ActivityFeed');
 
-export const ActivityFeed: React.FC<ActivityFeedProps> = ({
-  username,
-  token,
-  limit = 10,
-  selectedRepos,
-  onError,
-  onRateLimitExceeded,
-  className = '',
-  showAvatar = true,
-  showRepoName = true,
-  showEventType = true,
-  showTimestamp = true,
-}) => {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+const EVENT_ICONS: Record<string, string> = {
+  PushEvent: '📝',
+  IssuesEvent: '📋',
+  IssueCommentEvent: '💬',
+  PullRequestEvent: '🔄',
+  ReleaseEvent: '🏷️',
+  WatchEvent: '⭐',
+  ForkEvent: '🍴',
+  CreateEvent: '✨',
+  DeleteEvent: '🗑️',
+  MemberEvent: '👥',
+  PublicEvent: '🌐',
+};
+
+export function ActivityFeed({ username }: ActivityFeedProps) {
+  const [events, setEvents] = useState<GithubEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rateLimit, setRateLimit] = useState<{ remaining: number; reset: Date } | null>(null);
+  const { githubToken } = useAuth();
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      logger.info(`Fetching GitHub events for user: ${username}`);
-      setLoading(true);
-      setError(null);
-
+    async function fetchActivity() {
       try {
-        const headers: HeadersInit = {
-          Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'turf-app',
-        };
-
-        if (token) {
-          headers['Authorization'] = `token ${token}`;
-        }
-
         const response = await fetch(
-          `https://api.github.com/users/${username}/events?per_page=${limit}`,
-          { headers }
+          `https://api.github.com/users/${username}/events?per_page=10`,
+          {
+            headers: {
+              Authorization: `Bearer ${githubToken}`,
+              Accept: 'application/vnd.github.v3+json',
+            },
+          }
         );
 
-        // Get rate limit info from headers
-        const remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0', 10);
-        const reset = parseInt(response.headers.get('X-RateLimit-Reset') || '0', 10);
-
-        setRateLimit({
-          remaining,
-          reset: new Date(reset * 1000),
-        });
-
         if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error(`User ${username} not found on GitHub`);
-          } else if (response.status === 403) {
-            throw new Error('Rate limit exceeded. Please try again later.');
-          } else {
-            throw new Error(`GitHub API error: ${response.status}`);
-          }
+          throw new Error('Failed to fetch activity');
         }
 
         const data = await response.json();
-        logger.info(`Successfully fetched ${data.length} events for ${username}`);
         setEvents(data);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-        logger.error(`Failed to fetch GitHub events: ${errorMessage}`);
-        setError(errorMessage);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
-    };
-
-    if (username) {
-      fetchEvents();
-    } else {
-      setError('Username is required');
     }
-  }, [username, token, limit, logger]);
 
-  const renderEventContent = (event: Event) => {
-    switch (event.type) {
-      case 'PushEvent':
-        return (
-          <div>
-            <p>
-              Pushed to <strong>{event.repo.name}</strong>
-              {event.payload.ref && (
-                <span className="text-gray-600">
-                  {' '}
-                  ({event.payload.ref.replace('refs/heads/', '')})
-                </span>
-              )}
-            </p>
-            <ul className="text-sm text-gray-600">
-              {event.payload.commits?.map(commit => (
-                <li key={commit.sha.substring(0, 7)} className="truncate">
-                  <span className="font-mono text-xs text-gray-500">
-                    {commit.sha.substring(0, 7)}
-                  </span>{' '}
-                  {commit.message.split('\n')[0]}
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      case 'CreateEvent':
-        return (
-          <p>
-            Created {event.payload.ref_type}{' '}
-            {event.payload.ref && <strong>{event.payload.ref}</strong>} in{' '}
-            <strong>{event.repo.name}</strong>
-          </p>
-        );
-      case 'DeleteEvent':
-        return (
-          <p>
-            Deleted {event.payload.ref_type}{' '}
-            {event.payload.ref && <strong>{event.payload.ref}</strong>} in{' '}
-            <strong>{event.repo.name}</strong>
-          </p>
-        );
-      case 'IssuesEvent':
-        return (
-          <p>
-            {event.payload.action} issue{' '}
-            <strong>
-              {event.repo.name}#{event.payload.issue?.number}
-            </strong>
-            : {event.payload.issue?.title}
-          </p>
-        );
-      case 'IssueCommentEvent':
-        return (
-          <p>
-            Commented on issue{' '}
-            <strong>
-              {event.repo.name}#{event.payload.issue?.number}
-            </strong>
-          </p>
-        );
-      case 'PullRequestEvent':
-        return (
-          <p>
-            {event.payload.action} pull request{' '}
-            <strong>
-              {event.repo.name}#{event.payload.pull_request?.number}
-            </strong>
-            : {event.payload.pull_request?.title}
-          </p>
-        );
-      case 'ReleaseEvent':
-        return (
-          <p>
-            Released{' '}
-            <strong>{event.payload.release?.name || event.payload.release?.tag_name}</strong> on{' '}
-            <strong>{event.repo.name}</strong>
-          </p>
-        );
-      case 'WatchEvent':
-        return (
-          <p>
-            Starred <strong>{event.repo.name}</strong>
-          </p>
-        );
-      case 'ForkEvent':
-        return (
-          <p>
-            Forked <strong>{event.repo.name}</strong>
-          </p>
-        );
-      default:
-        return (
-          <p>
-            Activity on <strong>{event.repo.name}</strong>
-          </p>
-        );
-    }
-  };
+    fetchActivity();
+  }, [username, githubToken]);
 
   if (loading) {
-    return (
-      <div className="p-4 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600 mx-auto mb-2"></div>
-        <p>Loading GitHub activity...</p>
-      </div>
-    );
+    return <div className="p-4 text-center">Loading activity...</div>;
   }
 
   if (error) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        <p className="font-medium">Error</p>
-        <p className="text-sm">{error}</p>
-      </div>
-    );
+    return <div className="p-4 text-center text-red-500">{error}</div>;
   }
 
   if (events.length === 0) {
-    return (
-      <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-        <p>No recent GitHub activity found for @{username}</p>
-      </div>
-    );
+    return <div className="p-4 text-center">No recent activity</div>;
+  }
+
+  function formatEventType(type: string, payload: any): string {
+    switch (type) {
+      case 'PushEvent':
+        return `pushed ${payload.commits?.length || 0} commit${payload.commits?.length === 1 ? '' : 's'} to ${payload.ref}`;
+      case 'CreateEvent':
+        return `created ${payload.ref_type} ${payload.ref}`;
+      case 'WatchEvent':
+        return 'starred a repository';
+      case 'ForkEvent':
+        return 'forked a repository';
+      case 'IssuesEvent':
+        return `${payload.action} an issue`;
+      case 'PullRequestEvent':
+        return `${payload.action} a pull request`;
+      default:
+        return type.replace('Event', '').toLowerCase();
+    }
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="px-4 py-3 border-b border-gray-200">
-        <h3 className="text-lg font-medium">Recent GitHub Activity</h3>
-        {rateLimit && (
-          <p className="text-xs text-gray-500 mt-1">
-            Rate limit: {rateLimit.remaining} requests remaining
-            {rateLimit.remaining < 10 && (
-              <span className="text-yellow-600">
-                {' '}
-                (Resets {formatDistanceToNow(rateLimit.reset, { addSuffix: true })})
-              </span>
-            )}
-          </p>
-        )}
-      </div>
-      <ul className="divide-y divide-gray-200">
-        {events.map(event => (
-          <li key={event.id} className="p-4 hover:bg-gray-50 transition-colors">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+      <div className="space-y-4">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0"
+          >
             <div className="flex items-start">
-              <Image
-                src={event.actor.avatar_url}
-                alt={`${event.actor.login}'s avatar`}
-                width={40}
-                height={40}
-                className="rounded-full mr-4"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-gray-900">{event.actor.login}</p>
-                <div className="mt-1">{renderEventContent(event)}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+              <div className="flex-1">
+                <p className="text-gray-800 dark:text-gray-200">
+                  {formatEventType(event.type, event.payload)}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {event.repo.name}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {new Date(event.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

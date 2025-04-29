@@ -1,0 +1,3 @@
+import type { AppProps } from 'next/app';
+import { AuthProvider } from '../lib/auth/AuthProvider';
+// ... existing code ... 

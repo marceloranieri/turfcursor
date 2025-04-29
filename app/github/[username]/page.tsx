@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import ActivityFeed from '@/components/github/ActivityFeed';
-import RepositoryCard from '@/components/github/RepositoryCard';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ActivityFeed } from '@/components/github/ActivityFeed';
+import { RepositoryCard } from '@/components/github/RepositoryCard';
+import { GithubProfile } from '@/components/github/GithubProfile';
 
 interface GitHubProfilePageProps {
   params: {
@@ -14,9 +15,13 @@ export default function GitHubProfilePage({ params }: GitHubProfilePageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">{username}&apos;s GitHub Profile</h1>
+      <ErrorBoundary>
+        <Suspense fallback={<div className="p-4 text-center">Loading profile...</div>}>
+          <GithubProfile username={username} />
+        </Suspense>
+      </ErrorBoundary>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         <div className="md:col-span-2">
           <ErrorBoundary>
             <Suspense fallback={<div className="p-4 text-center">Loading activity...</div>}>

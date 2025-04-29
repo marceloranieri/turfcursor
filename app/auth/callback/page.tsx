@@ -16,7 +16,13 @@ export default function OAuthCallbackPage(): JSX.Element {
     const handleCallback = async () => {
       try {
         // Get the redirect path from session storage
-        const redirectPath = sessionStorage.getItem('redirectAfterAuth') || '/chat';
+        let redirectPath = '/chat';
+        let settingsState = null;
+        
+        if (typeof window !== 'undefined') {
+          redirectPath = sessionStorage.getItem('redirectAfterAuth') || '/chat';
+          settingsState = sessionStorage.getItem('settingsState');
+        }
         
         // Check if we have a session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -30,16 +36,19 @@ export default function OAuthCallbackPage(): JSX.Element {
           handleAuthSuccess('signin');
           
           // Check if we need to restore settings state
-          const settingsState = sessionStorage.getItem('settingsState');
           if (settingsState) {
             // We're coming back from GitHub OAuth in settings
-            sessionStorage.removeItem('settingsState');
+            if (typeof window !== 'undefined') {
+              sessionStorage.removeItem('settingsState');
+            }
             router.push('/settings');
             return;
           }
           
           // Clear the redirect path from session storage
-          sessionStorage.removeItem('redirectAfterAuth');
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('redirectAfterAuth');
+          }
           
           // Redirect to the intended page
           router.push(redirectPath);

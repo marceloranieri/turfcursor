@@ -21,15 +21,9 @@ interface AuthContextType {
   isInitialized: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  signInWithOAuth: async () => {},
-  signOut: async () => {},
-  isInitialized: false,
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export { AuthContext };
+export default AuthContext;
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

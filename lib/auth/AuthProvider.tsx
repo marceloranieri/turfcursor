@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { Session, User } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
-import { AuthContext } from './AuthContext';
+import { AuthContext, useAuth } from './AuthContext';
 
 const logger = createLogger('AuthProvider');
 
@@ -18,11 +18,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Re-export the useAuth hook from AuthContext
-export { useAuth } from './AuthContext';
-
 // This is a wrapper component that uses the AuthContext.Provider
-export function AuthProviderWrapper({ children }: { children: React.ReactNode }) {
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState({
     user: null as User | null,
     session: null as Session | null,
@@ -135,4 +132,6 @@ export function AuthProviderWrapper({ children }: { children: React.ReactNode })
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
+export default AuthProvider;

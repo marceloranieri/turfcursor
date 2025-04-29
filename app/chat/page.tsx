@@ -196,7 +196,9 @@ export default function Chat(): JSX.Element {
   }
   
   if (!isAuthenticated) {
-    router.push('/auth/signin');
+    if (typeof window !== 'undefined') {
+      router.push('/auth/signin');
+    }
     return null;
   }
   
