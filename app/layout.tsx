@@ -1,11 +1,10 @@
 // app/layout.tsx
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { AuthProviderWrapper } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/Toaster';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { Analytics } from '@/components/Analytics';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Metadata } from 'next';
 import '@/styles/globals.css';
 
@@ -49,12 +48,11 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider>
+            <AuthProviderWrapper>
               {children}
               <Toaster />
               <Analytics />
-              <SpeedInsights />
-            </AuthProvider>
+            </AuthProviderWrapper>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

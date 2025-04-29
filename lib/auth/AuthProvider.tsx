@@ -18,28 +18,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-interface AuthState {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  error: Error | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  accessToken: string | null;
-}
+// Re-export the useAuth hook from AuthContext
+export { useAuth } from './AuthContext';
 
-const initialState: AuthState = {
-  user: null,
-  session: null,
-  loading: true,
-  error: null,
-  isAuthenticated: false,
-  isLoading: true,
-  accessToken: null,
-};
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AuthState>(initialState);
+// This is a wrapper component that uses the AuthContext.Provider
+export function AuthProviderWrapper({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState({
+    user: null as User | null,
+    session: null as Session | null,
+    loading: true,
+    error: null as Error | null,
+    isAuthenticated: false,
+    isLoading: true,
+    accessToken: null as string | null,
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -97,7 +89,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setState(prevState => ({ ...prevState, loading: true, error: null }));
       await supabase.auth.signOut();
-      setState(initialState);
+      setState(prevState => ({
+        ...prevState,
+        user: null,
+        session: null,
+        loading: false,
+        isAuthenticated: false,
+      }));
       router.push('/');
     } catch (error) {
       setState(prevState => ({
@@ -109,22 +107,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const value = {
-    state,
-    signIn,
-    signOut,
-    user: state.user,
-    isLoading: state.isLoading,
-    isAuthenticated: state.isAuthenticated,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  // Use the AuthContext.Provider from AuthContext.tsx
+  return (
+    <AuthContext.Provider 
+      value={{
+        user: state.user,
+        loading: state.loading,
+        signInWithOAuth: async (provider) => {
+          // Implement OAuth sign-in logic here
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider,
+            options: {
+              redirectTo: `${window.location.origin}/auth/callback`,
+            },
+          });
+          
+          if (error) throw error;
+          
+          if (data.url) {
+            window.location.href = data.url;
+          }
+        },
+        signOut,
+        isInitialized: !state.loading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
