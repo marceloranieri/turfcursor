@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Updated configuration for Vercel deployment verification
 const nextConfig = {
   reactStrictMode: true,
   images: {
