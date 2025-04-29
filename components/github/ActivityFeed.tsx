@@ -5,7 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { createLogger } from '@/lib/logger';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 interface Event {
   id: string;
