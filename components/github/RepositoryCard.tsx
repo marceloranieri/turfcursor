@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Octokit } from '@octokit/rest';
 import logger from '@/lib/logger';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 interface Repository {
   name: string;
