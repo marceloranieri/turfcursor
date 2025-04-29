@@ -39,5 +39,11 @@
         }
       ]
     }
-  ]
+  ],
+  "ignoreCommand": "echo 'Skip check'",
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
 } 
