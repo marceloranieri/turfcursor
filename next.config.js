@@ -12,7 +12,8 @@ const nextConfig = {
   },
   // Enable TypeScript and ESLint checks during build
   typescript: {
-    ignoreBuildErrors: true,
+    // Don't ignore build errors
+    ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: false,
@@ -21,18 +22,49 @@ const nextConfig = {
   output: 'standalone',
   distDir: '.next',
   // Add Vercel Speed Insights configuration
-  webpack: config => {
+  webpack: (config, { dev, isServer }) => {
+    // Optimize client-side bundle
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        minSize: 20000,
+        maxSize: 244000,
+        minChunks: 1,
+        maxAsyncRequests: 30,
+        maxInitialRequests: 30,
+        cacheGroups: {
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/]/,
+            priority: -10,
+            reuseExistingChunk: true,
+          },
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+        },
+      };
+    }
+
+    // Add fallbacks for Node.js modules
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
       net: false,
       tls: false,
     };
+
     return config;
   },
   // Optimize serverless function
   serverRuntimeConfig: {
     maxMemory: 950, // MB (leaving some buffer from the 1GB limit)
+    // Add error handling for memory issues
+    onError: (err) => {
+      console.error('Runtime error:', err);
+      // Log to your error tracking service here
+    },
   },
   // Add headers for security and caching
   async headers() {
@@ -64,6 +96,15 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
+          },
+          // Add compression and caching headers
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding',
           },
         ],
       },
@@ -111,7 +152,19 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
+    // Enable modern optimizations
+    optimizePackageImports: ['@heroicons/react', '@radix-ui/react-slot', 'date-fns'],
+    // Enable streaming
+    serverActions: true,
+    serverComponents: true,
   },
+  // Add build optimizations
+  compiler: {
+    // Remove console.log in production
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Add powered by header
+  poweredByHeader: false,
 };
 
 module.exports = nextConfig;

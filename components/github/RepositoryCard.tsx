@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Octokit } from '@octokit/rest';
 import logger from '@/lib/logger';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Repository {
   name: string;
@@ -28,6 +29,8 @@ interface Repository {
 interface RepositoryCardProps {
   owner: string;
   repo: string;
+  token?: string; // Optional GitHub token
+  cacheTime?: number; // Cache time in minutes
 }
 
 const languageColors: Record<string, string> = {
@@ -51,32 +54,78 @@ const languageColors: Record<string, string> = {
   Dart: '#00B4AB',
 };
 
-const RepositoryCard: React.FC<RepositoryCardProps> = ({ owner, repo }) => {
+// Cache implementation
+const cache = new Map<string, { data: Repository; timestamp: number }>();
+
+const RepositoryCard: React.FC<RepositoryCardProps> = ({ owner, repo, token, cacheTime = 5 }) => {
   const [repository, setRepository] = useState<Repository | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimit, setRateLimit] = useState<{ remaining: number; reset: Date } | null>(null);
 
   const componentLogger = logger.tagged('RepositoryCard');
 
   useEffect(() => {
     const fetchRepository = async () => {
+      const cacheKey = `${owner}/${repo}`;
+      const now = Date.now();
+      const cached = cache.get(cacheKey);
+
+      // Check cache first
+      if (cached && now - cached.timestamp < cacheTime * 60 * 1000) {
+        componentLogger.debug(`Using cached data for ${cacheKey}`);
+        setRepository(cached.data);
+        setLoading(false);
+        return;
+      }
+
       componentLogger.debug(`Fetching repository: ${owner}/${repo}`);
       setLoading(true);
       setError(null);
 
       try {
-        const octokit = new Octokit();
+        const octokit = new Octokit({
+          auth: token,
+          userAgent: 'turf-app',
+        });
+
+        // Check rate limit before making the request
+        const { data: rateData } = await octokit.rateLimit.get();
+        setRateLimit({
+          remaining: rateData.resources.core.remaining,
+          reset: new Date(rateData.resources.core.reset * 1000),
+        });
+
+        if (rateData.resources.core.remaining === 0) {
+          const resetTime = new Date(rateData.resources.core.reset * 1000);
+          throw new Error(`Rate limit exceeded. Resets ${formatDistanceToNow(resetTime, { addSuffix: true })}`);
+        }
+
         const response = await octokit.repos.get({
           owner,
           repo,
         });
 
         componentLogger.info(`Successfully fetched repository data for ${owner}/${repo}`);
+        
+        // Update cache
+        cache.set(cacheKey, {
+          data: response.data as Repository,
+          timestamp: now,
+        });
+        
         setRepository(response.data as Repository);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
         componentLogger.error(`Failed to fetch repository: ${errorMessage}`);
-        setError(`Failed to load repository: ${errorMessage}`);
+        
+        if (err.status === 404) {
+          setError(`Repository ${owner}/${repo} not found`);
+        } else if (err.status === 403) {
+          setError('Rate limit exceeded. Please try again later.');
+        } else {
+          setError(`Failed to load repository: ${errorMessage}`);
+        }
       } finally {
         setLoading(false);
         componentLogger.debug('Finished loading repository data');
@@ -88,7 +137,7 @@ const RepositoryCard: React.FC<RepositoryCardProps> = ({ owner, repo }) => {
     } else {
       setError('Owner and repository name are required');
     }
-  }, [owner, repo, componentLogger]);
+  }, [owner, repo, token, cacheTime, componentLogger]);
 
   if (loading) {
     return (
