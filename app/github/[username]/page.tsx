@@ -11,11 +11,11 @@ interface GitHubProfilePageProps {
 
 export default function GitHubProfilePage({ params }: GitHubProfilePageProps) {
   const { username } = params;
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">{username}'s GitHub Profile</h1>
-      
+      <h1 className="text-3xl font-bold mb-8">{username}&apos;s GitHub Profile</h1>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <ErrorBoundary>
@@ -24,7 +24,7 @@ export default function GitHubProfilePage({ params }: GitHubProfilePageProps) {
             </Suspense>
           </ErrorBoundary>
         </div>
-        
+
         <div>
           <h2 className="text-xl font-semibold mb-4">Featured Repository</h2>
           <ErrorBoundary>
@@ -36,4 +36,4 @@ export default function GitHubProfilePage({ params }: GitHubProfilePageProps) {
       </div>
     </div>
   );
-} 
+}

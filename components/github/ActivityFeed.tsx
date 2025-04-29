@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Octokit } from '@octokit/rest';
-import logger from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -43,64 +42,68 @@ interface Event {
 
 interface ActivityFeedProps {
   username: string;
-  limit?: number;
   token?: string; // Optional GitHub token for increased rate limits
+  limit?: number;
 }
 
-export const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5, token }) => {
+export function ActivityFeed({ username, token, limit = 10 }: ActivityFeedProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [rateLimit, setRateLimit] = useState<{ remaining: number; reset: Date } | null>(null);
 
   // Create a tagged logger for this component
-  const componentLogger = logger.tagged('ActivityFeed');
+  const componentLogger = createLogger('ActivityFeed');
 
   useEffect(() => {
     const fetchEvents = async () => {
-      componentLogger.debug(`Fetching GitHub events for user: ${username}`);
+      componentLogger.info(`Fetching GitHub events for user: ${username}`);
       setLoading(true);
       setError(null);
 
       try {
-        const octokit = new Octokit({
-          auth: token,
-          userAgent: 'turf-app',
-        });
+        const headers: HeadersInit = {
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': 'turf-app',
+        };
 
-        // Check rate limit before making the request
-        const { data: rateData } = await octokit.rateLimit.get();
-        setRateLimit({
-          remaining: rateData.resources.core.remaining,
-          reset: new Date(rateData.resources.core.reset * 1000),
-        });
-
-        if (rateData.resources.core.remaining === 0) {
-          const resetTime = new Date(rateData.resources.core.reset * 1000);
-          throw new Error(`Rate limit exceeded. Resets ${formatDistanceToNow(resetTime, { addSuffix: true })}`);
+        if (token) {
+          headers['Authorization'] = `token ${token}`;
         }
 
-        const response = await octokit.activity.listPublicEventsForUser({
-          username,
-          per_page: limit,
+        const response = await fetch(
+          `https://api.github.com/users/${username}/events?per_page=${limit}`,
+          { headers }
+        );
+
+        // Get rate limit info from headers
+        const remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0', 10);
+        const reset = parseInt(response.headers.get('X-RateLimit-Reset') || '0', 10);
+
+        setRateLimit({
+          remaining,
+          reset: new Date(reset * 1000),
         });
 
-        componentLogger.info(`Successfully fetched ${response.data.length} events for ${username}`);
-        setEvents(response.data as Event[]);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(`User ${username} not found on GitHub`);
+          } else if (response.status === 403) {
+            throw new Error('Rate limit exceeded. Please try again later.');
+          } else {
+            throw new Error(`GitHub API error: ${response.status}`);
+          }
+        }
+
+        const data = await response.json();
+        componentLogger.info(`Successfully fetched ${data.length} events for ${username}`);
+        setEvents(data);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
         componentLogger.error(`Failed to fetch GitHub events: ${errorMessage}`);
-        
-        if (err.status === 404) {
-          setError(`User ${username} not found on GitHub`);
-        } else if (err.status === 403) {
-          setError('Rate limit exceeded. Please try again later.');
-        } else {
-          setError(`Failed to load GitHub activity: ${errorMessage}`);
-        }
+        setError(errorMessage);
       } finally {
         setLoading(false);
-        componentLogger.debug('Finished loading GitHub events');
       }
     };
 
@@ -109,7 +112,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5,
     } else {
       setError('Username is required');
     }
-  }, [username, limit, token, componentLogger]);
+  }, [username, token, limit, componentLogger]);
 
   const renderEventContent = (event: Event) => {
     switch (event.type) {
@@ -241,6 +244,17 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5,
     <div className="bg-white rounded-lg shadow">
       <div className="px-4 py-3 border-b border-gray-200">
         <h3 className="text-lg font-medium">Recent GitHub Activity</h3>
+        {rateLimit && (
+          <p className="text-xs text-gray-500 mt-1">
+            Rate limit: {rateLimit.remaining} requests remaining
+            {rateLimit.remaining < 10 && (
+              <span className="text-yellow-600">
+                {' '}
+                (Resets {formatDistanceToNow(rateLimit.reset, { addSuffix: true })})
+              </span>
+            )}
+          </p>
+        )}
       </div>
       <ul className="divide-y divide-gray-200">
         {events.map(event => (
@@ -257,7 +271,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5,
                 <p className="font-medium text-gray-900">{event.actor.login}</p>
                 <div className="mt-1">{renderEventContent(event)}</div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {new Date(event.created_at).toLocaleString()}
+                  {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
                 </p>
               </div>
             </div>
@@ -266,6 +280,4 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ username, limit = 5,
       </ul>
     </div>
   );
-};
-
-export default ActivityFeed;
+}

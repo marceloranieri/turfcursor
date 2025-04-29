@@ -1,291 +1,136 @@
 'use client';
 
-import logger from '@/lib/logger';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User, AuthError } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { Session, User, AuthError, AuthResponse } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
-import { handleAuthSuccess } from './authEffects';
+import { handleAuthError } from './authEffects';
 import { useRouter } from 'next/navigation';
+import { createLogger } from '@/lib/logger';
 
-type AuthState = {
-  session: Session | null;
+const logger = createLogger('AuthContext');
+
+interface AuthState {
   user: User | null;
+  session: Session | null;
+  loading: boolean;
+  error: Error | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  isInitialized: boolean;
-};
-
-type AuthContextType = AuthState & {
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, username: string) => Promise<{ error: AuthError | null, user: User | null }>;
-  signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
-  updatePassword: (token: string, newPassword: string) => Promise<{ error: AuthError | null }>;
-  updateProfile: (data: {username?: string, avatar_url?: string}) => Promise<{error: Error | null}>;
-  signInWithOAuth: (provider: 'google' | 'facebook' | 'github') => Promise<{ error: AuthError | null }>;
-};
+  accessToken: string | null;
+}
 
 const initialState: AuthState = {
-  session: null,
   user: null,
+  session: null,
+  loading: true,
+  error: null,
+  isAuthenticated: false,
   isLoading: true,
-  isInitialized: false,
+  accessToken: null,
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<{
+  state: AuthState;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+}>({
+  state: initialState,
+  signIn: async () => {},
+  signOut: async () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const [state, setState] = useState<AuthState>(initialState);
+  const router = useRouter();
 
   useEffect(() => {
-    let mounted = true;
-
-    const initialize = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-
-        if (error) {
-          logger.error('Error getting auth session:', error.message);
-          setState({
-            ...initialState,
-            isLoading: false,
-            isInitialized: true,
-          });
-          return;
-        }
-
-        setState({
-          session: data.session,
-          user: data.session?.user ?? null,
-          isLoading: false,
-          isInitialized: true,
-        });
-      } catch (error) {
-        if (!mounted) return;
-        logger.error('Unexpected error during auth initialization:', error);
-        setState({
-          ...initialState,
-          isLoading: false,
-          isInitialized: true,
-        });
-      }
-    };
-
-    initialize();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (!mounted) return;
-        setState(prevState => ({
-          ...prevState,
-          session,
-          user: session?.user ?? null,
-          isLoading: false,
-        }));
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setState(prevState => ({
+        ...prevState,
+        user: session?.user ?? null,
+        session,
+        loading: false,
+      }));
+    });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    setState(prev => ({ ...prev, isLoading: true }));
+  useEffect(() => {
+    setState(prevState => ({
+      ...prevState,
+      isLoading: true,
+    }));
+  }, []);
+
+  const handleAuthSuccess = useCallback((response: AuthResponse) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast.error(error.message);
-      } else {
-        handleAuthSuccess('signin');
-        router.prefetch('/chat');
-        setTimeout(() => {
-          router.push('/chat');
-        }, 100);
-      }
-      return { error };
+      const {
+        data: { session },
+      } = response;
+      setState(prevState => ({
+        ...prevState,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+        accessToken: session?.access_token ?? null,
+        user: session?.user ?? null,
+        session,
+      }));
     } catch (error) {
-      logger.error('Unexpected error during sign in:', error);
-      toast.error('An unexpected error occurred during sign in');
-      return { error: new AuthError('An unexpected error occurred') };
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
+      handleAuthError(error);
     }
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string, username: string) => {
-    setState(prev => ({ ...prev, isLoading: true }));
+  const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username,
-          },
-        },
-      });
+      setState(prevState => ({ ...prevState, loading: true, error: null }));
+      const response = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) {
-        toast.error(error.message);
-        return { error, user: null };
+      if (response.error) {
+        throw response.error;
       }
 
-      handleAuthSuccess('signup');
-      return { error: null, user: data.user };
+      handleAuthSuccess(response);
+      router.push('/dashboard');
     } catch (error) {
-      logger.error('Unexpected error during sign up:', error);
-      toast.error('An unexpected error occurred during sign up');
-      return { error: new AuthError('An unexpected error occurred'), user: null };
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState(prevState => ({
+        ...prevState,
+        loading: false,
+        error: error as Error,
+      }));
+      handleAuthError(error);
     }
   };
 
   const signOut = async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error(error.message);
-      }
+      setState(prevState => ({ ...prevState, loading: true, error: null }));
+      await supabase.auth.signOut();
+      setState(initialState);
+      router.push('/');
     } catch (error) {
-      logger.error('Unexpected error during sign out:', error);
-      toast.error('An unexpected error occurred during sign out');
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState(prevState => ({
+        ...prevState,
+        loading: false,
+        error: error as Error,
+      }));
+      handleAuthError(error);
     }
   };
 
-  const resetPassword = async (email: string) => {
-    setState(prev => ({ ...prev, isLoading: true }));
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
-      });
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success('Password reset email sent');
-      }
-
-      return { error };
-    } catch (error) {
-      logger.error('Unexpected error during password reset:', error);
-      toast.error('An unexpected error occurred during password reset');
-      return { error: new AuthError('An unexpected error occurred') };
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  const updatePassword = async (token: string, newPassword: string) => {
-    setState(prev => ({ ...prev, isLoading: true }));
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        handleAuthSuccess('reset');
-        router.push('/auth/signin');
-      }
-
-      return { error };
-    } catch (error) {
-      logger.error('Unexpected error during password update:', error);
-      toast.error('An unexpected error occurred during password update');
-      return { error: new AuthError('An unexpected error occurred') };
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  const updateProfile = async (data: {username?: string, avatar_url?: string}) => {
-    setState(prev => ({ ...prev, isLoading: true }));
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: state.user?.id,
-          ...data,
-          updated_at: new Date().toISOString(),
-        });
-
-      if (error) {
-        toast.error(error.message);
-        return { error };
-      }
-
-      toast.success('Profile updated successfully');
-      return { error: null };
-    } catch (error) {
-      logger.error('Unexpected error during profile update:', error);
-      toast.error('An unexpected error occurred during profile update');
-      return { error: error as Error };
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  const signInWithOAuth = async (provider: 'google' | 'facebook' | 'github') => {
-    setState(prev => ({ ...prev, isLoading: true }));
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          scopes: provider === 'github' 
-            ? 'read:user user:email repo notifications gist' 
-            : undefined,
-        },
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return { error };
-      }
-
-      // Success will redirect to callback URL
-      return { error: null };
-    } catch (error) {
-      logger.error('Unexpected error during OAuth sign in:', error);
-      toast.error('An unexpected error occurred during sign in');
-      return { error: new AuthError('An unexpected error occurred') };
-    } finally {
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  const value = {
-    ...state,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
-    updatePassword,
-    updateProfile,
-    signInWithOAuth,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ state, signIn, signOut }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}
