@@ -1,14 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Spinner } from '@/components/ui/spinner';
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Login - Turf',
-  description: 'Sign in to your Turf account',
-};
 
 export default function LoginPage() {
   const router = useRouter();
