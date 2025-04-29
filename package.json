@@ -58,5 +58,8 @@
     "eslint-config-next": "14.1.0",
     "postcss": "^8.4.35",
     "typescript": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
