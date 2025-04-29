@@ -99,45 +99,23 @@ const nextConfig = {
           },
         ],
       },
-      {
-        source: '/api/github/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-GitHub-Api-Version, X-GitHub-Event, X-GitHub-Delivery, X-GitHub-Hook-ID' },
-        ],
-      },
     ];
   },
-  // Enable SWC minification for faster builds
+  // Enable SWC minification
   swcMinify: true,
-  // Configure experimental features
+  // Experimental features
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    optimizePackageImports: ['@heroicons/react', '@radix-ui/react-slot', 'date-fns', '@octokit/rest', '@octokit/webhooks'],
   },
-  // Add build optimizations
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
-  },
-  poweredByHeader: false,
+  // Transpile packages
   transpilePackages: [
-    'react-hot-toast',
-    'canvas-confetti',
     '@octokit/rest',
     '@octokit/auth-token',
-    '@octokit/webhooks',
-    '@octokit/plugin-throttling',
-    '@octokit/plugin-retry',
     '@octokit/plugin-paginate-rest',
-    '@octokit/plugin-log-level',
-    '@octokit/plugin-request-log',
-    '@octokit/plugin-rest-endpoint-methods',
-    '@octokit/plugin-enterprise-compatibility',
-    '@octokit/plugin-enterprise-server',
-    'react-icons'
+    '@octokit/plugin-retry',
+    '@octokit/plugin-throttling',
+    '@octokit/webhooks',
   ],
 };
 
