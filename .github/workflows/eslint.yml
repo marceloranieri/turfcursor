@@ -1,0 +1,30 @@
+name: ESLint Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Fix ESLint package versions
+        run: |
+          npm uninstall eslint
+          npm install eslint@^8.57.0 --save-dev
+      
+      - name: Run ESLint
+        run: npm run lint 

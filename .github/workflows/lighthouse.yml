@@ -23,6 +23,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        
+      # Add this step to fix ESLint package conflicts
+      - name: Fix ESLint package versions
+        run: |
+          npm uninstall eslint
+          npm install eslint@^8.57.0 --save-dev
 
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.13.x
