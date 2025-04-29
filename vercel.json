@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "npm install --legacy-peer-deps && npm run build",
-  "installCommand": "npm install --no-optional --legacy-peer-deps",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install --legacy-peer-deps",
   "framework": "nextjs",
   "regions": ["iad1"],
   "env": {
@@ -50,5 +50,6 @@
     "deploymentEnabled": {
       "main": true
     }
-  }
+  },
+  "outputDirectory": ".next"
 } 
