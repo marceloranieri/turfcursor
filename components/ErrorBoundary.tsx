@@ -13,9 +13,7 @@ interface ErrorBoundaryState {
   error?: Error;
 }
 
-const errorLogger = logger.tagged('ErrorBoundary');
-
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -28,10 +26,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log the error to our logger service
-    errorLogger.error('Component error caught:', {
-      error: error.toString(),
-      componentStack: errorInfo.componentStack,
-    });
+    logger.error('Error caught by ErrorBoundary:', error, errorInfo);
   }
 
   render(): ReactNode {
@@ -42,17 +37,26 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       }
 
       return (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-          <h2 className="text-lg font-semibold text-red-700 mb-2">Something went wrong</h2>
-          <p className="text-red-600 mb-4">
-            We&apos;ve encountered an error rendering this component.
-          </p>
-          <details className="text-sm text-gray-700">
-            <summary className="cursor-pointer">Technical details</summary>
-            <pre className="mt-2 p-2 bg-gray-100 rounded overflow-x-auto">
-              {this.state.error?.toString()}
-            </pre>
-          </details>
+        <div className="min-h-screen flex items-center justify-center bg-background-primary">
+          <div className="max-w-md w-full p-6 bg-background-secondary rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong!</h2>
+            <p className="text-text-secondary mb-4">
+              We apologize for the inconvenience. An error has occurred and our team has been notified.
+            </p>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="w-full px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary-dark transition-colors"
+            >
+              Try again
+            </button>
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-6 p-4 bg-background-tertiary rounded">
+                <p className="text-sm font-mono text-text-secondary break-all">
+                  {this.state.error?.message}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       );
     }

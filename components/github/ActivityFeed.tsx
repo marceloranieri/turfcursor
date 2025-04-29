@@ -71,7 +71,7 @@ const EVENT_ICONS: Record<string, string> = {
   PublicEvent: '🌐',
 };
 
-export function ActivityFeed({ username }: ActivityFeedProps) {
+const ActivityFeed = ({ username }: ActivityFeedProps) => {
   const [events, setEvents] = useState<GithubEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +86,9 @@ export function ActivityFeed({ username }: ActivityFeedProps) {
             headers: {
               Authorization: `Bearer ${githubToken}`,
               Accept: 'application/vnd.github.v3+json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'User-Agent': 'turf-app',
             },
           }
         );
@@ -155,7 +158,7 @@ export function ActivityFeed({ username }: ActivityFeedProps) {
                   {event.repo.name}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  {new Date(event.created_at).toLocaleDateString()}
+                  {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
                 </p>
               </div>
             </div>
@@ -164,6 +167,6 @@ export function ActivityFeed({ username }: ActivityFeedProps) {
       </div>
     </div>
   );
-}
+};
 
 export default ActivityFeed;

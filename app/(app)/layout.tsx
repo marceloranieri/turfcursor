@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { SkipToContent } from '@/components/layout/SkipToContent';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export default function AppLayout({
   children,

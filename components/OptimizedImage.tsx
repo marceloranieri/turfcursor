@@ -14,7 +14,7 @@ interface OptimizedImageProps {
   priority?: boolean;
 }
 
-export default function OptimizedImage({
+export function OptimizedImage({
   src,
   alt,
   width,
@@ -44,7 +44,7 @@ export default function OptimizedImage({
   );
 }
 
-// Also export a profile picture component that uses OptimizedImage
+// Profile picture component that uses OptimizedImage
 export function ProfilePicture({
   src,
   username,

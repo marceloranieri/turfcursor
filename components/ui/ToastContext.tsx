@@ -15,7 +15,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = useCallback(({ message, type, duration = 3000 }: Omit<Toast, 'id'>) => {
@@ -50,7 +50,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       </div>
     </ToastContext.Provider>
   );
-}
+};
+
+export default ToastProvider;
 
 export function useToast() {
   const context = useContext(ToastContext);

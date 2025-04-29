@@ -20,7 +20,7 @@ interface NotificationCenterProps {
   onClearAll: () => void;
 }
 
-export const NotificationCenter: React.FC<NotificationCenterProps> = ({
+const NotificationCenter: React.FC<NotificationCenterProps> = ({
   notifications,
   onMarkAsRead,
   onClearAll
@@ -112,4 +112,6 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       )}
     </div>
   );
-}; 
+};
+
+export default NotificationCenter; 

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { createClient, User, Provider } from '@supabase/supabase-js';
+import { createClient, User, Provider, Session } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { handleAuthError } from './authEffects';
 import { createLogger } from '@/lib/logger';
@@ -13,29 +13,39 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isLoading: boolean;
+  session: Session | null;
   signInWithOAuth: (provider: Provider) => Promise<void>;
   signOut: () => Promise<void>;
   isInitialized: boolean;
+  githubToken?: string;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export default AuthContext;
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     // Check active sessions and sets the user
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      setSession(session);
       setLoading(false);
       setIsInitialized(true);
     });
@@ -79,6 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading,
+    isLoading: loading,
+    session,
     signInWithOAuth,
     signOut,
     isInitialized,

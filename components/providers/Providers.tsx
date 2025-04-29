@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -36,4 +36,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
       </AuthProvider>
     </ErrorBoundary>
   );
-} 
+}
+
+export default Providers; 

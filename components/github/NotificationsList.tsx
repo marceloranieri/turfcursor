@@ -28,7 +28,7 @@ interface NotificationsListProps {
   maxRetries?: number; // Maximum number of retries on error
 }
 
-export const NotificationsList: React.FC<NotificationsListProps> = ({
+const NotificationsList: React.FC<NotificationsListProps> = ({
   accessToken,
   onError,
   pollInterval = 60,
@@ -235,3 +235,5 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({
     </div>
   );
 };
+
+export default NotificationsList;

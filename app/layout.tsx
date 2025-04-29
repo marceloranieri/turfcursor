@@ -1,6 +1,6 @@
 // app/layout.tsx
 import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProviderWrapper } from '@/lib/auth/AuthProvider';
 import { Toaster } from '@/components/ui/Toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   description: 'A modern GitHub client with powerful features and a beautiful interface.',
   keywords: ['github', 'client', 'git', 'repository', 'code', 'collaboration'],
   authors: [{ name: 'Turf Team', url: 'https://turf.dev' }],
+  metadataBase: new URL('https://turf.dev'),
   openGraph: {
     title: 'Turf - Your GitHub Companion',
     description: 'A modern GitHub client with powerful features and a beautiful interface.',
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     siteName: 'Turf',
     images: [
       {
-        url: 'https://turf.dev/og.png',
+        url: '/og.png',
         width: 1200,
         height: 630,
         alt: 'Turf - Your GitHub Companion',

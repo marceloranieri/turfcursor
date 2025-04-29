@@ -10,7 +10,7 @@ import GuestModal from '@/components/modals/GuestModal';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import { useDebugListeners } from '@/lib/debug-helpers';
 import HydrationSafeComponent from '@/components/HydrationSafeComponent';
 import { toast } from 'react-hot-toast';

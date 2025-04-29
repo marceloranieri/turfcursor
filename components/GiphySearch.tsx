@@ -14,7 +14,7 @@ interface GiphySearchProps {
   onClose: () => void;
 }
 
-export const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
+const GiphySearch: React.FC<GiphySearchProps> = ({ onSelect, onClose }) => {
   const [gifs, setGifs] = useState<IGif[]>([]);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);

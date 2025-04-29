@@ -10,35 +10,24 @@ interface GitHubProfilePageProps {
   };
 }
 
-export default function GitHubProfilePage({ params }: GitHubProfilePageProps) {
-  const { username } = params;
-
+export default function GitHubProfilePage({ params }: GitHubProfilePageProps): JSX.Element {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <ErrorBoundary>
-        <Suspense fallback={<div className="p-4 text-center">Loading profile...</div>}>
-          <GithubProfile username={username} />
+    <ErrorBoundary>
+      <div className="container mx-auto px-4 py-8">
+        <Suspense fallback={<div>Loading profile...</div>}>
+          <GithubProfile username={params.username} />
         </Suspense>
-      </ErrorBoundary>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-        <div className="md:col-span-2">
-          <ErrorBoundary>
-            <Suspense fallback={<div className="p-4 text-center">Loading activity...</div>}>
-              <ActivityFeed username={username} limit={10} />
-            </Suspense>
-          </ErrorBoundary>
-        </div>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Featured Repository</h2>
-          <ErrorBoundary>
-            <Suspense fallback={<div className="p-4 text-center">Loading repository...</div>}>
-              <RepositoryCard owner={username} repo="featured-repo" />
-            </Suspense>
-          </ErrorBoundary>
+        
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          <Suspense fallback={<div>Loading repositories...</div>}>
+            <RepositoryCard username={params.username} />
+          </Suspense>
+          
+          <Suspense fallback={<div>Loading activity...</div>}>
+            <ActivityFeed username={params.username} />
+          </Suspense>
         </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

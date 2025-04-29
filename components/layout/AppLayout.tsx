@@ -12,7 +12,7 @@ interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -165,4 +165,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </div>
     </div>
   );
-}; 
+};
+
+export default AppLayout; 

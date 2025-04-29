@@ -7,7 +7,7 @@ interface MainLayoutProps {
   enableDebug?: boolean
 }
 
-export function MainLayout({ children, enableDebug = false }: MainLayoutProps) {
+const MainLayout = ({ children, enableDebug = false }: MainLayoutProps) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
@@ -15,3 +15,5 @@ export function MainLayout({ children, enableDebug = false }: MainLayoutProps) {
     </html>
   )
 }
+
+export default MainLayout;

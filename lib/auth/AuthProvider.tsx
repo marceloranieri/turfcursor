@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { Session, User } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
-import { AuthContext, useAuth } from './AuthContext';
+import { AuthContext } from './AuthContext';
 
 const logger = createLogger('AuthProvider');
 
@@ -18,8 +18,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// This is a wrapper component that uses the AuthContext.Provider
-const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState({
     user: null as User | null,
     session: null as Session | null,
@@ -104,34 +107,39 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
   };
 
-  // Use the AuthContext.Provider from AuthContext.tsx
-  return (
-    <AuthContext.Provider 
-      value={{
-        user: state.user,
-        loading: state.loading,
-        signInWithOAuth: async (provider) => {
-          // Implement OAuth sign-in logic here
-          const { data, error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-              redirectTo: `${window.location.origin}/auth/callback`,
-            },
-          });
-          
-          if (error) throw error;
-          
-          if (data.url) {
-            window.location.href = data.url;
-          }
+  const signInWithOAuth = async (provider: any) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
-        signOut,
-        isInitialized: !state.loading,
-      }}
-    >
+      });
+      
+      if (error) throw error;
+      
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      logger.error('OAuth sign in error', error);
+      throw error;
+    }
+  };
+
+  const value = {
+    user: state.user,
+    loading: state.loading,
+    signInWithOAuth,
+    signOut,
+    isInitialized: !state.loading,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
 export default AuthProvider;

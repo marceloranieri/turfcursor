@@ -11,7 +11,7 @@ interface GuestAwareReactionButtonProps {
   children?: React.ReactNode;
 }
 
-export const GuestAwareReactionButton: React.FC<GuestAwareReactionButtonProps> = ({
+const GuestAwareReactionButton: React.FC<GuestAwareReactionButtonProps> = ({
   onClick,
   isGuest,
   icon: Icon,
