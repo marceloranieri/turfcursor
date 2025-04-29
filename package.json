@@ -64,10 +64,12 @@
     "@types/node": "20.10.0",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
-    "@typescript-eslint/parser": "8.31.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
     "autoprefixer": "^10.4.16",
-    "eslint": "9.25.1",
+    "eslint": "8.56.0",
     "eslint-config-next": "15.3.1",
+    "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "5.2.0",
     "husky": "9.1.7",
     "lint-staged": "15.5.1",
@@ -79,7 +81,7 @@
     "wait-on": "8.0.3"
   },
   "engines": {
-    "node": ">=18.x"
+    "node": "18.x"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

@@ -9,6 +9,7 @@ on:
 env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN || 'undefined' }}
   ORG_ID: ${{ secrets.ORG_ID || 'undefined' }}
+  VERCEL_PROJECT_ID: prj_FoBSdmqcM5MPfFjAK4SDFt3kjnHc
 
 jobs:
   deploy:
@@ -34,11 +35,73 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
+      - name: Debug Environment
+        run: |
+          echo "VERCEL_TOKEN exists: ${{ secrets.VERCEL_TOKEN != '' }}"
+          echo "GitHub Repository: ${{ github.repository }}"
+          echo "Vercel Project ID: ${{ env.VERCEL_PROJECT_ID }}"
+          echo "Node Version: $(node -v)"
+          echo "NPM Version: $(npm -v)"
+
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ env.VERCEL_TOKEN }}
+        run: |
+          max_attempts=3
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts to pull Vercel environment information"
+            if vercel pull --yes --environment=production --token=${{ env.VERCEL_TOKEN }} --scope=${{ env.ORG_ID }}; then
+              echo "Successfully pulled Vercel environment information"
+              break
+            else
+              echo "Failed to pull Vercel environment information"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "All attempts failed. Exiting with error."
+                exit 1
+              fi
+              echo "Waiting 10 seconds before retrying..."
+              sleep 10
+            fi
+            attempt=$((attempt + 1))
+          done
 
       - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ env.VERCEL_TOKEN }}
+        run: |
+          max_attempts=3
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts to build project artifacts"
+            if vercel build --prod --token=${{ env.VERCEL_TOKEN }} --scope=${{ env.ORG_ID }}; then
+              echo "Successfully built project artifacts"
+              break
+            else
+              echo "Failed to build project artifacts"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "All attempts failed. Exiting with error."
+                exit 1
+              fi
+              echo "Waiting 10 seconds before retrying..."
+              sleep 10
+            fi
+            attempt=$((attempt + 1))
+          done
 
       - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ env.VERCEL_TOKEN }} 
+        run: |
+          max_attempts=3
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts to deploy project artifacts"
+            if vercel deploy --prebuilt --prod --token=${{ env.VERCEL_TOKEN }} --scope=${{ env.ORG_ID }}; then
+              echo "Successfully deployed project artifacts"
+              break
+            else
+              echo "Failed to deploy project artifacts"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "All attempts failed. Exiting with error."
+                exit 1
+              fi
+              echo "Waiting 10 seconds before retrying..."
+              sleep 10
+            fi
+            attempt=$((attempt + 1))
+          done 
