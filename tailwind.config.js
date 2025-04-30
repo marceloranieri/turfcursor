@@ -17,21 +17,14 @@ module.exports = {
     },
     extend: {
       colors: {
-        accent: {
-          primary: '#3B82F6',
-          'primary-dark': '#2563eb',
-          foreground: '#FFFFFF',
-        },
-        background: {
-          primary: '#FFFFFF',
-          secondary: '#F3F4F6',
-          tertiary: '#E5E7EB',
-        },
-        text: {
-          primary: '#111827',
-          secondary: '#4B5563',
-          muted: '#6B7280',
-        },
+        'background-primary': '#FFFFFF',
+        'background-secondary': '#F3F4F6',
+        'background-tertiary': '#E5E7EB',
+        'text-primary': '#111827',
+        'text-secondary': '#4B5563',
+        'text-muted': '#6B7280',
+        'accent-primary': '#3B82F6',
+        'accent-primary-dark': '#2563eb',
         border: {
           DEFAULT: '#E5E7EB',
           dark: '#374151',
