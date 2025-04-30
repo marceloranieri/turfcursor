@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
-import { User } from '@/lib/supabase/client';
+import type { User } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/ToastContext';
 
 export default function ProfileContent(): JSX.Element {
@@ -17,8 +17,6 @@ export default function ProfileContent(): JSX.Element {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -41,6 +39,9 @@ export default function ProfileContent(): JSX.Element {
   }, [user]);
 
   const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
@@ -51,29 +52,21 @@ export default function ProfileContent(): JSX.Element {
 
       if (error) throw error;
 
-      showToast({
-        message: 'Profile updated successfully!',
-        type: 'success',
-      });
+      showToast('Profile updated successfully!', 'success');
       setIsEditing(false);
     } catch (error) {
-      showToast({
-        message: 'Error updating profile. Please try again.',
-        type: 'error',
-      });
+      showToast('Error updating profile. Please try again.', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await signOut();
       router.push('/');
     } catch (error) {
-      showToast({
-        message: 'Error signing out. Please try again.',
-        type: 'error',
-      });
+      showToast('Error signing out. Please try again.', 'error');
     }
   };
 
@@ -87,7 +80,7 @@ export default function ProfileContent(): JSX.Element {
 
   if (!user) {
     router.push('/auth/signin');
-    return null;
+    return <></>;
   }
 
   return (
@@ -97,18 +90,6 @@ export default function ProfileContent(): JSX.Element {
           <h1 className="text-2xl font-bold text-text-primary">Your Profile</h1>
           <p className="text-text-secondary mt-2">Manage your account settings</p>
         </div>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {success}
-          </div>
-        )}
 
         <div className="flex flex-col md:flex-row gap-8">
           <div className="md:w-1/3 flex flex-col items-center">
