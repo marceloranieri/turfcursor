@@ -92,3 +92,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 // Test comment
 // Test comment
+
+## 📚 Documentation
+
+- [Changelog](./CHANGELOG.md) – Latest build updates and implementation details
+- [Contributing](./.github/CONTRIBUTING.md) – Guidelines for contributing to the project
+- [Code of Conduct](./.github/CODE_OF_CONDUCT.md) – Our standards for participation

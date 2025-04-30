@@ -1,59 +1,49 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
+# Build
+.next
+out
+dist
+build
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Node
+node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.yarn/install-state.gz
+.pnp
+.pnp.js
 
-# local env files
-.env*.local
+# Environment
 .env
+.env.local
 .env.development
 .env.test
 .env.production
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# logs
+# Logs
 logs
 *.log
 
-# cache
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+coverage
+
+# Cache
 .cache
 .eslintcache
 
-# OS generated files
+# OS
 .DS_Store
 .DS_Store?
 ._*
@@ -62,7 +52,7 @@ logs
 ehthumbs.db
 Thumbs.db
 
-# Lock files - to prevent conflicts
+# Lock files
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
@@ -70,3 +60,6 @@ pnpm-lock.yaml
 # Husky
 .husky/
 .lintstagedrc.js
+
+# Vercel
+.vercel
