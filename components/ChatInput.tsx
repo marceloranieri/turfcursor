@@ -74,7 +74,7 @@ export default function ChatInput({
   };
   
   const handleGifSelect = (gif: IGif) => {
-    const gifUrl = gif.images.original.url;
+    const gifUrl = gif.images.fixed_height_small.url;
     onSendMessage(gifUrl, 'gif');
     setShowGifSearch(false);
     // Re-focus the input after sending
