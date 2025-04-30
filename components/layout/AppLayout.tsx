@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import DiscordButton from '@/components/ui/DiscordButton';
 import Image from 'next/image';
 
 interface AppLayoutProps {
