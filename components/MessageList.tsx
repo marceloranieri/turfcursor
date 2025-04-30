@@ -95,7 +95,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
     >
       {/* Avatar */}
       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold mr-3 ${
-        message.isBot ? 'bg-green-500' : 'bg-indigo-500'
+        message.author.isBot ? 'bg-green-500' : 'bg-indigo-500'
       }`}>
         {message.author.avatar}
       </div>
@@ -104,11 +104,11 @@ const MessageItem: React.FC<MessageItemProps> = ({
       <div className="flex-1">
         {/* Message header */}
         <div className="flex items-center mb-1">
-          <span className={`font-semibold ${message.isBot ? 'text-green-500' : 'text-white'}`}>
+          <span className={`font-semibold ${message.author.isBot ? 'text-green-500' : 'text-white'}`}>
             {message.author.name}
           </span>
           
-          {message.isBot && (
+          {message.author.isBot && (
             <span className="ml-1 px-1 py-0.5 bg-green-500 text-white text-xs rounded">
               BOT
             </span>
