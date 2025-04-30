@@ -14,12 +14,12 @@ interface SignInModalProps {
 export default function SignInModal({ onClose, isLoading = false }: SignInModalProps) {
   const router = useRouter();
   const { signInWithOAuth } = useAuth();
-  const { play: playConfetti } = useConfetti();
+  const triggerConfetti = useConfetti();
 
   const handleOAuthSignIn = async (provider: 'github' | 'google') => {
     try {
       await signInWithOAuth(provider);
-      playConfetti();
+      triggerConfetti();
       onClose();
     } catch (error) {
       console.error('OAuth sign in failed:', error);
