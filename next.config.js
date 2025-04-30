@@ -2,6 +2,9 @@
 // Testing new Vercel webhook integration
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    appDir: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -60,10 +63,10 @@ const nextConfig = {
     '@octokit/webhooks',
   ],
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: false
   },
   typescript: {
-    ignoreBuildErrors: true
+    ignoreBuildErrors: false
   }
 };
 

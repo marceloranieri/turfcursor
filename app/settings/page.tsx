@@ -1,11 +1,12 @@
-import dynamic from 'next/dynamic';
+import AuthGuard from '@/components/auth/AuthGuard';
+import SettingsContent from '@/components/settings/SettingsContent';
 
-// Dynamically import the component with SSR disabled
-const SettingsContent = dynamic(
-  () => import('@/components/settings/SettingsContent'),
-  { ssr: false }
-);
+export const dynamic = 'force-dynamic';
 
 export default function SettingsPage() {
-  return <SettingsContent />;
+  return (
+    <AuthGuard>
+      <SettingsContent />
+    </AuthGuard>
+  );
 } 
