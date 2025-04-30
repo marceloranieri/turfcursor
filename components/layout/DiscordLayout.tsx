@@ -230,6 +230,15 @@ export default function DiscordLayout({
           </div>
         </div>
         
+        {/* Desktop notification center */}
+        <div className="hidden md:block">
+          <NotificationCenter
+            notifications={localNotifications}
+            onMarkAsRead={handleMarkNotificationAsRead}
+            onClearAll={handleClearAllNotifications}
+          />
+        </div>
+        
         {/* Mobile menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden fixed inset-0 z-50 bg-background">
@@ -388,13 +397,13 @@ export default function DiscordLayout({
       </div>
       
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        initialMode={authMode}
-      />
-      
-      <NotificationCenter />
+      {showAuthModal && (
+        <AuthModal
+          mode={authMode}
+          onClose={() => setShowAuthModal(false)}
+          onModeChange={setAuthMode}
+        />
+      )}
     </div>
   );
 } 
