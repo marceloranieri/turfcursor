@@ -1,11 +1,20 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { cva, VariantProps } from 'class-variance-authority';
 import * as ToastPrimitive from '@radix-ui/react-toast';
+import { useToast } from './ToastContext';
+import {
+  ToastRoot,
+  ToastViewport,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction
+} from './ToastPrimitives';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -20,9 +29,14 @@ interface ToastProps {
 const ToastContext = createContext<{
   open: boolean;
   setOpen: (open: boolean) => void;
+  message: string;
+  type: ToastType;
+  duration?: number;
 }>({
   open: false,
   setOpen: () => {},
+  message: '',
+  type: 'info',
 });
 
 // Custom hook to use toast context
@@ -37,11 +51,14 @@ export const useToast = () => {
 };
 
 // Toast provider component
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+function ToastProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [type, setType] = useState<ToastType>('info');
+  const [duration, setDuration] = useState<number | undefined>(5000);
 
   return (
-    <ToastContext.Provider value={{ open, setOpen }}>
+    <ToastContext.Provider value={{ open, setOpen, message, type, duration }}>
       {children}
       <Toaster
         position="bottom-right"
@@ -68,6 +85,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </ToastContext.Provider>
   );
 }
+
+export default ToastProvider;
 
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitive.Viewport>,
@@ -116,29 +135,34 @@ const Toast = React.forwardRef<
 });
 Toast.displayName = 'Toast';
 
-export default function ToastComponent({ message, type = 'info', onClose }: ToastProps) {
-  const { open, setOpen } = useToast();
+export function Toast() {
+  const { open, setOpen, message, type, duration } = useToast();
 
-  const bgColor = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    info: 'bg-blue-500',
-    warning: 'bg-yellow-500',
-  }[type];
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        setOpen(false);
+      }, duration);
+
+      return () => clearTimeout(timer);
+    }
+  }, [open, duration, setOpen]);
+
+  if (!open) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <div className={`rounded-lg shadow-lg p-4 ${bgColor}`}>
-        <div className="flex items-center">
-          <span className="flex-grow">{message}</span>
-          {onClose && (
-            <button onClick={onClose} className="ml-4 text-gray-400 hover:text-gray-600">
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+    <ToastRoot
+      open={open}
+      onOpenChange={setOpen}
+      className={type}
+      duration={duration}
+    >
+      <ToastTitle>{type.charAt(0).toUpperCase() + type.slice(1)}</ToastTitle>
+      <ToastDescription>{message}</ToastDescription>
+      <ToastAction asChild altText="Close">
+        <ToastClose />
+      </ToastAction>
+    </ToastRoot>
   );
 }
 

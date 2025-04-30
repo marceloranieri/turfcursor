@@ -1,63 +1,88 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface Toast {
-  id: number;
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+interface ToastProps {
   message: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+  type: ToastType;
   duration?: number;
 }
 
-interface ToastContextType {
-  showToast: (toast: Omit<Toast, 'id'>) => void;
-}
+type ToastContextType = {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  message: string;
+  setMessage: (message: string) => void;
+  type: ToastType;
+  setType: (type: ToastType) => void;
+  duration: number;
+  setDuration: (duration: number) => void;
+  showToast: (message: string, type?: ToastType, duration?: number) => void;
+};
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [type, setType] = useState<ToastType>('info');
+  const [duration, setDuration] = useState(5000);
+  const [queue, setQueue] = useState<ToastProps[]>([]);
 
-  const showToast = useCallback(({ message, type, duration = 3000 }: Omit<Toast, 'id'>) => {
-    const id = Date.now();
-    setToasts((prevToasts) => [...prevToasts, { id, message, type, duration }]);
+  // Handle queue management
+  useEffect(() => {
+    if (!open && queue.length > 0) {
+      const nextToast = queue[0];
+      setMessage(nextToast.message);
+      setType(nextToast.type);
+      setDuration(nextToast.duration || 5000);
+      setOpen(true);
+      setQueue(prev => prev.slice(1));
+    }
+  }, [open, queue]);
 
-    setTimeout(() => {
-      setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-    }, duration);
-  }, []);
+  const showToast = (message: string, type: ToastType = 'info', duration?: number) => {
+    const newToast = { message, type, duration };
+    
+    if (!open) {
+      // If no toast is showing, display immediately
+      setMessage(message);
+      setType(type);
+      if (duration) setDuration(duration);
+      setOpen(true);
+    } else {
+      // Otherwise, add to queue
+      setQueue(prev => [...prev, newToast]);
+    }
+  };
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider
+      value={{
+        open,
+        setOpen,
+        message,
+        setMessage,
+        type,
+        setType,
+        duration,
+        setDuration,
+        showToast
+      }}
+    >
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`slide-up rounded-lg p-4 shadow-lg ${
-              toast.type === 'success'
-                ? 'bg-success text-white'
-                : toast.type === 'error'
-                ? 'bg-danger text-white'
-                : toast.type === 'warning'
-                ? 'bg-warning text-white'
-                : 'bg-accent-secondary text-white'
-            }`}
-          >
-            {toast.message}
-          </div>
-        ))}
-      </div>
     </ToastContext.Provider>
   );
-};
-
-export default ToastProvider;
+}
 
 export function useToast() {
   const context = useContext(ToastContext);
+  
   if (context === undefined) {
     throw new Error('useToast must be used within a ToastProvider');
   }
+  
   return context;
 } 

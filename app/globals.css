@@ -2,73 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background-primary: #ffffff;
-  --background-secondary: #f3f4f6;
-  --text-primary: #111827;
-  --text-secondary: #4b5563;
-}
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --background-primary: 0 0% 100%;
+    --background-secondary: 210 40% 96.1%;
+    --background-tertiary: 210 40% 94%;
+    --text-primary: 222.2 84% 4.9%;
+    --text-secondary: 215.4 16.3% 46.9%;
+    --text-muted: 215.4 16.3% 46.9%;
+  }
 
-.dark {
-  --background-primary: #111827;
-  --background-secondary: #1f2937;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --background-primary: 222.2 84% 4.9%;
+    --background-secondary: 217.2 32.6% 17.5%;
+    --background-tertiary: 217.2 32.6% 15%;
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20.2% 65.1%;
+    --text-muted: 215 20.2% 65.1%;
+  }
 }
 
 @layer base {
   body {
-    @apply bg-background-primary text-text-primary;
-  }
-}
-
-@layer base {
-  :root {
-    /* Light theme variables */
-    --background: #FFFFFF;
-    --background-secondary: #F5F5F5;
-    --background-tertiary: #EEEEEE;
-    --background-primary: #FFFFFF;
-    
-    --text-primary: #1A1A1A;
-    --text-secondary: #4A4A4A;
-    --text-muted: #6B6B6B;
-    
-    --accent-primary: #FFD700;
-    --accent-secondary: #2F80ED;
-    
-    --gold: #FFD700;
-    --success: #34D399;
-    --danger: #EF4444;
-    --warning: #FBBF24;
-    
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  }
-
-  .dark {
-    /* Dark theme variables */
-    --background: #1A1A1A;
-    --background-secondary: #2C2C2C;
-    --background-tertiary: #333333;
-    --background-primary: #1A1A1A;
-    
-    --text-primary: #FFFFFF;
-    --text-secondary: #B9BBBE;
-    --text-muted: #72767D;
-    
-    --accent-primary: #FFD700;
-    --accent-secondary: #2F80ED;
-    
-    --gold: #FFD700;
-    --success: #34D399;
-    --danger: #EF4444;
-    --warning: #FBBF24;
-    
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+    @apply bg-background-primary text-text-primary font-sans;
   }
 }
 
@@ -78,15 +73,15 @@
   }
   
   .message-bubble {
-    @apply bg-background-secondary rounded-message shadow-message p-3;
+    @apply bg-background-secondary rounded-lg shadow-md p-3;
   }
   
   .button {
-    @apply rounded-button px-4 py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring-light;
+    @apply rounded-button px-4 py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring;
   }
   
   .input {
-    @apply rounded-input bg-background-tertiary px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring-light;
+    @apply rounded-lg bg-background-tertiary px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring;
   }
   
   .sidebar {
@@ -96,9 +91,66 @@
   .mobile-nav {
     @apply fixed bottom-0 left-0 right-0 bg-background-secondary p-4 md:hidden;
   }
+
+  .btn {
+    @apply rounded-button px-4 py-2 transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .btn-secondary {
+    @apply bg-background-secondary text-text-primary hover:bg-background-tertiary;
+  }
+}
+
+@layer utilities {
+  .text-primary {
+    @apply text-text-primary;
+  }
+
+  .text-secondary {
+    @apply text-text-secondary;
+  }
+
+  .bg-primary {
+    @apply bg-background-primary;
+  }
+
+  .bg-secondary {
+    @apply bg-background-secondary;
+  }
 }
 
 /* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .fade-in {
   animation: fadeIn 0.2s ease-in-out;
 }
@@ -138,114 +190,58 @@
   }
 }
 
-/* Base styles */
-body {
-  background-color: var(--color-background-primary);
-  color: var(--color-text-primary);
-  font-family: 'Inter', 'Roboto', 'SF Pro', sans-serif;
-}
-
 /* Discord-inspired scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: var(--color-background-tertiary);
+  @apply bg-background-tertiary;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-background-secondary);
-  border-radius: 4px;
+  @apply bg-background-secondary rounded;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-muted);
+  @apply bg-muted;
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-
-/* Button styles */
-.btn {
-  @apply rounded-button px-4 py-2 transition-colors duration-200;
-}
-
-.btn-primary {
-  @apply btn bg-accent-primary text-white hover:bg-accent-primary-hover;
-}
-
-.btn-secondary {
-  @apply btn bg-background-secondary text-text-primary hover:bg-background-tertiary;
+  @apply text-text-primary font-semibold;
 }
 
 /* Form elements */
 input, textarea {
-  background-color: var(--color-background-tertiary);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 0.75rem 1rem;
-  width: 100%;
-}
-
-input:focus, textarea:focus {
-  outline: none;
-  border-color: var(--color-accent-primary);
+  @apply bg-background-tertiary text-text-primary border border-border rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-ring;
 }
 
 /* Message styling */
-.message-bubble {
-  border-radius: 4px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-  background-color: var(--color-background-secondary);
-}
-
 .message-bubble.wizard {
-  background-color: rgba(47, 128, 237, 0.1);
-  border-left: 3px solid var(--color-accent-secondary);
+  @apply bg-accent/10 border-l-2 border-accent;
 }
 
 .pinned-message {
-  background-color: rgba(255, 215, 0, 0.1);
-  border: 1px solid var(--color-accent-primary);
-  border-radius: 4px;
-  padding: 0.75rem 1rem;
+  @apply bg-accent/10 border border-accent rounded-lg p-3;
 }
 
 /* Reaction button styling */
 .reaction-button {
-  background-color: var(--color-background-tertiary);
-  border-radius: 12px;
-  padding: 0.25rem 0.5rem;
-  display: inline-flex;
-  align-items: center;
-  transition: background-color 0.2s ease;
-}
-
-.reaction-button:hover {
-  background-color: var(--color-background-secondary);
+  @apply bg-background-tertiary rounded-xl px-2 py-1 inline-flex items-center transition-colors duration-200 hover:bg-background-secondary;
 }
 
 /* Harmony points styling */
 .harmony-points {
-  background-color: var(--color-background-tertiary);
-  border-radius: 12px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  @apply bg-background-tertiary rounded-xl px-2 py-1 text-xs font-semibold;
 }
 
 .harmony-points.positive {
-  color: var(--color-success);
+  @apply text-green-500;
 }
 
 .harmony-points.negative {
-  color: var(--color-danger);
+  @apply text-red-500;
 }
 
 /* Layout components */
@@ -254,15 +250,6 @@ input:focus, textarea:focus {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-}
-
-.sidebar {
-  width: 72px;
-  background-color: var(--color-background-tertiary);
-  padding: 1rem 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .channels-sidebar {
@@ -592,5 +579,18 @@ body {
 @media (max-width: 640px) {
   .container {
     @apply px-4;
+  }
+}
+
+/* Toast mobile overrides */
+@media (max-width: 640px) {
+  .toast-mobile-override {
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
   }
 }
