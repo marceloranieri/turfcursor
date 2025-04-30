@@ -2,7 +2,7 @@
 
 import { ErrorBoundary } from 'react-error-boundary';
 import { ToastProvider } from './ToastContext';
-import { Toast } from './Toast';
+import { ToastComponent } from './Toast';
 
 function ToastErrorFallback() {
   // Silent failure for toast components
@@ -18,7 +18,7 @@ export function ToastWrapper({ children }: ToastWrapperProps) {
     <ErrorBoundary FallbackComponent={ToastErrorFallback}>
       <ToastProvider>
         {children}
-        <Toast />
+        <ToastComponent />
       </ToastProvider>
     </ErrorBoundary>
   );

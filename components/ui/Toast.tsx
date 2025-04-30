@@ -6,10 +6,10 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { cva, VariantProps } from 'class-variance-authority';
 import * as ToastPrimitive from '@radix-ui/react-toast';
-import { useToast } from './ToastContext';
+import { useToast as useToastFromContext } from './ToastContext';
 import {
   ToastRoot,
-  ToastViewport,
+  ToastViewport as ToastViewportPrimitive,
   ToastTitle,
   ToastDescription,
   ToastClose,
@@ -119,7 +119,7 @@ const toastVariants = cva(
   }
 );
 
-const Toast = React.forwardRef<
+const ToastElement = React.forwardRef<
   React.ElementRef<typeof ToastPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitive.Root> & {
     variant?: VariantProps<typeof toastVariants>['variant'];
@@ -133,10 +133,10 @@ const Toast = React.forwardRef<
     />
   );
 });
-Toast.displayName = 'Toast';
+ToastElement.displayName = 'ToastElement';
 
-export function Toast() {
-  const { open, setOpen, message, type, duration } = useToast();
+export function ToastComponent() {
+  const { open, setOpen, message, type, duration } = useToastFromContext();
 
   useEffect(() => {
     if (open) {
