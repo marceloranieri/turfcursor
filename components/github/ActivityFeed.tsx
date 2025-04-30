@@ -1,61 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { createLogger } from '@/lib/logger';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
-
-interface Event {
-  id: string;
-  type: string;
-  actor: {
-    login: string;
-    avatar_url: string;
-  };
-  repo: {
-    name: string;
-  };
-  payload: any;
-  created_at: string;
-}
+import type { GitHubEvent } from '@/lib/types';
+import { useToast } from '../ui/ToastContext';
 
 interface ActivityFeedProps {
   username: string;
+  token?: string;
+  limit?: number;
+  selectedRepos?: string[];
+  onError?: (error: Error) => void;
+  onRateLimitExceeded?: () => void;
+  className?: string;
 }
-
-interface GithubEvent {
-  id: string;
-  type: string;
-  created_at: string;
-  repo: {
-    name: string;
-  };
-  payload: {
-    action?: string;
-    ref?: string;
-    ref_type?: string;
-    description?: string;
-    master_branch?: string;
-    pusher_type?: string;
-    push_id?: number;
-    size?: number;
-    distinct_size?: number;
-    head?: string;
-    before?: string;
-    commits?: Array<{
-      sha: string;
-      message: string;
-      author: {
-        name: string;
-        email: string;
-      };
-    }>;
-  };
-}
-
-const logger = createLogger('ActivityFeed');
 
 const EVENT_ICONS: Record<string, string> = {
   PushEvent: '📝',
@@ -71,93 +30,121 @@ const EVENT_ICONS: Record<string, string> = {
   PublicEvent: '🌐',
 };
 
-const ActivityFeed = ({ username }: ActivityFeedProps) => {
-  const [events, setEvents] = useState<GithubEvent[]>([]);
+export const ActivityFeed: React.FC<ActivityFeedProps> = ({
+  username,
+  token,
+  limit = 10,
+  selectedRepos,
+  onError,
+  onRateLimitExceeded,
+  className = '',
+}) => {
+  const [events, setEvents] = useState<GitHubEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { githubToken } = useAuth();
+  const { session } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
-    async function fetchActivity() {
+    const fetchActivity = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
         const response = await fetch(
-          `https://api.github.com/users/${username}/events?per_page=10`,
+          `https://api.github.com/users/${username}/events?per_page=${limit}`,
           {
             headers: {
-              Authorization: `Bearer ${githubToken}`,
+              Authorization: `Bearer ${token || session?.provider_token}`,
               Accept: 'application/vnd.github.v3+json',
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
               'User-Agent': 'turf-app',
             },
           }
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch activity');
+          if (response.status === 403) {
+            onRateLimitExceeded?.();
+            throw new Error('Rate limit exceeded. Please try again later.');
+          }
+          if (response.status === 404) {
+            throw new Error('User not found');
+          }
+          throw new Error(`GitHub API error: ${response.statusText}`);
         }
 
         const data = await response.json();
-        setEvents(data);
+        const filteredEvents = selectedRepos
+          ? data.filter((event: GitHubEvent) => selectedRepos.includes(event.repo.name))
+          : data;
+        setEvents(filteredEvents);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        const error = err instanceof Error ? err : new Error('An error occurred');
+        setError(error.message);
+        onError?.(error);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchActivity();
-  }, [username, githubToken]);
+    if (username) {
+      fetchActivity();
+    }
+  }, [username, token, limit, session?.provider_token, selectedRepos, onError, onRateLimitExceeded]);
 
   if (loading) {
-    return <div className="p-4 text-center">Loading activity...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-500">{error}</div>;
+    return (
+      <div className="p-8 text-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
   }
 
   if (events.length === 0) {
-    return <div className="p-4 text-center">No recent activity</div>;
-  }
-
-  function formatEventType(type: string, payload: any): string {
-    switch (type) {
-      case 'PushEvent':
-        return `pushed ${payload.commits?.length || 0} commit${payload.commits?.length === 1 ? '' : 's'} to ${payload.ref}`;
-      case 'CreateEvent':
-        return `created ${payload.ref_type} ${payload.ref}`;
-      case 'WatchEvent':
-        return 'starred a repository';
-      case 'ForkEvent':
-        return 'forked a repository';
-      case 'IssuesEvent':
-        return `${payload.action} an issue`;
-      case 'PullRequestEvent':
-        return `${payload.action} a pull request`;
-      default:
-        return type.replace('Event', '').toLowerCase();
-    }
+    return (
+      <div className="p-8 text-center text-text-secondary">
+        No recent activity
+      </div>
+    );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+    <div className={`bg-background-secondary rounded-lg shadow-card p-6 ${className}`}>
+      <h2 className="text-xl font-bold text-text-primary mb-4">Recent Activity</h2>
       <div className="space-y-4">
         {events.map((event) => (
           <div
             key={event.id}
-            className="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0"
+            className="border-b border-border last:border-0 pb-4 last:pb-0"
           >
-            <div className="flex items-start">
-              <div className="flex-1">
-                <p className="text-gray-800 dark:text-gray-200">
-                  {formatEventType(event.type, event.payload)}
+            <div className="flex items-start space-x-3">
+              <a
+                href={`https://github.com/${event.actor.login}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0"
+              >
+                <img
+                  src={event.actor.avatar_url}
+                  alt={event.actor.login}
+                  className="w-8 h-8 rounded-full"
+                  width={32}
+                  height={32}
+                />
+              </a>
+              <div className="flex-1 min-w-0">
+                <p className="text-text-primary break-words">
+                  {EVENT_ICONS[event.type] || '📌'} {event.type.replace('Event', '')} in {event.repo.name}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {event.repo.name}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
+                <p className="text-sm text-text-secondary mt-1">
                   {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
                 </p>
               </div>
@@ -168,5 +155,3 @@ const ActivityFeed = ({ username }: ActivityFeedProps) => {
     </div>
   );
 };
-
-export default ActivityFeed;

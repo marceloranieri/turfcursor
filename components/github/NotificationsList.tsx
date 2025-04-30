@@ -1,8 +1,11 @@
+'use client';
+
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, GitPullRequest, AlertCircle, Eye, MessageSquare, GitCommit } from 'lucide-react';
 import logger from '@/lib/logger';
+import { useToast } from '../ui/ToastContext';
 
 interface GitHubNotification {
   id: string;
@@ -28,12 +31,13 @@ interface NotificationsListProps {
   maxRetries?: number; // Maximum number of retries on error
 }
 
-const NotificationsList: React.FC<NotificationsListProps> = ({
+export const NotificationsList: React.FC<NotificationsListProps> = ({
   accessToken,
   onError,
   pollInterval = 60,
   maxRetries = 3,
 }) => {
+  const { showToast } = useToast();
   const [notifications, setNotifications] = useState<GitHubNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
@@ -235,5 +239,3 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
     </div>
   );
 };
-
-export default NotificationsList;
