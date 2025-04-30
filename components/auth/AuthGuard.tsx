@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from "@/lib/auth/useAuth.tsx";
+import { useAuth } from "@/lib/auth/useAuth";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, ReactNode } from "react";
 
