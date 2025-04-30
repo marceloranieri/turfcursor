@@ -1,8 +1,10 @@
-import { Suspense } from 'react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import ActivityFeed from '@/components/github/ActivityFeed';
-import RepositoryCard from '@/components/github/RepositoryCard';
-import GithubProfile from '@/components/github/GithubProfile';
+'use client';
+
+import React from 'react';
+import { GithubProfile } from '@/components/github/GithubProfile';
+import { ActivityFeed } from '@/components/github/ActivityFeed';
+import { RepositoryCard } from '@/components/github/RepositoryCard';
+import { NotificationsList } from '@/components/github/NotificationsList';
 
 interface GitHubProfilePageProps {
   params: {
@@ -12,22 +14,18 @@ interface GitHubProfilePageProps {
 
 export default function GitHubProfilePage({ params }: GitHubProfilePageProps): JSX.Element {
   return (
-    <ErrorBoundary>
-      <div className="container mx-auto px-4 py-8">
-        <Suspense fallback={<div>Loading profile...</div>}>
-          <GithubProfile username={params.username} />
-        </Suspense>
-        
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
-          <Suspense fallback={<div>Loading repositories...</div>}>
-            <RepositoryCard username={params.username} />
-          </Suspense>
-          
-          <Suspense fallback={<div>Loading activity...</div>}>
-            <ActivityFeed username={params.username} />
-          </Suspense>
+    <div className="container mx-auto px-4 py-8">
+      <GithubProfile />
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-xl font-bold mb-4">Activity</h2>
+          <ActivityFeed username={params.username} />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold mb-4">Notifications</h2>
+          <NotificationsList accessToken="" onError={() => {}} />
         </div>
       </div>
-    </ErrorBoundary>
+    </div>
   );
 }
