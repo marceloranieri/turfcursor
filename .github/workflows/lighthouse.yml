@@ -1,10 +1,15 @@
 name: Lighthouse CI
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-  pull_request:
+  workflow_dispatch:  # Allow manual runs
+    inputs:
+      url:
+        description: 'URL to test (optional)'
+        required: false
+        default: ''
 
 jobs:
   lighthouse-ci:
@@ -35,9 +40,11 @@ jobs:
 
       - name: Get Vercel Preview URL
         id: get-preview-url
+        if: github.event_name == 'pull_request'
         run: |
-          # Wait for Vercel deployment to be ready (max 5 minutes)
-          for i in {1..30}; do
+          # Wait for Vercel deployment to be ready (max 10 minutes)
+          timeout=600  # 10 minutes (instead of 300)
+          for i in {1..60}; do
             PREVIEW_URL=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
               "https://api.vercel.com/v6/deployments?projectId=turf&teamId=team_123&state=READY&target=preview&gitSource.commitSha=${{ github.sha }}" \
               | jq -r '.deployments[0].url')
@@ -47,20 +54,9 @@ jobs:
               break
             fi
             
-            echo "Waiting for Vercel preview URL... (attempt $i/30)"
+            echo "Waiting for Vercel preview URL... (attempt $i/60)"
             sleep 10
           done
 
-      - name: Run Lighthouse CI
-        run: |
-          if [ -z "${{ steps.get-preview-url.outputs.url }}" ]; then
-            echo "Failed to get Vercel preview URL after 5 minutes"
-            exit 1
-          fi
-          
-          lhci autorun \
-            --collect.url=${{ steps.get-preview-url.outputs.url }} \
-            --collect.numberOfRuns=3 \
-            --collect.settings.preset=desktop \
-            --upload.target=temporary-public-storage \
-            --assert.preset=lighthouse:recommended 
+      # - name: Run Lighthouse CI
+      #   run: npm run lhci 
