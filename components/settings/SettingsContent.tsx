@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/useAuth';
+import { useAuth } from '@/lib/auth/useAuth.tsx';
 import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/ToastContext';

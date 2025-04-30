@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/lib/auth/useAuth';
+import { useAuth } from '@/lib/auth/useAuth.tsx';
 import { useToast } from '@/components/ui/ToastContext';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
