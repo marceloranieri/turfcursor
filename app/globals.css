@@ -76,12 +76,16 @@
     @apply bg-background-secondary rounded-lg shadow-md p-3;
   }
   
+  .message-bubble.wizard {
+    @apply bg-blue-500/10 border-l-2 border-blue-500;
+  }
+  
   .button {
-    @apply rounded-button px-4 py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring;
+    @apply rounded-button px-4 py-2 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent;
   }
   
   .input {
-    @apply rounded-lg bg-background-tertiary px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring;
+    @apply rounded-lg bg-background-tertiary px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent;
   }
   
   .sidebar {
@@ -120,6 +124,10 @@
 
   .bg-secondary {
     @apply bg-background-secondary;
+  }
+
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
@@ -218,10 +226,6 @@ input, textarea {
 }
 
 /* Message styling */
-.message-bubble.wizard {
-  @apply bg-accent/10 border-l-2 border-accent;
-}
-
 .pinned-message {
   @apply bg-accent/10 border border-accent rounded-lg p-3;
 }

@@ -17,14 +17,23 @@ module.exports = {
     },
     extend: {
       colors: {
-        'background-primary': '#FFFFFF',
-        'background-secondary': '#F3F4F6',
-        'background-tertiary': '#E5E7EB',
-        'text-primary': '#111827',
-        'text-secondary': '#4B5563',
-        'text-muted': '#6B7280',
-        'accent-primary': '#3B82F6',
-        'accent-primary-dark': '#2563eb',
+        accent: {
+          DEFAULT: '#3B82F6',
+          primary: '#3B82F6',
+          'primary-dark': '#2563eb',
+        },
+        background: {
+          DEFAULT: '#FFFFFF',
+          primary: '#FFFFFF',
+          secondary: '#F3F4F6',
+          tertiary: '#E5E7EB',
+        },
+        text: {
+          DEFAULT: '#111827',
+          primary: '#111827',
+          secondary: '#4B5563',
+          muted: '#6B7280',
+        },
         border: {
           DEFAULT: '#E5E7EB',
           dark: '#374151',
@@ -38,7 +47,6 @@ module.exports = {
           foreground: "#FFFFFF",
         },
         input: 'hsl(var(--input))',
-        background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
@@ -87,5 +95,24 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function({ addBase }) {
+      addBase({
+        ':root': {
+          '--accent-opacity-10': '0.1',
+          '--accent-opacity-20': '0.2',
+          '--accent-opacity-30': '0.3',
+          '--accent-opacity-40': '0.4',
+          '--accent-opacity-50': '0.5',
+          '--accent-opacity-60': '0.6',
+          '--accent-opacity-70': '0.7',
+          '--accent-opacity-80': '0.8',
+          '--accent-opacity-90': '0.9',
+          '--background-opacity': '1',
+          '--text-opacity': '1',
+        },
+      });
+    },
+  ],
 } 
