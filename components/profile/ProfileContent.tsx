@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth/useAuth';
 import { useToast } from '@/components/ui/ToastContext';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
@@ -8,6 +8,30 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 export default function ProfileContent() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'harmony_points' | 'genius_award' | 'pinned' | 'wizard' | 'general';
+    message: string;
+    wizNote?: string;
+    timestamp: Date;
+    read: boolean;
+  }>>([]);
+
+  const handleMarkAsRead = (id: string) => {
+    setNotifications(prev =>
+      prev.map(notification => 
+        notification.id === id 
+          ? { ...notification, read: true } 
+          : notification
+      )
+    );
+  };
+
+  const handleClearAll = () => {
+    setNotifications(prev =>
+      prev.map(notification => ({ ...notification, read: true }))
+    );
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -25,7 +49,11 @@ export default function ProfileContent() {
         </div>
       </div>
 
-      <NotificationCenter />
+      <NotificationCenter
+        notifications={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onClearAll={handleClearAll}
+      />
     </div>
   );
 } 
