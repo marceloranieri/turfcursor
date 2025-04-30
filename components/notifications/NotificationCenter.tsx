@@ -3,24 +3,23 @@
 import React from 'react';
 import { useToast } from '../ui/ToastContext';
 
-interface NotificationCenterProps {
-  notifications: Array<{
-    id: string;
-    type: 'harmony_points' | 'genius_award' | 'pinned' | 'wizard' | 'general';
-    message: string;
-    wizNote?: string;
-    timestamp: Date;
-    read: boolean;
-  }>;
-  onMarkAsRead: (id: string) => void;
-  onClearAll: () => void;
+interface Notification {
+  id: string;
+  message: string;
+  read: boolean;
 }
 
-export const NotificationCenter: React.FC<NotificationCenterProps> = ({
-  notifications,
-  onMarkAsRead,
-  onClearAll
-}) => {
+interface NotificationCenterProps {
+  notifications?: Notification[];
+  onMarkAsRead?: (id: string) => void;
+  onClearAll?: () => void;
+}
+
+export const NotificationCenter = ({
+  notifications = [],
+  onMarkAsRead = () => {},
+  onClearAll = () => {},
+}: NotificationCenterProps) => {
   const { showToast } = useToast();
 
   if (notifications.length === 0) {
@@ -48,21 +47,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
               }`}
             >
               <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-text-primary">{notification.message}</p>
-                  {notification.wizNote && (
-                    <p className="text-text-secondary text-sm mt-1">{notification.wizNote}</p>
-                  )}
-                  <p className="text-text-muted text-xs mt-1">
-                    {notification.timestamp.toLocaleString()}
-                  </p>
-                </div>
+                <p className="text-text-primary">{notification.message}</p>
                 {!notification.read && (
                   <button
                     onClick={() => onMarkAsRead(notification.id)}
-                    className="text-text-secondary hover:text-text-primary text-sm ml-2"
+                    className="text-text-secondary hover:text-text-primary text-sm"
                   >
-                    Mark as Read
+                    Mark as read
                   </button>
                 )}
               </div>

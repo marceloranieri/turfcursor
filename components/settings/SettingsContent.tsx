@@ -48,7 +48,11 @@ export default function SettingsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'updated' | 'stars'>('updated');
   const [githubProfile, setGithubProfile] = useState<any>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    message: string;
+    read: boolean;
+  }>>([]);
 
   const fetchGithubRepos = useCallback(async (accessToken: string) => {
     try {
@@ -93,8 +97,6 @@ export default function SettingsContent() {
 
   const fetchGithubProfile = useCallback(async (accessToken: string) => {
     try {
-      setIsLoadingProfile(true);
-      
       const response = await fetch('https://api.github.com/user', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -109,8 +111,6 @@ export default function SettingsContent() {
       setGithubProfile(data);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Error fetching GitHub profile', 'error');
-    } finally {
-      setIsLoadingProfile(false);
     }
   }, [showToast]);
 
@@ -289,6 +289,16 @@ export default function SettingsContent() {
     }
   };
 
+  const handleMarkAsRead = useCallback((id: string) => {
+    setNotifications(prev => prev.map(notification => 
+      notification.id === id ? { ...notification, read: true } : notification
+    ));
+  }, []);
+
+  const handleClearAll = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-primary">
@@ -300,7 +310,13 @@ export default function SettingsContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Settings</h1>
-      <NotificationCenter />
+      <NotificationCenter 
+        notifications={[
+          { id: '1', message: 'Test notification', read: false },
+        ]}
+        onMarkAsRead={handleMarkAsRead}
+        onClearAll={handleClearAll}
+      />
     </div>
   );
 } 
