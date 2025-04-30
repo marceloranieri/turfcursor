@@ -34,8 +34,10 @@ export default function OAuthCallbackPage(): JSX.Element {
         if (session) {
           // Success - play success sound and show toast
           handleAuthSuccess({ 
-            user: session.user,
-            session: session,
+            data: {
+              user: session.user,
+              session: session
+            },
             error: null 
           });
           
