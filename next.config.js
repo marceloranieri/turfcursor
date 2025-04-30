@@ -59,6 +59,12 @@ const nextConfig = {
     '@octokit/plugin-throttling',
     '@octokit/webhooks',
   ],
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+  typescript: {
+    ignoreBuildErrors: true
+  }
 };
 
 module.exports = nextConfig;

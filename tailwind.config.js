@@ -1,11 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ['class'],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './lib/**/*.{js,ts,jsx,tsx}'
   ],
   theme: {
     container: {
@@ -17,6 +15,12 @@ module.exports = {
     },
     extend: {
       colors: {
+        'background-primary': 'hsl(var(--background-primary))',
+        'background-secondary': 'hsl(var(--background-secondary))',
+        'background-tertiary': 'hsl(var(--background-tertiary))',
+        'text-primary': 'hsl(var(--text-primary))',
+        'text-secondary': 'hsl(var(--text-secondary))',
+        'text-muted': 'hsl(var(--text-muted))',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -52,9 +56,14 @@ module.exports = {
         },
       },
       borderRadius: {
+        card: '1rem',
+        button: '0.5rem',
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        card: '0 4px 8px rgba(0, 0, 0, 0.1)',
       },
       keyframes: {
         'accordion-down': {
@@ -72,5 +81,6 @@ module.exports = {
       },
     },
   },
+  darkMode: 'class',
   plugins: [require('tailwindcss-animate')],
 } 

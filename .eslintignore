@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+public/
+*.d.ts
+next-env.d.ts
+next.config.js
+postcss.config.js
+tailwind.config.js
+*.config.js
+supabase/functions/
+lib/supabase/edge-functions/
+*.test.ts
+*.spec.ts 
