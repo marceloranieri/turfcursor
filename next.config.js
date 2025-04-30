@@ -2,8 +2,9 @@
 // Testing new Vercel webhook integration
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: true,
   experimental: {
-    appDir: true,
+    // Any other experimental features can stay here
   },
   images: {
     remotePatterns: [
@@ -13,6 +14,8 @@ const nextConfig = {
       },
     ],
     domains: [
+      'firebasestorage.googleapis.com',
+      'lh3.googleusercontent.com',
       'avatars.githubusercontent.com',
       'github.com',
       'raw.githubusercontent.com',
@@ -63,10 +66,11 @@ const nextConfig = {
     '@octokit/webhooks',
   ],
   eslint: {
-    ignoreDuringBuilds: false
+    ignoreDuringBuilds: false,
+    dirs: ['app', 'components', 'lib', 'hooks', 'pages', 'utils'],
   },
   typescript: {
-    ignoreBuildErrors: false
+    ignoreBuildErrors: false,
   }
 };
 
