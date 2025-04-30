@@ -49,6 +49,7 @@ interface ChatAreaProps {
   pinnedMessage?: PinnedMessage;
   onSendMessage: (content: string) => void;
   isAuthenticated: boolean;
+  onSignInClick?: () => void;
 }
 
 interface GifPickerProps {
@@ -147,7 +148,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   messages: initialMessages,
   pinnedMessage: initialPinnedMessage,
   onSendMessage,
-  isAuthenticated
+  isAuthenticated,
+  onSignInClick
 }) => {
   const [messageInput, setMessageInput] = useState('');
   const [messagesList, setMessagesList] = useState<Message[]>(initialMessages);
