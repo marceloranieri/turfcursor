@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase/client';
 
 interface AuthModalProps {
-  isOpen: boolean;
+  mode: 'signin' | 'signup';
   onClose: () => void;
-  initialMode?: 'signin' | 'signup';
+  onModeChange: Dispatch<SetStateAction<'signin' | 'signup'>>;
 }
 
-export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: AuthModalProps) {
-  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
+export default function AuthModal({ mode, onClose, onModeChange }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -21,47 +20,39 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
   
   // Add effect to focus on first input when modal opens
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isOpen) {
-      timer = setTimeout(() => {
-        const firstInput = document.querySelector<HTMLInputElement>('.auth-modal input');
-        if (firstInput) {
-          firstInput.focus();
-        }
-      }, 100);
-    }
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
+    const timer = setTimeout(() => {
+      const firstInput = document.querySelector<HTMLInputElement>('.auth-modal input');
+      if (firstInput) {
+        firstInput.focus();
       }
-    };
-  }, [isOpen]);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Add effect to handle escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [onClose]);
   
   // Add effect to handle clicking outside the modal
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node) && isOpen) {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
-  
-  if (!isOpen) return null;
+  }, [onClose]);
   
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +103,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
         setLoading(false);
         setSuccessMessage('Account created successfully! You can now sign in.');
         setTimeout(() => {
-          setMode('signin');
+          onModeChange('signin');
           setSuccessMessage(null);
         }, 2000);
       }, 1000);
@@ -123,7 +114,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'signin' }: A
   };
   
   const toggleMode = () => {
-    setMode(mode === 'signin' ? 'signup' : 'signin');
+    onModeChange(mode === 'signin' ? 'signup' : 'signin');
     setError(null);
     setSuccessMessage(null);
   };
