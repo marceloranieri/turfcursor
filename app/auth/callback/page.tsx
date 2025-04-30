@@ -33,7 +33,11 @@ export default function OAuthCallbackPage(): JSX.Element {
         
         if (session) {
           // Success - play success sound and show toast
-          handleAuthSuccess({ session, user: session.user });
+          handleAuthSuccess({ 
+            user: session.user,
+            session: session,
+            error: null 
+          });
           
           // Check if we need to restore settings state
           if (settingsState) {
