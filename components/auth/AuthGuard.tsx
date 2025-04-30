@@ -1,32 +1,44 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/useAuth';
+import { useAuth } from "@/lib/auth/useAuth";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, ReactNode } from "react";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+interface AuthGuardProps {
+  children: ReactNode;
+  redirectTo?: string;
+}
+
+export default function AuthGuard({ 
+  children, 
+  redirectTo = "/login" 
+}: AuthGuardProps) {
+  const { user, isLoading } = useAuth();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
-  const [isClient, setIsClient] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    setIsClient(true);
-    
-    // Only check auth after client-side hydration
-    if (isClient && !isLoading && !isAuthenticated) {
-      router.push('/login');
+    // Wait for auth to finish loading
+    if (!isLoading) {
+      if (!user) {
+        // Redirect if no user is found
+        router.push(redirectTo);
+      } else {
+        // Auth check complete, render children
+        setIsChecking(false);
+      }
     }
-  }, [isAuthenticated, isLoading, router, isClient]);
+  }, [user, isLoading, router, redirectTo]);
 
-  // Show loading state during SSR or while checking auth
-  if (!isClient || isLoading) {
+  // Show loading state while checking auth
+  if (isLoading || isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background-primary">
-        <div className="text-text-primary">Loading...</div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  // Only render children when authenticated on the client
-  return isAuthenticated ? <>{children}</> : null;
+  // Only render children if authenticated
+  return user ? <>{children}</> : null;
 } 
