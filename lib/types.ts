@@ -99,4 +99,25 @@ export interface MessageFormData {
   content: string;
   attachment?: File;
   replyToId?: string;
+}
+
+// GitHub types
+export interface GitHubActor {
+  login: string;
+  avatar_url: string;
+  url: string;
+}
+
+export interface GitHubRepo {
+  name: string;
+  url: string;
+}
+
+export interface GitHubEvent {
+  id: string;
+  type: string;
+  actor: GitHubActor;
+  repo: GitHubRepo;
+  created_at: string;
+  payload?: Record<string, unknown>;
 } 
