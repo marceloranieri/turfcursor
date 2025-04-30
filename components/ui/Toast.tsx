@@ -51,7 +51,7 @@ export const useToast = () => {
 };
 
 // Toast provider component
-function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [type, setType] = useState<ToastType>('info');
@@ -86,6 +86,7 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Also export as default for backward compatibility
 export default ToastProvider;
 
 const ToastViewport = React.forwardRef<
