@@ -49,7 +49,6 @@ interface ChatAreaProps {
   pinnedMessage?: PinnedMessage;
   onSendMessage: (content: string) => void;
   isAuthenticated: boolean;
-  onSignInClick: () => void;
 }
 
 interface GifPickerProps {
@@ -148,8 +147,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   messages: initialMessages,
   pinnedMessage: initialPinnedMessage,
   onSendMessage,
-  isAuthenticated,
-  onSignInClick
+  isAuthenticated
 }) => {
   const [messageInput, setMessageInput] = useState('');
   const [messagesList, setMessagesList] = useState<Message[]>(initialMessages);
@@ -159,6 +157,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const [showGifPicker, setShowGifPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [reactions, setReactions] = useState<Map<string, Set<string>>>(new Map());
   
   // Update messages when the prop changes (e.g. when topic changes)
   useEffect(() => {
@@ -246,99 +245,29 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     setReplyingTo(null);
   };
   
-  const handleReactionClick = async (messageId: string, emoji: string, isActive: boolean) => {
-    // Check authentication first
-    if (!isAuthenticated) {
-      onSendMessage(''); // This will trigger the auth modal in the parent
-      return;
+  const handleReaction = (messageId: string, emoji: string) => {
+    const updatedReactions = new Map(reactions);
+    const messageReactions = updatedReactions.get(messageId) || new Set();
+    
+    if (messageReactions.has(emoji)) {
+      messageReactions.delete(emoji);
+    } else {
+      messageReactions.add(emoji);
     }
     
-    try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        onSendMessage(''); // Trigger auth modal
-        return;
-      }
-      
-      // For demo purposes, update reaction count locally first for better UX
-      const updatedMessages = messagesList.map(message => {
-        if (message.id === messageId) {
-          let updatedReactions = [...(message.reactions || [])] as Reaction[];
-          
-          // Find if this emoji already exists in reactions
-          const existingIndex = updatedReactions.findIndex(r => r.emoji === emoji);
-          
-          if (isActive) {
-            // User has already reacted, remove their reaction
-            const reaction = updatedReactions[existingIndex];
-            if (existingIndex >= 0 && reaction && reaction.count > 1) {
-              updatedReactions[existingIndex] = {
-                ...reaction,
-                count: reaction.count - 1,
-                active: false
-              };
-            } else if (existingIndex >= 0) {
-              updatedReactions.splice(existingIndex, 1);
-            }
-          } else {
-            // Add new reaction
-            if (existingIndex >= 0) {
-              const reaction = updatedReactions[existingIndex];
-              if (reaction) {
-                updatedReactions[existingIndex] = {
-                  ...reaction,
-                  count: reaction.count + 1,
-                  active: true
-                };
-              }
-            } else {
-              updatedReactions.push({
-                emoji: emoji,
-                count: 1,
-                active: true
-              });
-            }
-          }
-          
-          return {
-            ...message,
-            reactions: updatedReactions
-          };
-        }
-        return message;
-      });
-      
-      setMessagesList(updatedMessages);
-      
-      // In a real app, also save/update reaction in Supabase
-      if (isActive) {
-        // Remove reaction
-        await supabase
-          .from('reactions')
-          .delete()
-          .match({ message_id: messageId, user_id: user.id, content: emoji });
-      } else {
-        // Add reaction
-        await supabase
-          .from('reactions')
-          .insert({
-            message_id: messageId,
-            user_id: user.id,
-            content: emoji,
-            created_at: new Date().toISOString()
-          });
-      }
-    } catch (error) {
-      logger.error('Error handling reaction:', error);
+    if (messageReactions.size === 0) {
+      updatedReactions.delete(messageId);
+    } else {
+      updatedReactions.set(messageId, messageReactions);
     }
+    
+    setReactions(updatedReactions);
   };
   
   const handleRandomReaction = (messageId: string) => {
     const emojis = ['👍', '❤️', '🔥', '😂', '🎉', '👀', '😍', '🚀'];
     const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)] || '👍';
-    handleReactionClick(messageId, randomEmoji, false);
+    handleReaction(messageId, randomEmoji);
   };
   
   const handlePinMessage = async (message: Message) => {
