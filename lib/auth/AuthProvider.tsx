@@ -1,11 +1,11 @@
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
+import React from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 import { Session, User } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
-import { AuthContext } from './AuthContext';
 
 const logger = createLogger('AuthProvider');
 
@@ -17,6 +17,39 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+interface AuthContextType {
+  user: any; // Replace with proper user type
+  loading: boolean;
+  error: Error | null;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    // Add your auth logic here
+    setLoading(false);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, loading, error }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export interface AuthProviderProps {
   children: React.ReactNode;
@@ -130,6 +163,8 @@ function AuthProvider({ children }: AuthProviderProps) {
   const value = {
     user: state.user,
     loading: state.loading,
+    isLoading: state.loading,
+    session: state.session,
     signInWithOAuth,
     signOut,
     isInitialized: !state.loading,
