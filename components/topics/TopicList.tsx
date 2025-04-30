@@ -76,7 +76,7 @@ export const TopicList: React.FC = () => {
               <span className="text-sm text-[var(--text-muted)]">
                 {topic.category}
               </span>
-              <DiscordButton variant="primary">Join Discussion</DiscordButton>
+              <DiscordButton variant="primary" onClick={() => {}}>Join Discussion</DiscordButton>
             </div>
           </div>
         </Link>

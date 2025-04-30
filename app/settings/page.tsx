@@ -6,9 +6,9 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/ToastContext';
-import { ActivityFeed } from '@/components/github/ActivityFeed';
-import { RepositoryCard } from '@/components/github/RepositoryCard';
-import { NotificationsList } from '@/components/github/NotificationsList';
+import ActivityFeed from '@/components/github/ActivityFeed';
+import RepositoryCard from '@/components/github/RepositoryCard';
+import NotificationsList from '@/components/github/NotificationsList';
 // import logger from '@/lib/logger';
 
 type GithubRepo = {
@@ -29,7 +29,7 @@ type GithubRepo = {
 
 export default function SettingsPage(): JSX.Element {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, session } = useAuth();
   const { showToast } = useToast();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);

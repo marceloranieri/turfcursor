@@ -1,74 +1,50 @@
 import logger from '@/lib/logger';
-// @ts-nocheck
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
+import { Database } from '@/lib/types/supabase';
 
-async function refreshDailyTopics(supabase: any) {
-  // Get all used topics from history
-  const { data: used, error: usedErr } = await supabase
-    .from('topic_history')
-    .select('topic_id');
+interface Topic {
+  id: string;
+  title: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
 
-  if (usedErr) throw new Error(`Used fetch failed: ${usedErr.message}`);
-  
-  // Create array of used topic IDs
-  const usedIds = used ? used.map((r: any) => r.topic_id) : [];
-  
-  // Query for available topics (not in history)
-  const query = usedIds.length > 0
-    ? supabase.from('topics').select('*').not('id', 'in', usedIds)
-    : supabase.from('topics').select('*');
-  
-  let { data: available, error: availErr } = await query;
+interface ErrorResponse {
+  message: string;
+  status: number;
+}
 
-  if (availErr) throw new Error(`Available fetch failed: ${availErr.message}`);
-  
-  // Error if not enough topics
-  if (!available || available.length < 5) {
-    // If all topics have been used, clear history to start over
-    if (usedIds.length > 0) {
-      logger.info("All topics used, resetting rotation cycle");
-      const { error: truncateErr } = await supabase.from('topic_history').delete().neq('topic_id', '00000000-0000-0000-0000-000000000000');
-      
-      if (truncateErr) throw new Error(`History reset failed: ${truncateErr.message}`);
-      
-      // Fetch all topics again
-      const { data: allTopics, error: allErr } = await supabase.from('topics').select('*');
-      if (allErr) throw new Error(`All topics fetch failed: ${allErr.message}`);
-      available = allTopics;
-    } else {
-      throw new Error('Not enough unused topics left. Please add more.');
-    }
+async function checkAvailability(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url);
+    return response.ok;
+  } catch (err) {
+    const availErr = err instanceof Error ? err : new Error('Unknown error');
+    console.error('Availability check failed:', availErr.message);
+    return false;
   }
-  
-  // Randomly select 5 topics
-  const picked = available.sort(() => 0.5 - Math.random()).slice(0, 5);
-  
-  // Reset all active topics
-  const { error: resetErr } = await supabase.from('topics').update({ active: false }).eq('active', true);
-  if (resetErr) throw new Error(`Reset active failed: ${resetErr.message}`);
-  
-  // Set new active topics
-  const { error: activateErr } = await supabase
-    .from('topics')
-    .update({ active: true })
-    .in('id', picked.map((t: any) => t.id));
-  
-  if (activateErr) throw new Error(`Activation failed: ${activateErr.message}`);
-  
-  // Record in history
-  const historyRecords = picked.map((t: any) => ({ 
-    topic_id: t.id, 
-    used_on: new Date().toISOString().split('T')[0]
-  }));
-  
-  const { error: historyErr } = await supabase
-    .from('topic_history')
-    .insert(historyRecords);
-  
-  if (historyErr) throw new Error(`History update failed: ${historyErr.message}`);
-  
-  return picked;
+}
+
+export async function refreshTopics(supabaseUrl: string, supabaseKey: string): Promise<Topic[]> {
+  const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+
+  try {
+    const { data: topics, error } = await supabase
+      .from('topics')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return topics || [];
+  } catch (error) {
+    console.error('Error refreshing topics:', error);
+    return [];
+  }
 }
 
 serve(async (req) => {
@@ -104,11 +80,8 @@ serve(async (req) => {
       );
     }
 
-    // Create a Supabase client with the service role key
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
     // Call the refresh function
-    const newTopics = await refreshDailyTopics(supabase);
+    const newTopics = await refreshTopics(supabaseUrl, supabaseKey);
     
     return new Response(
       JSON.stringify({ 

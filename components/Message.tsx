@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import DiscordButton from '@/components/ui/DiscordButton';
 import { formatDistanceToNow } from 'date-fns';
-import { GuestAwareReactionButton } from './GuestAwareReactionButton';
+import GuestAwareReactionButton from './GuestAwareReactionButton';
 import { FaReply } from '@react-icons/all-files/fa/FaReply';
 import { FaRegSmile } from '@react-icons/all-files/fa/FaRegSmile';
 import { FaThumbsUp } from '@react-icons/all-files/fa/FaThumbsUp';

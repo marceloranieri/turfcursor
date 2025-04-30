@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ActivityFeed } from '@/components/github/ActivityFeed';
-import { RepositoryCard } from '@/components/github/RepositoryCard';
-import { GithubProfile } from '@/components/github/GithubProfile';
+import ActivityFeed from '@/components/github/ActivityFeed';
+import RepositoryCard from '@/components/github/RepositoryCard';
+import GithubProfile from '@/components/github/GithubProfile';
 
 interface GitHubProfilePageProps {
   params: {
