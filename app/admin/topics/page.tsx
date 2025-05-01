@@ -2,22 +2,21 @@
 
 import { Suspense } from 'react';
 import { default as loadDynamic } from 'next/dynamic';
-
-const TopicAdminComponent = loadDynamic(() => import('@/components/admin/TopicAdmin'), {
-  ssr: false,
-});
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 export const dynamic = 'force-dynamic';
 
+const TopicAdminComponent = loadDynamic(() => import('@/components/admin/TopicAdmin'), {
+  ssr: false,
+  loading: () => <div style={{ padding: '2rem' }}>Loading admin dashboard...</div>,
+});
+
 export default function TopicAdminPage() {
   return (
-    <div className="container mx-auto px-4 py-10">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">Topic Administration</h1>
-        <Suspense fallback={<div>Loading admin...</div>}>
-          <TopicAdminComponent />
-        </Suspense>
-      </div>
-    </div>
+    <ErrorBoundary fallback={<div style={{ padding: '2rem' }}>⚠️ Admin tools failed to load.</div>}>
+      <Suspense fallback={<div style={{ padding: '2rem' }}>Preparing admin panel…</div>}>
+        <TopicAdminComponent />
+      </Suspense>
+    </ErrorBoundary>
   );
 } 
