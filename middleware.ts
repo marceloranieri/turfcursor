@@ -1,50 +1,56 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 // This middleware function will run for all routes
-export function middleware(request: NextRequest) {
-  // Get the pathname of the request
-  const pathname = request.nextUrl.pathname;
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
   
-  // List of routes that should be dynamically rendered
-  const dynamicRoutes = [
-    '/dashboard',
-    '/onboarding',
-    '/auth/signup',
-    '/auth/login',
-    '/settings',
-    '/',
-    '/onboarding/welcome',
-    '/chat',
-    '/auth/callback',
-    '/profile',
-  ];
-  
-  // Check if the current path is in our list of dynamic routes
-  const isDynamicRoute = dynamicRoutes.some(route => 
-    pathname === route || pathname.startsWith(`${route}/`)
-  );
-  
-  // If it's a dynamic route, add a header to indicate it should be dynamically rendered
-  if (isDynamicRoute) {
-    const response = NextResponse.next();
-    response.headers.set('x-middleware-cache', 'no-cache');
-    return response;
+  // Check if the path should be protected
+  const isProtectedRoute = req.nextUrl.pathname.startsWith('/chat') || 
+                          req.nextUrl.pathname.startsWith('/profile') ||
+                          req.nextUrl.pathname.startsWith('/settings');
+                          
+  if (isProtectedRoute) {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      // Not logged in, redirect to login
+      return NextResponse.redirect(new URL('/auth/signin', req.url));
+    }
+    
+    // Check terms acceptance
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('terms_accepted, terms_version')
+      .eq('id', session.user.id)
+      .single();
+      
+    if (!profile?.terms_accepted) {
+      // User hasn't accepted terms, redirect to terms acceptance page
+      // Store the original URL they were trying to access
+      const returnUrl = encodeURIComponent(req.nextUrl.pathname);
+      return NextResponse.redirect(new URL(`/legal/accept-terms?returnUrl=${returnUrl}`, req.url));
+    }
+
+    // Check if terms version is current
+    if (profile.terms_version !== '1.0') {
+      // User needs to accept the latest terms
+      const returnUrl = encodeURIComponent(req.nextUrl.pathname);
+      return NextResponse.redirect(new URL(`/legal/terms-update?returnUrl=${returnUrl}`, req.url));
+    }
   }
   
-  // For all other routes, proceed normally
-  return NextResponse.next();
+  return res;
 }
 
 // Configure the middleware to run on specific paths
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/onboarding/:path*',
-    '/auth/:path*',
-    '/settings/:path*',
-    '/',
     '/chat/:path*',
     '/profile/:path*',
+    '/settings/:path*',
+    // Add other protected routes here
   ],
 }; 
