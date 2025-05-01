@@ -1,18 +1,20 @@
 // app/layout.tsx
 import './globals.css';
-import type { Metadata } from 'next';
-import ClientLayout from './ClientLayout';
+import React from 'react';
+import AuthProvider from '@/lib/auth/AuthProvider';
 
-export const metadata: Metadata = {
-  title: 'Turf',
-  description: 'Smart, daily debate playground',
+export const metadata = {
+  title: 'Turf App',
+  description: 'A better way to debate and connect',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <ClientLayout>{children}</ClientLayout>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

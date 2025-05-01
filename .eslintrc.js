@@ -1,27 +1,26 @@
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'react'],
+  plugins: ['@typescript-eslint'],
   extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
+    'next/core-web-vitals',
+    'plugin:@typescript-eslint/recommended'
   ],
-  env: {
-    browser: true,
-    node: true,
-    es6: true,
-  },
-  settings: {
-    react: {
-      version: 'detect',
-    },
-  },
   rules: {
-    'react/react-in-jsx-scope': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    '@typescript-eslint/no-explicit-any': 'off',
+    'react/prop-types': 'off',
+    '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/no-namespace': 'off',
+    '@next/next/no-img-element': 'warn'
   },
+  ignorePatterns: [
+    'node_modules/',
+    '.next/',
+    'out/',
+    'dist/',
+    'build/',
+    'mobile/TurfApp/lib/',
+    'scripts/',
+  ],
 }; 
