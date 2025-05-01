@@ -1,100 +1,51 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
-import { toast } from 'react-hot-toast';
-import { handleAuthSuccess } from '@/lib/auth/authEffects';
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { createLogger } from '@/lib/logger';
 
-export default function OAuthCallbackPage(): JSX.Element {
+const logger = createLogger('AuthCallback');
+
+export default function AuthCallback() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  const searchParams = useSearchParams();
+  
   useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
     const handleCallback = async () => {
       try {
-        // Get the redirect path from session storage
-        let redirectPath = '/chat';
-        let settingsState = null;
+        const code = searchParams.get('code');
         
-        if (typeof window !== 'undefined') {
-          redirectPath = sessionStorage.getItem('redirectAfterAuth') || '/chat';
-          settingsState = sessionStorage.getItem('settingsState');
+        if (!code) {
+          throw new Error('No code provided');
         }
-        
-        // Check if we have a session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
-        }
-        
-        if (session) {
-          // Success - play success sound and show toast
-          handleAuthSuccess({ 
-            data: {
-              user: session.user,
-              session: session
-            },
-            error: null 
-          });
-          
-          // Check if we need to restore settings state
-          if (settingsState) {
-            // We're coming back from GitHub OAuth in settings
-            if (typeof window !== 'undefined') {
-              sessionStorage.removeItem('settingsState');
-            }
-            router.push('/settings');
-            return;
-          }
-          
-          // Clear the redirect path from session storage
-          if (typeof window !== 'undefined') {
-            sessionStorage.removeItem('redirectAfterAuth');
-          }
-          
-          // Redirect to the intended page
-          router.push(redirectPath);
-        } else {
-          // No session - something went wrong
-          setError('Authentication failed. Please try again.');
-          toast.error('Authentication failed. Please try again.');
-          setTimeout(() => {
-            router.push('/auth/signin');
-          }, 2000);
-        }
+
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) throw error;
+
+        // Get return URL or default to home
+        const returnTo = searchParams.get('returnTo') || '/';
+        router.push(returnTo);
       } catch (error: any) {
-        console.error('OAuth callback error:', error);
-        setError(error.message || 'Authentication error. Please try again.');
-        toast.error(error.message || 'Authentication error. Please try again.');
-        setTimeout(() => {
-          router.push('/auth/signin');
-        }, 2000);
-      } finally {
-        setIsLoading(false);
+        logger.error('Error handling auth callback:', error);
+        router.push('/auth/signin?error=Authentication failed');
       }
     };
 
     handleCallback();
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background-primary p-4">
-      <div className="bg-background-secondary rounded-lg p-8 max-w-md w-full text-center shadow-lg">
-        <h1 className="text-2xl font-bold text-text-primary mb-4">
-          {error ? 'Authentication Error' : 'Completing Sign In'}
-        </h1>
-        <p className="text-text-secondary mb-6">
-          {error || (isLoading ? 'Please wait while we complete your sign in...' : 'Redirecting you...')}
-        </p>
-        {isLoading && (
-          <div className="flex justify-center">
-            <LoadingSpinner size="lg" />
-          </div>
-        )}
+    <div className="min-h-screen flex items-center justify-center bg-background-primary">
+      <div className="text-center">
+        <LoadingSpinner size="lg" />
+        <p className="mt-4 text-text-secondary">Completing sign in...</p>
       </div>
     </div>
   );
