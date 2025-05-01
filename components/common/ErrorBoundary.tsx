@@ -29,9 +29,9 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#dc2626' }}>
-          <h2>Something went wrong.</h2>
-          <p>Please refresh or try again later.</p>
+        <div className="p-6 text-center text-red-600">
+          <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+          <p>Please try again later</p>
         </div>
       );
     }
