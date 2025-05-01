@@ -1,22 +1,25 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
-import { default as loadDynamic } from 'next/dynamic';
+import ClientOnly from '@/components/common/ClientOnly';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 
 export const dynamic = 'force-dynamic';
 
-const ChatRoom = loadDynamic(() => import('@/components/chat/ChatRoom'), {
+const ChatRoom = dynamic(() => import('@/components/chat/ChatRoom'), {
   ssr: false,
   loading: () => <div style={{ padding: '2rem' }}>Loading chatroom...</div>,
 });
 
 export default function ChatPage() {
   return (
-    <ErrorBoundary fallback={<div style={{ padding: '2rem' }}>⚠️ Unable to load chatroom.</div>}>
-      <Suspense fallback={<div style={{ padding: '2rem' }}>Spinning up chatroom…</div>}>
-        <ChatRoom />
-      </Suspense>
-    </ErrorBoundary>
+    <ClientOnly>
+      <ErrorBoundary fallback={<div style={{ padding: '2rem' }}>⚠️ Chat failed to load.</div>}>
+        <Suspense fallback={<div style={{ padding: '2rem' }}>Starting chat session…</div>}>
+          <ChatRoom />
+        </Suspense>
+      </ErrorBoundary>
+    </ClientOnly>
   );
 } 
