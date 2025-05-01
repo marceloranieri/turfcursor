@@ -2,11 +2,11 @@
 
 import React, { Suspense } from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import dynamic from 'next/dynamic';
+import { default as loadDynamic } from 'next/dynamic';
 
 export const dynamic = 'force-dynamic';
 
-const ChatRoom = dynamic(() => import('@/components/chat/ChatRoom'), {
+const ChatRoom = loadDynamic(() => import('@/components/chat/ChatRoom'), {
   ssr: false,
   loading: () => <div className="p-6 text-center">Loading chat...</div>,
 });
