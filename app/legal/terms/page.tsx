@@ -1,5 +1,3 @@
-'use client';
-
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { CURRENT_TERMS_VERSION, TERMS_VERSIONS } from '@/lib/constants/legal';
