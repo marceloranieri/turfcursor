@@ -3,40 +3,86 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
+import { createBrowserClient } from '@supabase/ssr';
 import { toast } from 'react-hot-toast';
 import { Chrome, Facebook, Github } from 'lucide-react';
-import { signInWithGoogle, signInWithFacebook, signInWithGithub } from '@/lib/auth/oauth';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('SignUpPage');
 
 export default function SignUpPage(): JSX.Element {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize Supabase client
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
+    if (!acceptedTerms) {
+      toast.error('You must accept the Terms of Service to continue');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             username,
+            terms_accepted: true,
+            terms_accepted_at: new Date().toISOString(),
+            terms_version: '1.0',
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) throw error;
 
+      logger.info('Sign up successful', { email, userId: data.user?.id });
+      
+      if (data.user?.identities?.length === 0) {
+        toast.error('An account with this email already exists. Please sign in instead.');
+        router.push('/auth/signin');
+        return;
+      }
+
+      // Store terms acceptance in the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: data.user.id,
+            username,
+            email,
+            terms_accepted: true,
+            terms_accepted_at: new Date().toISOString(),
+            terms_version: '1.0',
+          },
+        ]);
+
+      if (profileError) {
+        logger.error('Error storing terms acceptance:', profileError);
+        // Continue with signup as the user is already created
+      }
+
       toast.success('Account created successfully! Please check your email to verify your account.');
       router.push('/auth/verify-email');
     } catch (error: any) {
-      console.error('Sign up error:', error);
+      logger.error('Sign up error:', error);
       toast.error(error.message || 'Failed to create account. Please try again.');
     } finally {
       setIsLoading(false);
@@ -44,21 +90,28 @@ export default function SignUpPage(): JSX.Element {
   };
 
   const handleOAuthSignUp = async (provider: 'google' | 'facebook' | 'github') => {
+    if (!acceptedTerms) {
+      toast.error('You must accept the Terms of Service to continue');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      switch (provider) {
-        case 'google':
-          await signInWithGoogle();
-          break;
-        case 'facebook':
-          await signInWithFacebook();
-          break;
-        case 'github':
-          await signInWithGithub();
-          break;
-      }
-    } catch (error) {
-      console.error(`${provider} sign up error:`, error);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      logger.error(`${provider} sign up error:`, error);
+      toast.error(`Failed to sign up with ${provider}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -114,9 +167,30 @@ export default function SignUpPage(): JSX.Element {
             />
           </div>
 
+          <div className="flex items-start space-x-2">
+            <input
+              id="terms"
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1"
+              required
+            />
+            <label htmlFor="terms" className="text-sm text-text-secondary">
+              I agree to the{' '}
+              <Link href="/legal/terms" className="text-accent-primary hover:text-accent-primary-dark" target="_blank">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/legal/privacy" className="text-accent-primary hover:text-accent-primary-dark" target="_blank">
+                Privacy Policy
+              </Link>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !acceptedTerms}
             className="w-full py-2 px-4 bg-accent-primary text-white rounded-lg hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? <LoadingSpinner size="sm" /> : 'Sign up'}
@@ -138,7 +212,7 @@ export default function SignUpPage(): JSX.Element {
           <div className="mt-6 grid grid-cols-3 gap-3">
             <button
               onClick={() => handleOAuthSignUp('google')}
-              disabled={isLoading}
+              disabled={isLoading || !acceptedTerms}
               className="w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-background-primary text-text-primary hover:bg-background-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Sign up with Google"
             >
@@ -146,7 +220,7 @@ export default function SignUpPage(): JSX.Element {
             </button>
             <button
               onClick={() => handleOAuthSignUp('facebook')}
-              disabled={isLoading}
+              disabled={isLoading || !acceptedTerms}
               className="w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-background-primary text-text-primary hover:bg-background-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Sign up with Facebook"
             >
@@ -154,7 +228,7 @@ export default function SignUpPage(): JSX.Element {
             </button>
             <button
               onClick={() => handleOAuthSignUp('github')}
-              disabled={isLoading}
+              disabled={isLoading || !acceptedTerms}
               className="w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-background-primary text-text-primary hover:bg-background-secondary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Sign up with GitHub"
             >

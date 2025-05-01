@@ -1,57 +1,66 @@
-import logger from '@/lib/logger';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createServerClient, createBrowserClient, type CookieOptions } from '@supabase/ssr';
+import { createLogger } from '@/lib/logger';
 import { Database } from './database.types';
+import { cookies } from 'next/headers';
 
-// Initialize the Supabase client with environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const logger = createLogger('SupabaseClient');
 
 // Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  // intentional log: critical environment variable check that should halt execution in development
-  logger.error('Missing Supabase environment variables', {
-    context: 'Supabase Client Initialization',
-    message: 'Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
-  });
-  // Don't throw in production to prevent app crashes
-  if (process.env.NODE_ENV === 'development') {
-    throw new Error(
-      'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
-    );
-  }
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
+}
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-// Create a single supabase client for interacting with your database
-export const supabase: SupabaseClient<Database> = createClient<Database>(
-  supabaseUrl || '',
-  supabaseAnonKey || '',
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-    global: {
-      headers: {
-        'x-application-name': 'turf-app',
-      },
-    },
-    db: {
-      schema: 'public',
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10,
-      },
-    },
-  }
-);
+// Create a server client that can be used in Server Components, API Routes, and Edge Functions
+export function createServerSupabaseClient() {
+  const cookieStore = cookies();
 
-// Add debug logging in development
-if (process.env.NODE_ENV === 'development') {
-  supabase.auth.onAuthStateChange((event, session) => {
-    logger.info('Supabase auth state changed:', event, session?.user?.id);
-  });
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // This will throw in middleware, but we can ignore it
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch (error) {
+            // This will throw in middleware, but we can ignore it
+          }
+        },
+      },
+    }
+  );
+}
+
+// Create a browser client that can be used in Client Components
+export function createBrowserSupabaseClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        flowType: 'pkce',
+        debug: process.env.NODE_ENV === 'development',
+      },
+      global: {
+        headers: {
+          'x-application-name': 'turf-app',
+        },
+      },
+    }
+  );
 }
 
 // Types for database tables
