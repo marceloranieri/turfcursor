@@ -1,9 +1,6 @@
-// app/layout.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import './globals.css';
-import { Metadata, Viewport } from 'next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from 'react-hot-toast';
@@ -11,70 +8,10 @@ import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { createLogger } from '@/lib/logger';
-import { RootLayoutClient } from './RootLayoutClient';
 
 const logger = createLogger('RootLayout');
 
-export const dynamic = 'force-dynamic';
-
-export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  
-  return {
-    metadataBase: new URL(siteUrl),
-    title: {
-      default: 'Turf - Engage in Meaningful Discussions',
-      template: '%s | Turf'
-    },
-    description: 'Join Turf to engage in meaningful discussions, share ideas, and connect with others in a respectful environment.',
-    openGraph: {
-      type: 'website',
-      locale: 'en_US',
-      url: '/',
-      title: 'Turf - Engage in Meaningful Discussions',
-      description: 'Join Turf to engage in meaningful discussions, share ideas, and connect with others in a respectful environment.',
-      siteName: 'Turf'
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: 'Turf - Engage in Meaningful Discussions',
-      description: 'Join Turf to engage in meaningful discussions, share ideas, and connect with others in a respectful environment.',
-    },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
-    },
-    icons: {
-      shortcut: '/favicon.ico',
-    },
-    viewport: {
-      width: 'device-width',
-      initialScale: 1,
-      maximumScale: 1,
-    },
-    verification: {
-      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-    }
-  };
-}
-
-export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
-  width: 'device-width',
-  initialScale: 1,
-};
-
-function RootLayoutClient({
+export function RootLayoutClient({
   children,
 }: {
   children: React.ReactNode;
@@ -156,20 +93,4 @@ function RootLayoutClient({
       <Analytics />
     </ErrorBoundary>
   );
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <RootLayoutClient>
-          {children}
-        </RootLayoutClient>
-      </body>
-    </html>
-  );
-}
+} 
