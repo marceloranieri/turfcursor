@@ -1,7 +1,7 @@
 'use client';
 
 import logger from '@/lib/logger';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import ChatArea from '@/components/layout/ChatArea';
 import MembersList from '@/components/layout/MembersList';
@@ -13,6 +13,7 @@ import { useDebugListeners } from '@/lib/debug-helpers';
 import HydrationSafeComponent from '@/components/HydrationSafeComponent';
 import { toast } from 'react-hot-toast';
 import { Message, Topic, Author, Reaction } from '@/lib/types';
+import { sendMessage, loadMoreMessages } from './actions';
 
 // Define the Member type
 interface Member {
@@ -168,6 +169,11 @@ interface ChatPageClientProps {
   initialMessages: Message[];
 }
 
+interface MessageWithStatus extends Message {
+  status?: 'sending' | 'sent' | 'error';
+  optimistic?: boolean;
+}
+
 export default function ChatPageClient({ chatId, initialChat, initialMessages }: ChatPageClientProps) {
   const router = useRouter();
   
@@ -178,11 +184,60 @@ export default function ChatPageClient({ chatId, initialChat, initialMessages }:
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<MessageWithStatus[]>(initialMessages.map(msg => ({ ...msg, status: 'sent' })));
   const [chat, setChat] = useState(initialChat);
+  const [isOnline, setIsOnline] = useState(true);
   const supabase = createClient();
   
+  // Track online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMore || !hasMore || messages.length === 0) return;
+
+    setLoadingMore(true);
+    try {
+      const oldestMessage = messages[0];
+      const result = await loadMoreMessages(chatId, oldestMessage.created_at);
+
+      if (!result.success || !result.data) {
+        throw new Error('Failed to load more messages');
+      }
+
+      if (result.data.length < 20) {
+        setHasMore(false);
+      }
+
+      setMessages(prev => [...result.data.reverse().map(msg => ({ ...msg, status: 'sent' })), ...prev]);
+    } catch (error) {
+      logger.error('Error loading more messages:', error);
+      toast.error('Failed to load more messages');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [chatId, loadingMore, hasMore, messages]);
+
+  // Memoize sorted messages
+  const sortedMessages = useMemo(() => {
+    return [...messages].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }, [messages]);
+
   // Check authentication with Supabase
   useEffect(() => {
     const checkAuth = async () => {
@@ -225,80 +280,117 @@ export default function ChatPageClient({ chatId, initialChat, initialMessages }:
     };
   }, [chatId]);
 
-  // Subscribe to new messages and chat updates
+  // Subscribe to new messages and chat updates with reconnection logic
   useEffect(() => {
-    // Messages channel
-    const messagesChannel = supabase
-      .channel(`messages:${chatId}`)
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'messages',
-          filter: `chat_id=eq.${chatId}`
-        }, 
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setMessages(prev => [...prev, payload.new as Message]);
-          } else if (payload.eventType === 'UPDATE') {
-            setMessages(prev => prev.map(msg => 
-              msg.id === payload.new.id ? payload.new as Message : msg
-            ));
-          } else if (payload.eventType === 'DELETE') {
-            setMessages(prev => prev.filter(msg => msg.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
+    let retryCount = 0;
+    const maxRetries = 5;
+    const subscribeToChannels = () => {
+      try {
+        const messagesChannel = supabase
+          .channel(`messages:${chatId}`)
+          .on('postgres_changes', 
+            { 
+              event: '*', 
+              schema: 'public', 
+              table: 'messages',
+              filter: `chat_id=eq.${chatId}`
+            }, 
+            (payload) => {
+              if (payload.eventType === 'INSERT') {
+                // Only add the message if it's not from our optimistic updates
+                setMessages(prev => {
+                  const exists = prev.some(msg => msg.id === payload.new.id);
+                  if (!exists) {
+                    return [...prev, { ...payload.new as Message, status: 'sent' }];
+                  }
+                  return prev.map(msg => 
+                    msg.id === payload.new.id ? { ...payload.new as Message, status: 'sent' } : msg
+                  );
+                });
+              } else if (payload.eventType === 'UPDATE') {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === payload.new.id ? { ...payload.new as Message, status: 'sent' } : msg
+                ));
+              } else if (payload.eventType === 'DELETE') {
+                setMessages(prev => prev.filter(msg => msg.id !== payload.old.id));
+              }
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              retryCount = 0;
+            }
+          });
 
-    // Chat updates channel
-    const chatChannel = supabase
-      .channel(`chat:${chatId}`)
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chats',
-          filter: `id=eq.${chatId}`
-        },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            setChat(payload.new);
-          } else if (payload.eventType === 'DELETE') {
-            // Chat was deleted, redirect to home
-            toast.error('This chat has been deleted');
-            router.push('/');
-          }
-        }
-      )
-      .subscribe();
+        const chatChannel = supabase
+          .channel(`chat:${chatId}`)
+          .on('postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'chats',
+              filter: `id=eq.${chatId}`
+            },
+            (payload) => {
+              if (payload.eventType === 'UPDATE') {
+                setChat(payload.new);
+              } else if (payload.eventType === 'DELETE') {
+                toast.error('This chat has been deleted');
+                router.push('/');
+              }
+            }
+          )
+          .subscribe();
 
-    return () => {
-      supabase.removeChannel(messagesChannel);
-      supabase.removeChannel(chatChannel);
+        return () => {
+          supabase.removeChannel(messagesChannel);
+          supabase.removeChannel(chatChannel);
+        };
+      } catch (error) {
+        logger.error('Error in subscription:', error);
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const timeout = Math.min(1000 * Math.pow(2, retryCount), 30000);
+          setTimeout(subscribeToChannels, timeout);
+        }
+      }
     };
+
+    return subscribeToChannels();
   }, [chatId, router]);
   
   const handleSendMessage = useCallback(async () => {
     if (!message.trim() || !user) return;
-    
+
+    const optimisticId = `${Date.now()}-${Math.random()}`;
+    const newMessage: MessageWithStatus = {
+      id: optimisticId,
+      content: message.trim(),
+      user_id: user.id,
+      chat_id: chatId,
+      created_at: new Date().toISOString(),
+      status: 'sending',
+      optimistic: true
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setMessage('');
+
     try {
-      const newMessage = {
-        content: message.trim(),
-        user_id: user.id,
-        chat_id: chatId,
-        created_at: new Date().toISOString()
-      };
-      
-      const { error } = await supabase.from('messages').insert([newMessage]);
-      
-      if (error) {
-        throw error;
+      const result = await sendMessage(chatId, newMessage.content);
+
+      if (!result.success) {
+        throw new Error('Failed to send message');
       }
-      
-      setMessage('');
+
+      // The real message will come through the subscription
+      // We just need to handle the error case
     } catch (error) {
       logger.error('Error sending message:', error);
+      // Mark the message as failed
+      setMessages(prev => prev.map(msg => 
+        msg.id === optimisticId ? { ...msg, status: 'error' } : msg
+      ));
       toast.error('Failed to send message. Please try again.');
     }
   }, [user?.id, chatId, message]);
@@ -367,11 +459,15 @@ export default function ChatPageClient({ chatId, initialChat, initialMessages }:
           <div className="flex-1 flex flex-col">
             <div className="flex-1 flex">
               <ChatArea
-                messages={messages}
+                messages={sortedMessages}
                 chat={chat}
                 onSendMessage={handleSendMessage}
                 isAuthenticated={isAuthenticated}
                 onSignInClick={() => setShowGuestModal(true)}
+                onLoadMore={handleLoadMore}
+                hasMore={hasMore}
+                loadingMore={loadingMore}
+                isOnline={isOnline}
               />
               <MembersList members={DEMO_MEMBERS} />
             </div>
