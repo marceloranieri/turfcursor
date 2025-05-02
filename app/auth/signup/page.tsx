@@ -28,6 +28,7 @@ export default function SignUpPage(): JSX.Element {
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log('Starting signup process...'); // Debug log
 
     if (!acceptedTerms) {
       toast.error('You must accept the Terms of Service to continue');
@@ -36,6 +37,7 @@ export default function SignUpPage(): JSX.Element {
     }
 
     try {
+      console.log('Attempting Supabase signup...'); // Debug log
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -50,17 +52,23 @@ export default function SignUpPage(): JSX.Element {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase signup error:', error); // Debug log
+        throw error;
+      }
 
+      console.log('Signup response:', data); // Debug log
       logger.info('Sign up successful', { email, userId: data.user?.id });
       
       if (data.user?.identities?.length === 0) {
+        console.log('Account already exists'); // Debug log
         toast.error('An account with this email already exists. Please sign in instead.');
         router.push('/auth/signin');
         return;
       }
 
       // Store terms acceptance in the profiles table
+      console.log('Storing profile data...'); // Debug log
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -75,6 +83,7 @@ export default function SignUpPage(): JSX.Element {
         ]);
 
       if (profileError) {
+        console.error('Profile creation error:', profileError); // Debug log
         logger.error('Error storing terms acceptance:', profileError);
         // Continue with signup as the user is already created
       }
@@ -82,6 +91,7 @@ export default function SignUpPage(): JSX.Element {
       toast.success('Account created successfully! Please check your email to verify your account.');
       router.push('/auth/verify-email');
     } catch (error: any) {
+      console.error('Signup process error:', error); // Debug log
       logger.error('Sign up error:', error);
       toast.error(error.message || 'Failed to create account. Please try again.');
     } finally {
@@ -191,9 +201,16 @@ export default function SignUpPage(): JSX.Element {
           <button
             type="submit"
             disabled={isLoading || !acceptedTerms}
-            className="w-full py-2 px-4 bg-accent-primary text-white rounded-lg hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2 px-4 bg-accent-primary text-white rounded-lg hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            {isLoading ? <LoadingSpinner size="sm" /> : 'Sign up'}
+            {isLoading ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                <span>Creating account...</span>
+              </>
+            ) : (
+              'Sign up'
+            )}
           </button>
         </form>
 
