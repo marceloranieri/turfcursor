@@ -20,6 +20,9 @@ export function createClient() {
   );
 }
 
+// Export a direct instance for imports like: import { supabase } from '@/lib/supabase/client'
+export const supabase = createClient();
+
 // For server components/actions (use this only in app directory files)
 export function createServerComponentClient(cookieStore: any) {
   if (typeof window === 'undefined') {
@@ -42,20 +45,15 @@ export function createServerComponentClient(cookieStore: any) {
         }
       );
     } catch (error) {
-      logger.error('Error creating server component client', error);
+      logger.error('Error creating server component client:', error);
       throw error;
     }
   }
-  
-  throw new Error('createServerComponentClient can only be used on the server');
+  return createClient();
 }
 
-// For pages directory (client-side only)
+// For Pages Router
 export function createPagesClient() {
-  if (typeof window === 'undefined') {
-    throw new Error('createPagesClient can only be used in the browser');
-  }
-  
   return createClient();
 }
 
