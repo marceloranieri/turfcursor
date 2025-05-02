@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createLogger } from '@/lib/logger';
+import { cspToString, cspConfig } from './csp-config';
 
 const logger = createLogger('Middleware');
 
@@ -92,22 +93,13 @@ export async function middleware(req: NextRequest) {
     }
     
     // Add CSP header
-    res.headers.set(
-      'Content-Security-Policy',
-      [
-        "default-src 'self'",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.vercel.app https://app.turfyeah.com",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "img-src 'self' data: blob: https://*.supabase.co https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://media.giphy.com",
-        "font-src 'self' https://fonts.gstatic.com",
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.giphy.com https://app.turfyeah.com",
-        "frame-src 'self' https://*.supabase.co https://accounts.google.com",
-        "media-src 'self' https://media.giphy.com",
-        "form-action 'self'",
-        "base-uri 'self'",
-        "object-src 'none'",
-      ].join('; ')
-    );
+    res.headers.set('Content-Security-Policy', cspToString(cspConfig));
+    
+    // Add other security headers
+    res.headers.set('X-Frame-Options', 'DENY');
+    res.headers.set('X-Content-Type-Options', 'nosniff');
+    res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     
     return res;
   } catch (error) {
