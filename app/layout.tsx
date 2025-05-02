@@ -12,6 +12,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta httpEquiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline';" />
+      </head>
       <body suppressHydrationWarning>
         <ClientLayout>
           {children}
