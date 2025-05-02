@@ -21,8 +21,8 @@ const nextConfig = {
       'media.giphy.com',
     ],
   },
-  // Disable static exports
-  output: 'server',
+  // Change from 'server' to 'standalone'
+  output: 'standalone',
   distDir: '.next',
   // Add headers for security and caching
   async headers() {
