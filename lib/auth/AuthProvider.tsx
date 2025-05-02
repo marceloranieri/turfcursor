@@ -1,146 +1,117 @@
 'use client';
 
-import { createContext, useState, useEffect, ReactNode } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { getSupabaseBrowser } from '@/lib/supabase/browser-client';
 import { createLogger } from '@/lib/logger';
-import type { User, Session } from '@supabase/supabase-js';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const logger = createLogger('AuthProvider');
 
-// Define your user type according to your application needs
-type User = {
-  id?: string;
-  email?: string;
-  user_metadata?: {
-    username?: string;
-    avatar_url?: string;
-    full_name?: string;
-  };
-} | null;
-
 interface AuthContextType {
-  user: User;
-  session: Session | null;
-  signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<void>;
-  signUp: (email: string, password: string) => Promise<any>;
-  resetPassword: (email: string) => Promise<any>;
+  user: User | null;
   loading: boolean;
+  error: Error | null;
 }
 
-// Create the context with default values
-export const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
-  signIn: async () => {},
-  signOut: async () => {},
-  signUp: async () => {},
-  resetPassword: async () => {},
   loading: true,
+  error: null,
 });
 
-// Auth provider component
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User>(null);
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const [error, setError] = useState<Error | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Check for existing session
-    const checkUser = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          logger.error('Error getting session:', error);
-          return;
+    try {
+      const supabase = getSupabaseBrowser();
+
+      // Get initial session
+      const initializeAuth = async () => {
+        try {
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
+          
+          setUser(session?.user ?? null);
+          logger.info('Auth initialized:', { user: session?.user?.email });
+        } catch (error) {
+          logger.error('Error initializing auth:', error);
+          setError(error as Error);
+        } finally {
+          setLoading(false);
         }
-        
-        setSession(session);
-        setUser(session?.user || null);
+      };
+
+      initializeAuth();
+
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
         setLoading(false);
-
-        // Set up auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          (_event, session) => {
-            setSession(session);
-            setUser(session?.user || null);
-          }
-        );
-        
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (error) {
-        logger.error('Error in auth state management:', error);
-        setLoading(false);
-      }
-    };
-    
-    checkUser();
-  }, [supabase.auth]);
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
       });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      logger.error('Error signing in:', error);
-      throw error;
-    }
-  };
 
-  const signUp = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      logger.error('Error signing up:', error);
-      throw error;
-    }
-  };
+      // Mark as client-side rendered
+      setIsClient(true);
 
-  const resetPassword = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
+      return () => {
+        subscription.unsubscribe();
+      };
     } catch (error) {
-      logger.error('Error resetting password:', error);
-      throw error;
+      logger.error('Error in auth provider:', error);
+      setError(error as Error);
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      logger.error('Error signing out:', error);
-      throw error;
-    }
-  };
+  // Show loading state
+  if (!isClient || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-primary">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-primary">
+        <div className="max-w-md w-full p-6 bg-background-secondary rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Authentication Error</h2>
+          <p className="text-text-secondary mb-4">
+            We encountered an error while initializing authentication. Please try refreshing the page.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary-dark transition-colors"
+          >
+            Refresh Page
+          </button>
+          {process.env.NODE_ENV === 'development' && (
+            <pre className="mt-4 p-4 bg-background-tertiary rounded text-sm overflow-auto">
+              {error.message}
+            </pre>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session,
-      signIn, 
-      signOut,
-      signUp,
-      resetPassword,
-      loading 
-    }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, loading, error }}>
+      {children}
     </AuthContext.Provider>
   );
 }
 
-export default AuthProvider; 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}; 
