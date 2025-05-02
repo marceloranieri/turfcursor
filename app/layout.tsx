@@ -11,7 +11,9 @@ import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { createLogger } from '@/lib/logger';
-import { RootLayoutClient } from './RootLayoutClient';
+import { RootLayoutClient as ClientLayout } from './RootLayoutClient';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Suspense } from 'react';
 
 const logger = createLogger('RootLayout');
 
@@ -59,6 +61,10 @@ export async function generateMetadata(): Promise<Metadata> {
       initialScale: 1,
       maximumScale: 1,
     },
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+      { media: '(prefers-color-scheme: dark)', color: '#000000' },
+    ],
     verification: {
       google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
     }
@@ -74,52 +80,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-function RootLayoutClient({
+function InternalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [loading, setLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    // Add global error handler
-    const errorHandler = (event: ErrorEvent) => {
-      logger.error('Unhandled error:', event.error);
-      // You might want to show a toast or update UI here
-    };
-
-    window.addEventListener('error', errorHandler);
-    
-    // Handle unhandled promise rejections
-    const rejectionHandler = (event: PromiseRejectionEvent) => {
-      logger.error('Unhandled promise rejection:', event.reason);
-      // You might want to show a toast or update UI here
-    };
-
-    window.addEventListener('unhandledrejection', rejectionHandler);
-
-    // Mark as client-side rendered
-    setIsClient(true);
-
-    // Simulate a minimum load time to avoid flashes
-    const timer = setTimeout(() => setLoading(false), 500);
-
-    return () => {
-      window.removeEventListener('error', errorHandler);
-      window.removeEventListener('unhandledrejection', rejectionHandler);
-      clearTimeout(timer);
-    };
-  }, []);
-
-  if (loading || !isClient) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background-primary">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary
       fallback={
@@ -139,21 +104,28 @@ function RootLayoutClient({
         </div>
       }
     >
-      <AuthProvider>
-        {children}
-      </AuthProvider>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 5000,
-          style: {
-            background: 'var(--background-secondary)',
-            color: 'var(--text-primary)',
-          },
-        }}
-      />
-      <SpeedInsights />
-      <Analytics />
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          {children}
+        </Suspense>
+        <Analytics />
+        <SpeedInsights />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 5000,
+            style: {
+              background: 'var(--background-secondary)',
+              color: 'var(--text-primary)',
+            },
+          }}
+        />
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
@@ -166,9 +138,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <RootLayoutClient>
-          {children}
-        </RootLayoutClient>
+        <ClientLayout>
+          <InternalLayout>
+            {children}
+          </InternalLayout>
+        </ClientLayout>
       </body>
     </html>
   );
