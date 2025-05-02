@@ -86,10 +86,7 @@ export default function TermsOfServicePage(): JSX.Element {
         <section className="space-y-6">
           <h2 className="text-2xl font-semibold text-text-primary">6. Contact</h2>
           <p className="text-text-secondary">
-            For questions about these Terms, please contact us at{' '}
-            <a href="mailto:support@turf.app" className="text-accent-primary hover:text-accent-primary-dark">
-              support@turf.app
-            </a>
+            For questions about these Terms, please contact us at team@turfyeah.com
           </p>
         </section>
         
