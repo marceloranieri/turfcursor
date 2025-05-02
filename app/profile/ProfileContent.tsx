@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import type { User } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/ToastContext';
 
@@ -17,6 +17,7 @@ export default function ProfileContent(): JSX.Element {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
     if (user) {

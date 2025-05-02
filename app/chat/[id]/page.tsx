@@ -9,7 +9,7 @@ import MobileNavigation from '@/components/layout/MobileNavigation';
 import GuestModal from '@/components/modals/GuestModal';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import MainLayout from '@/components/layout/MainLayout';
 import { useDebugListeners } from '@/lib/debug-helpers';
 import HydrationSafeComponent from '@/components/HydrationSafeComponent';
@@ -178,6 +178,8 @@ export default function ChatPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
+  const supabase = createClient();
   
   // Check authentication with Supabase
   useEffect(() => {

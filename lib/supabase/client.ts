@@ -1,7 +1,6 @@
-import { createServerClient, createBrowserClient, type CookieOptions } from '@supabase/ssr';
+import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createLogger } from '@/lib/logger';
-import { Database } from './database.types';
-import { cookies } from 'next/headers';
+import { Database } from '@/lib/database/types';
 
 const logger = createLogger('SupabaseClient');
 
@@ -13,54 +12,51 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
   throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-// Create a server client that can be used in Server Components, API Routes, and Edge Functions
-export function createServerSupabaseClient() {
-  const cookieStore = cookies();
-
-  return createServerClient(
+// For client components
+export function createClient() {
+  return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // This will throw in middleware, but we can ignore it
-          }
-        },
-        remove(name: string, options: CookieOptions) {
-          try {
-            cookieStore.set({ name, value: '', ...options });
-          } catch (error) {
-            // This will throw in middleware, but we can ignore it
-          }
-        },
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
-// Create a browser client that can be used in Client Components
-export function createBrowserSupabaseClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        flowType: 'pkce',
-        debug: process.env.NODE_ENV === 'development',
-      },
-      global: {
-        headers: {
-          'x-application-name': 'turf-app',
-        },
-      },
+// For server components/actions (use this only in app directory files)
+export function createServerComponentClient(cookieStore: any) {
+  if (typeof window === 'undefined') {
+    try {
+      return createServerClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value;
+            },
+            set(name: string, value: string, options: CookieOptions) {
+              cookieStore.set({ name, value, ...options });
+            },
+            remove(name: string, options: CookieOptions) {
+              cookieStore.set({ name, value: '', ...options });
+            },
+          },
+        }
+      );
+    } catch (error) {
+      logger.error('Error creating server component client', error);
+      throw error;
     }
-  );
+  }
+  
+  throw new Error('createServerComponentClient can only be used on the server');
+}
+
+// For pages directory (client-side only)
+export function createPagesClient() {
+  if (typeof window === 'undefined') {
+    throw new Error('createPagesClient can only be used in the browser');
+  }
+  
+  return createClient();
 }
 
 // Types for database tables
