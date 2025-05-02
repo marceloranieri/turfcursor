@@ -1,5 +1,5 @@
 // csp-config.js
-export const cspConfig = {
+const cspConfig = {
   directives: {
     'default-src': ["'self'"],
     'script-src': [
@@ -49,15 +49,13 @@ export const cspConfig = {
   }
 };
 
-// Helper to convert config to CSP string
-export function cspToString(config) {
+function cspToString(config) {
   return Object.entries(config.directives)
     .map(([key, values]) => `${key} ${values.join(' ')}`)
     .join('; ');
 }
 
-// Temporary test configuration for debugging
-export const testCspConfig = {
+const testCspConfig = {
   directives: {
     'default-src': ["'self'"],
     'script-src': ["'self'", "'unsafe-eval'", "'unsafe-inline'", "*"],
@@ -71,4 +69,10 @@ export const testCspConfig = {
     'form-action': ["'self'"],
     'object-src': ["'none'"]
   }
+};
+
+module.exports = {
+  cspConfig,
+  cspToString,
+  testCspConfig
 }; 
