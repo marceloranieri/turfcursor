@@ -1,52 +1,32 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { createServerComponentClient } from '@/lib/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('AuthCallback');
 
-export default function AuthCallback() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+export const dynamic = 'force-dynamic';
 
-    const handleCallback = async () => {
-      try {
-        const code = searchParams.get('code');
-        
-        if (!code) {
-          throw new Error('No code provided');
-        }
+export default async function AuthCallback() {
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient(cookieStore);
 
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) throw error;
+  try {
+    const { searchParams } = new URL(headers().get('x-url') || '', 'http://localhost');
+    const code = searchParams.get('code');
+    const next = searchParams.get('next') || '/';
 
-        // Get return URL or default to home
-        const returnTo = searchParams.get('returnTo') || '/';
-        router.push(returnTo);
-      } catch (error: any) {
-        logger.error('Error handling auth callback:', error);
-        router.push('/auth/signin?error=Authentication failed');
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        logger.error('Error exchanging code for session:', error);
+        throw error;
       }
-    };
+    }
 
-    handleCallback();
-  }, [router, searchParams]);
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background-primary">
-      <div className="text-center">
-        <LoadingSpinner size="lg" />
-        <p className="mt-4 text-text-secondary">Completing sign in...</p>
-      </div>
-    </div>
-  );
+    return redirect(next);
+  } catch (error) {
+    logger.error('Error in auth callback:', error);
+    return redirect('/auth/error');
+  }
 } 

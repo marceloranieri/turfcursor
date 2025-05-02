@@ -21,8 +21,8 @@ const nextConfig = {
       'media.giphy.com',
     ],
   },
-  // Configure output for optimal Vercel deployment
-  output: 'standalone',
+  // Disable static exports
+  output: 'server',
   distDir: '.next',
   // Add headers for security and caching
   async headers() {
@@ -88,6 +88,12 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  // Configure metadata base URL
+  env: {
+    NEXT_PUBLIC_SITE_URL: process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
   }
 };
 

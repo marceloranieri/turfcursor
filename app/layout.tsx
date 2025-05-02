@@ -5,23 +5,34 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
   title: {
-    default: 'Turf App',
-    template: '%s | Turf App',
+    default: 'Turf - Engage in Meaningful Discussions',
+    template: '%s | Turf'
   },
-  description: 'A better way to debate and connect',
-  applicationName: 'Turf App',
-  authors: [{ name: 'Turf Team' }],
-  keywords: ['debate', 'discussion', 'community', 'social'],
+  description: 'Join Turf to engage in meaningful discussions, share ideas, and connect with others in a respectful environment.',
   openGraph: {
     type: 'website',
-    siteName: 'Turf App',
-    title: 'Turf App',
-    description: 'A better way to debate and connect',
+    locale: 'en_US',
+    url: '/',
+    title: 'Turf - Engage in Meaningful Discussions',
+    description: 'Join Turf to engage in meaningful discussions, share ideas, and connect with others in a respectful environment.',
+    siteName: 'Turf'
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Turf - Engage in Meaningful Discussions',
+    description: 'Join Turf to engage in meaningful discussions, share ideas, and connect with others in a respectful environment.',
+  },
+  robots: {
+    index: true,
+    follow: true
+  }
 };
 
 export const viewport: Viewport = {
@@ -33,33 +44,32 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background-primary p-4">
-      <div className="bg-background-secondary rounded-lg p-8 max-w-md w-full shadow-lg">
-        <h2 className="text-2xl font-bold text-text-primary mb-4">Something went wrong</h2>
-        <p className="text-text-secondary mb-4">
-          We're sorry, but something went wrong. Please try refreshing the page.
-        </p>
-        <pre className="bg-background-primary p-4 rounded text-sm overflow-auto">
-          {error.message}
-        </pre>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-primary-dark"
-        >
-          Refresh Page
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ErrorBoundary
+          fallback={
+            <div className="min-h-screen flex items-center justify-center bg-background-primary">
+              <div className="max-w-md w-full p-6 bg-background-secondary rounded-lg shadow-lg">
+                <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong!</h2>
+                <p className="text-text-secondary mb-4">
+                  We apologize for the inconvenience. An error has occurred and our team has been notified.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full px-4 py-2 bg-accent-primary text-white rounded hover:bg-accent-primary-dark transition-colors"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>
+          }
+        >
           <AuthProvider>
             {children}
           </AuthProvider>
