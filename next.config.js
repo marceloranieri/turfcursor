@@ -23,7 +23,8 @@ const nextConfig = {
   },
   // Change from 'server' to 'standalone'
   output: 'standalone',
-  distDir: '.next',
+  // Disable static error page generation
+  distDir: process.env.BUILD_DIR || '.next',
   // Add headers for security and caching
   async headers() {
     return [
@@ -71,7 +72,7 @@ const nextConfig = {
           }
         ]
       }
-    ]
+    ];
   },
   // Transpile packages
   transpilePackages: [
@@ -94,7 +95,7 @@ const nextConfig = {
     NEXT_PUBLIC_SITE_URL: process.env.VERCEL_URL 
       ? `https://${process.env.VERCEL_URL}`
       : 'http://localhost:3000'
-  }
+  },
 };
 
 module.exports = nextConfig;

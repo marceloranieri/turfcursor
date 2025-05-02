@@ -1,11 +1,11 @@
 'use client';
 
 import type { AppProps } from 'next/app';
-import AuthProvider from '../lib/auth/AuthProvider';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AuthProvider } from '@/lib/auth/AuthProvider';
 import '../styles/globals.css';
 
-function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps) {
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -13,6 +13,4 @@ function App({ Component, pageProps }: AppProps) {
       </AuthProvider>
     </ErrorBoundary>
   );
-}
-
-export default App; 
+} 
