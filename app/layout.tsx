@@ -14,6 +14,7 @@ import { createLogger } from '@/lib/logger';
 import { RootLayoutClient as ClientLayout } from './RootLayoutClient';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Suspense } from 'react';
+import RootLayoutClientWrapper from './root-layout-client';
 
 const logger = createLogger('RootLayout');
 
@@ -138,11 +139,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <ClientLayout>
+        <RootLayoutClientWrapper>
           <InternalLayout>
             {children}
           </InternalLayout>
-        </ClientLayout>
+        </RootLayoutClientWrapper>
       </body>
     </html>
   );
