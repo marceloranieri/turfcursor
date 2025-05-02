@@ -91,6 +91,22 @@ export async function middleware(req: NextRequest) {
       res.headers.set('x-user-role', session.user.role || 'user');
     }
     
+    // Add CSP header
+    res.headers.set(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.vercel.app",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob: https://*.supabase.co",
+        "font-src 'self'",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.giphy.com",
+        "frame-src 'self' https://*.supabase.co",
+        "media-src 'self'",
+        "form-action 'self'",
+      ].join('; ')
+    );
+    
     return res;
   } catch (error) {
     logger.error('Middleware error:', error);
