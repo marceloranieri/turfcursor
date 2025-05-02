@@ -156,4 +156,109 @@
   .pulse {
     animation: none !important;
   }
+}
+
+/* Scale Out */
+.scale-out {
+  animation: scaleOut 0.3s ease-out forwards;
+}
+
+@keyframes scaleOut {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.95); opacity: 0; }
+}
+
+/* Slide Out To Bottom */
+.slide-out-bottom {
+  animation: slideOutBottom 0.3s ease-out forwards;
+}
+
+@keyframes slideOutBottom {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(20px); opacity: 0; }
+}
+
+/* Slide In From Left */
+.slide-in-left {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Slide Out To Left */
+.slide-out-left {
+  animation: slideOutLeft 0.3s ease-out forwards;
+}
+
+@keyframes slideOutLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+/* Slide Out To Right */
+.slide-out-right {
+  animation: slideOutRight 0.3s ease-out forwards;
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(20px); opacity: 0; }
+}
+
+/* Fade In Up */
+.fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Fade In Down */
+.fade-in-down {
+  animation: fadeInDown 0.4s ease-out forwards;
+}
+
+@keyframes fadeInDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Button Hover/Press Animations */
+.button-hover {
+  transition: transform 0.1s ease-out;
+}
+.button-hover:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+.button-hover:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Bounce Animation */
+.bounce {
+  animation: bounce 0.7s cubic-bezier(0.3, 0.8, 0.4, 1.4) both;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  20% { transform: translateY(-10px); }
+  40% { transform: translateY(5px); }
+  60% { transform: translateY(-3px); }
+  80% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+
+/* Utility for disabling animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 } 

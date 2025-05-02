@@ -54,8 +54,8 @@ const Notification: React.FC<NotificationProps> = ({
   return (
     <div
       className={`${animation.getAnimationClasses(
-        `fixed top-4 right-4 max-w-sm border-l-4 p-4 shadow-md rounded ${getTypeStyles()} ${getDurationClass()}`
-      )}`}
+        'fixed top-4 right-4 max-w-sm border-l-4 p-4 shadow-md rounded'
+      )} ${getTypeStyles()}`}
     >
       <div className="flex items-start">
         <div className="flex-shrink-0">

@@ -1,7 +1,7 @@
 import './globals.css';
 import './styles/animations.css';
 import { generateMetadata, viewport } from './metadata';
-import ClientLayout from './client-layout';
+import ClientLayout from './(app)/client-layout';
 import { AnimationProvider } from './contexts/AnimationContext';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta httpEquiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline';" />
+        <meta httpEquiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" />
       </head>
       <body suppressHydrationWarning>
         <AnimationProvider>
