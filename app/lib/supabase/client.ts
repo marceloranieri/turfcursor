@@ -39,6 +39,39 @@ export const supabase = createBrowserClient(
   }
 );
 
+// Check authentication status
+export async function checkAuthStatus() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+
+    if (error) {
+      logger.error('Error checking auth status:', error);
+      return { session: null, error };
+    }
+
+    if (session) {
+      logger.info('User is authenticated', {
+        userId: session.user.id,
+        email: session.user.email,
+      });
+    } else {
+      logger.info('No active session found');
+    }
+
+    return { session, error: null };
+  } catch (error: any) {
+    logger.error('Unexpected error checking auth status:', error);
+    return {
+      session: null,
+      error: {
+        message: error.message || 'Failed to check authentication status',
+        status: error.status || 500,
+        details: error,
+      },
+    };
+  }
+}
+
 // Enhanced sign-up function with detailed logging and error handling
 export async function signUpWithEmail(email: string, password: string, metadata: any = {}) {
   try {
@@ -97,7 +130,7 @@ export async function signInWithEmail(email: string, password: string) {
       email,
       password,
     });
-
+    
     if (error) {
       logger.error('Sign-in error:', {
         error: error.message,
@@ -125,44 +158,6 @@ export async function signInWithEmail(email: string, password: string) {
       data: null,
       error: {
         message: error.message || 'An unexpected error occurred during sign-in',
-        status: error.status || 500,
-        details: error,
-      },
-    };
-  }
-}
-
-// Enhanced password reset function
-export async function resetPassword(email: string) {
-  try {
-    logger.info('Attempting password reset', { email });
-
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${appUrl}/auth/reset-password`,
-    });
-
-    if (error) {
-      logger.error('Password reset error:', {
-        error: error.message,
-        code: error.status,
-        details: error,
-        context: { email }
-      });
-      throw error;
-    }
-
-    logger.info('Password reset email sent', { email });
-    return { data, error: null };
-  } catch (error: any) {
-    logger.error('Unexpected password reset error:', {
-      error: error.message,
-      stack: error.stack,
-      context: { email }
-    });
-    return {
-      data: null,
-      error: {
-        message: error.message || 'An unexpected error occurred during password reset',
         status: error.status || 500,
         details: error,
       },
@@ -218,32 +213,40 @@ export async function signInWithProvider(provider: 'google' | 'facebook' | 'gith
   }
 }
 
-// Function to check authentication status
-export async function checkAuthStatus() {
+// Enhanced password reset function
+export async function resetPassword(email: string) {
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    logger.info('Attempting password reset', { email });
 
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${appUrl}/auth/reset-password`,
+    });
+    
     if (error) {
-      logger.error('Error checking auth status:', error);
-      return { session: null, error };
-    }
-
-    if (session) {
-      logger.info('User is authenticated', {
-        userId: session.user.id,
-        email: session.user.email,
+      logger.error('Password reset error:', {
+        error: error.message,
+        code: error.status,
+        details: error,
+        context: { email }
       });
-    } else {
-      logger.info('No active session found');
+      throw error;
     }
 
-    return { session, error: null };
+    logger.info('Password reset email sent', {
+      email,
+      url: window.location.href
+    });
+
+    return { error: null };
   } catch (error: any) {
-    logger.error('Unexpected error checking auth status:', error);
+    logger.error('Unexpected password reset error:', {
+      error: error.message,
+      stack: error.stack,
+      context: { email }
+    });
     return {
-      session: null,
       error: {
-        message: error.message || 'Failed to check authentication status',
+        message: error.message || 'An unexpected error occurred during password reset',
         status: error.status || 500,
         details: error,
       },
