@@ -8,13 +8,23 @@ on:
   workflow_dispatch:
 
 env:
+  # App URLs
   NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-  NEXT_PUBLIC_GOOGLE_CLIENT_SECRET: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET }}
-  PUBLIC_GITHUB_CLIENT_ID: ${{ secrets.PUBLIC_GITHUB_CLIENT_ID }}
-  GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
-  GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY }}
+  
+  # Supabase Configuration
+  NEXT_PUBLIC_SUPABASE_URL: https://xwgsbhncprilsuczqmjr.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Z3NiaG5jcHJpbHN1Y3pxbWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMjg4MTIsImV4cCI6MjA1OTcwNDgxMn0.UxCdhTb2Ti0wauZkcIQbWQRg0xNW6_spJ3Hm9rjHPms
+  
+  # OAuth Configuration
+  NEXT_PUBLIC_GOOGLE_CLIENT_SECRET: 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
+  PUBLIC_GITHUB_CLIENT_ID: Ov23liA75TUxFl1WynfC
+  GITHUB_CLIENT_SECRET: 83ad9ab633a07fbdf1b206224251c822ad37a923
+  GITHUB_WEBHOOK_SECRET: ${{ secrets.GITHUB_WEBHOOK_SECRET }}
+  
+  # API Keys
+  GIPHY_API_KEY: LAEhUpkO8Kb5pCjPgiufyX2LVJDv01s6
+  
+  # Vercel Configuration
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -40,6 +50,7 @@ jobs:
           NEXT_PUBLIC_APP_URL: ${{ env.NEXT_PUBLIC_APP_URL }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          GITHUB_WEBHOOK_SECRET: ${{ env.GITHUB_WEBHOOK_SECRET }}
 
       - name: Run linting
         run: npm run lint
@@ -51,6 +62,7 @@ jobs:
     if: github.event_name == 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
+    environment: preview
     steps:
       - uses: actions/checkout@v3
 
@@ -83,6 +95,7 @@ jobs:
           NEXT_PUBLIC_GOOGLE_CLIENT_SECRET: ${{ env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET }}
           PUBLIC_GITHUB_CLIENT_ID: ${{ env.PUBLIC_GITHUB_CLIENT_ID }}
           GITHUB_CLIENT_SECRET: ${{ env.GITHUB_CLIENT_SECRET }}
+          GITHUB_WEBHOOK_SECRET: ${{ env.GITHUB_WEBHOOK_SECRET }}
           GIPHY_API_KEY: ${{ env.GIPHY_API_KEY }}
 
       - name: Deploy to Vercel Preview
@@ -95,6 +108,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     needs: validate
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v3
 
@@ -127,6 +141,7 @@ jobs:
           NEXT_PUBLIC_GOOGLE_CLIENT_SECRET: ${{ env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET }}
           PUBLIC_GITHUB_CLIENT_ID: ${{ env.PUBLIC_GITHUB_CLIENT_ID }}
           GITHUB_CLIENT_SECRET: ${{ env.GITHUB_CLIENT_SECRET }}
+          GITHUB_WEBHOOK_SECRET: ${{ env.GITHUB_WEBHOOK_SECRET }}
           GIPHY_API_KEY: ${{ env.GIPHY_API_KEY }}
 
       - name: Deploy to Vercel Production
