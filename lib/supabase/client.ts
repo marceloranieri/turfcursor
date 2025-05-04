@@ -6,12 +6,46 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 const logger = createLogger('SupabaseClient');
 
 // Validate environment variables
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl) {
+  logger.error('Missing NEXT_PUBLIC_SUPABASE_URL');
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
 }
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
+if (!supabaseAnonKey) {
+  logger.error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
+
+// Get the app URL from environment or default to production URL
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.turfyeah.com';
+
+// Initialize the Supabase client with session persistence settings
+export const supabase = createBrowserClient(
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: true,
+      storageKey: 'supabase-auth',
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      debug: process.env.NODE_ENV === 'development',
+      cookieOptions: {
+        domain: new URL(appUrl).hostname,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      }
+    },
+    global: {
+      headers: {
+        'X-App-URL': appUrl
+      }
+    }
+  }
+);
 
 // For client components
 export function createClient() {
@@ -22,7 +56,7 @@ export function createClient() {
 }
 
 // Export a direct instance for imports like: import { supabase } from '@/lib/supabase/client'
-export const supabase = createClientComponentClient<Database>();
+export const supabaseDirect = createClientComponentClient<Database>();
 
 // For server components/actions (use this only in app directory files)
 export function createServerComponentClient(cookieStore: any) {
@@ -115,9 +149,6 @@ export type Notification = {
   created_at: string;
   related_id?: string; // ID of related message, user, etc.
 };
-
-// Get the app URL from environment or default to production URL
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.turfyeah.com';
 
 // Check authentication status with improved error handling
 export const checkAuthStatus = async () => {
