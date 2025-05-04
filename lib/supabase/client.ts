@@ -1,6 +1,7 @@
 import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr';
 import { createLogger } from '@/lib/logger';
 import { Database } from '@/lib/database/types';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const logger = createLogger('SupabaseClient');
 
@@ -21,7 +22,7 @@ export function createClient() {
 }
 
 // Export a direct instance for imports like: import { supabase } from '@/lib/supabase/client'
-export const supabase = createClient();
+export const supabase = createClientComponentClient<Database>();
 
 // For server components/actions (use this only in app directory files)
 export function createServerComponentClient(cookieStore: any) {
@@ -113,4 +114,151 @@ export type Notification = {
   is_read: boolean;
   created_at: string;
   related_id?: string; // ID of related message, user, etc.
+};
+
+// Get the app URL from environment or default to production URL
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.turfyeah.com';
+
+// Check authentication status with improved error handling
+export const checkAuthStatus = async () => {
+  try {
+    logger.info('Checking auth status');
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      logger.error('Error checking auth status:', error.message);
+      return { user: null, isLoggedIn: false, error };
+    }
+
+    const result = {
+      user: session?.user || null,
+      isLoggedIn: !!session?.user,
+      error: null
+    };
+
+    logger.info('Auth status checked:', {
+      isLoggedIn: result.isLoggedIn,
+      userId: result.user?.id,
+      email: result.user?.email
+    });
+    
+    return result;
+  } catch (err) {
+    logger.error('Exception checking auth status:', err);
+    return { 
+      user: null, 
+      isLoggedIn: false, 
+      error: err instanceof Error ? err : new Error('Unknown error checking auth status') 
+    };
+  }
+};
+
+// Sign up with email with improved error handling and logging
+export const signUpWithEmail = async (email: string, password: string) => {
+  try {
+    logger.info('Attempting sign up:', { email });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${appUrl}/auth/callback`
+      }
+    });
+    
+    if (error) {
+      logger.error('Error during sign up:', error.message);
+      return { success: false, error };
+    }
+
+    logger.info('Sign up successful:', {
+      userId: data.user?.id,
+      email: data.user?.email,
+      confirmationSent: data.user?.confirmation_sent_at
+    });
+    
+    return { success: true, data, error: null };
+  } catch (err) {
+    logger.error('Exception during sign up:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err : new Error('Unknown error during sign up'),
+      data: null
+    };
+  }
+};
+
+// Sign in with email with improved error handling
+export const signInWithEmail = async (email: string, password: string) => {
+  try {
+    logger.info('Attempting sign in:', { email });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) {
+      logger.error('Error during sign in:', error.message);
+      return { success: false, error };
+    }
+
+    logger.info('Sign in successful:', {
+      userId: data.user?.id,
+      email: data.user?.email
+    });
+    
+    return { success: true, data, error: null };
+  } catch (err) {
+    logger.error('Exception during sign in:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err : new Error('Unknown error during sign in'),
+      data: null
+    };
+  }
+};
+
+// Sign out with improved error handling
+export const signOut = async () => {
+  try {
+    logger.info('Attempting sign out');
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      logger.error('Error during sign out:', error.message);
+      return { success: false, error };
+    }
+
+    logger.info('Sign out successful');
+    return { success: true, error: null };
+  } catch (err) {
+    logger.error('Exception during sign out:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err : new Error('Unknown error during sign out') 
+    };
+  }
+};
+
+// Reset password with improved error handling
+export const resetPassword = async (email: string) => {
+  try {
+    logger.info('Attempting password reset:', { email });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${appUrl}/auth/reset-password`
+    });
+    
+    if (error) {
+      logger.error('Error during password reset:', error.message);
+      return { success: false, error };
+    }
+
+    logger.info('Password reset email sent:', { email });
+    return { success: true, error: null };
+  } catch (err) {
+    logger.error('Exception during password reset:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err : new Error('Unknown error during password reset') 
+    };
+  }
 };
