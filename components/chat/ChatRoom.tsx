@@ -5,17 +5,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function ChatRoom() {
   const [mounted, setMounted] = useState(false);
-  
-  // Safely access auth context with error handling
-  let authData = { user: null, isLoading: true };
-  try {
-    authData = useAuth();
-  } catch (error) {
-    console.error('Auth error in ChatRoom:', error);
-    // Will show error UI below
-  }
-  
-  const { user, isLoading } = authData;
+  const { user, isLoading } = useAuth();
   
   // Debug mounting lifecycle
   useEffect(() => {
