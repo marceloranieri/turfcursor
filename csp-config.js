@@ -10,6 +10,7 @@ const cspConfig = {
       "https://*.supabase.in",
       "https://*.vercel.app",
       "https://app.turfyeah.com",
+      "https://vercel.live",
       "https://accounts.google.com",
       "https://apis.google.com",
       "https://connect.facebook.net",
