@@ -1,32 +1,61 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { createServerComponentClient } from '@/lib/supabase/client';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('AuthCallback');
 
-export const dynamic = 'force-dynamic';
+export default function AuthCallback() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-export default async function AuthCallback() {
-  const cookieStore = cookies();
-  const supabase = createServerComponentClient(cookieStore);
+  useEffect(() => {
+    // Handle the auth callback
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      logger.info('Auth state changed:', { event, session: !!session });
 
-  try {
-    const { searchParams } = new URL(headers().get('x-url') || '', 'http://localhost');
-    const code = searchParams.get('code');
-    const next = searchParams.get('next') || '/';
+      if (event === 'SIGNED_IN' && session) {
+        try {
+          // Check if this is a new signup that needs verification
+          if (!session.user.email_confirmed_at) {
+            localStorage.setItem('pendingVerification', 'true');
+            router.push('/auth/verify-email');
+            return;
+          }
 
-    if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) {
-        logger.error('Error exchanging code for session:', error);
-        throw error;
+          // Clear any pending verification flags
+          localStorage.removeItem('pendingVerification');
+          
+          // Get the redirect URL from the URL parameters or default to dashboard
+          const redirectTo = searchParams.get('next') || '/dashboard';
+          logger.info('Redirecting to:', redirectTo);
+          router.push(redirectTo);
+        } catch (error: any) {
+          logger.error('Error handling sign in:', error);
+          router.push('/auth/signin');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        logger.info('User signed out');
+        router.push('/auth/signin');
+      } else if (event === 'USER_UPDATED') {
+        logger.info('User updated:', { userId: session?.user.id });
       }
-    }
+    });
 
-    return redirect(next);
-  } catch (error) {
-    logger.error('Error in auth callback:', error);
-    return redirect('/auth/error');
-  }
+    // Cleanup subscription on unmount
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, [router, searchParams]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background-primary">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto"></div>
+        <p className="mt-4 text-text-secondary">Completing authentication...</p>
+      </div>
+    </div>
+  );
 } 

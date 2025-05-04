@@ -36,11 +36,22 @@ export default function SignUpForm() {
       }
       
       logger.info('Signup successful:', data);
-      setSuccessMessage('Sign-up successful! Please check your email for confirmation.');
       
-      // Redirect to success page after a short delay
+      // Store verification flag in localStorage
+      if (data?.user?.confirmation_sent_at) {
+        localStorage.setItem('pendingVerification', 'true');
+        setSuccessMessage('Please check your email to verify your account.');
+      } else {
+        setSuccessMessage('Sign-up successful! You can now sign in.');
+      }
+      
+      // Redirect to appropriate page after a short delay
       setTimeout(() => {
-        router.push('/auth/success');
+        if (data?.user?.confirmation_sent_at) {
+          router.push('/auth/verify-email');
+        } else {
+          router.push('/auth/signin');
+        }
       }, 2000);
     } catch (error: any) {
       setError(error.message || 'An error occurred during sign up');
