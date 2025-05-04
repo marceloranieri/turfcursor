@@ -8,16 +8,16 @@ on:
   workflow_dispatch:
 
 env:
-  NEXT_PUBLIC_APP_URL: https://app.turfyeah.com
-  NEXT_PUBLIC_SUPABASE_URL: https://xwgsbhncprilsuczqmjr.supabase.co
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Z3NiaG5jcHJpbHN1Y3pxbWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQxMjg4MTIsImV4cCI6MjA1OTcwNDgxMn0.UxCdhTb2Ti0wauZkcIQbWQRg0xNW6_spJ3Hm9rjHPms
-  NEXT_PUBLIC_GOOGLE_CLIENT_SECRET: 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
-  PUBLIC_GITHUB_CLIENT_ID: Ov23liA75TUxFl1WynfC
-  GITHUB_CLIENT_SECRET: 83ad9ab633a07fbdf1b206224251c822ad37a923
-  GIPHY_API_KEY: LAEhUpkO8Kb5pCjPgiufyX2LVJDv01s6
+  NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+  NEXT_PUBLIC_GOOGLE_CLIENT_SECRET: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET }}
+  PUBLIC_GITHUB_CLIENT_ID: ${{ secrets.PUBLIC_GITHUB_CLIENT_ID }}
+  GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
+  GIPHY_API_KEY: ${{ secrets.GIPHY_API_KEY }}
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: prj_FoBSdmqcM5MPfFjAK4SDFt3kjnHc
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
   validate:
@@ -66,16 +66,16 @@ jobs:
         run: vercel pull --yes --environment=production --token=${{ env.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: prj_FoBSdmqcM5MPfFjAK4SDFt3kjnHc
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
 
       - name: Build Project Artifacts
         run: vercel build --prod --token=${{ env.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: prj_FoBSdmqcM5MPfFjAK4SDFt3kjnHc
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }}
 
       - name: Deploy to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ env.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ env.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: prj_FoBSdmqcM5MPfFjAK4SDFt3kjnHc 
+          VERCEL_PROJECT_ID: ${{ env.VERCEL_PROJECT_ID }} 
