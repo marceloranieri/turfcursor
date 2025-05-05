@@ -1,8 +1,51 @@
 'use client';
 
-import Link from "next/link"
+import { useState } from 'react';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from '@/lib/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('SignInPage');
 
 export default function SignInPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      logger.info('Attempting sign in with email', { email });
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        logger.error('Sign-in error:', { message: error.message });
+        setError(error.message);
+        return;
+      }
+
+      if (data.session) {
+        logger.info('Sign-in successful, redirecting to dashboard');
+        router.push('/dashboard');
+      }
+    } catch (err: any) {
+      logger.error('Unexpected sign-in error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8">
@@ -12,17 +55,30 @@ export default function SignInPage() {
             Welcome back! Please enter your details.
           </p>
         </div>
-        <form className="space-y-6">
+        
+        {error && (
+          <div className="rounded-message bg-red-100 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+        
+        <form className="space-y-6" onSubmit={handleSignIn}>
           <input
             type="email"
             required
             placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
           />
           <input
             type="password"
             required
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
             className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
           />
           <div className="text-right text-sm">
@@ -32,9 +88,10 @@ export default function SignInPage() {
           </div>
           <button
             type="submit"
-            className="w-full rounded-message bg-accent-primary p-3 text-sm font-medium text-white hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
+            disabled={loading}
+            className="w-full rounded-message bg-accent-primary p-3 text-sm font-medium text-white hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary/50 disabled:bg-accent-primary/70"
           >
-            Sign In
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
           <p className="mt-4 text-center text-sm text-text-secondary">
             Don&apos;t have an account?{" "}
@@ -45,5 +102,5 @@ export default function SignInPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }
