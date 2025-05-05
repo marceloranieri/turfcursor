@@ -42,18 +42,18 @@ const nextConfig = {
               "default-src 'self'",
               // Fonts
               "font-src 'self' https://fonts.gstatic.com data:",
-              // Scripts
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.vercel.app https://app.turfyeah.com https://vercel.live https://cdn.vercel-insights.com",
+              // Scripts - Added more Supabase domains
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.supabase.in https://*.vercel.app https://app.turfyeah.com https://vercel.live https://cdn.vercel-insights.com",
               // Styles
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              // Images
-              "img-src 'self' https: data: blob:",
-              // Connect (APIs, WebSocket)
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://app.turfyeah.com https://vercel.live https://*.vercel.app https://vitals.vercel-insights.com",
+              // Images - Added Supabase domains
+              "img-src 'self' https: data: blob: https://*.supabase.co https://*.supabase.in",
+              // Connect - Added more Supabase endpoints
+              "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in https://app.turfyeah.com https://vercel.live https://*.vercel.app https://vitals.vercel-insights.com",
               // Media
               "media-src 'self' https: data:",
-              // Frames
-              "frame-src 'self' https://*.supabase.co https://vercel.live",
+              // Frames - Added Supabase domains
+              "frame-src 'self' https://*.supabase.co https://*.supabase.in https://vercel.live",
               // Worker
               "worker-src 'self' blob:",
               // Manifest
