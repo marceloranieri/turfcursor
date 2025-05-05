@@ -8,6 +8,7 @@ import { createLogger } from '@/lib/logger';
 import { FormInput } from '@/components/auth/FormInput';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
+import AuthLayout from '@/components/auth/AuthLayout';
 
 const logger = createLogger('SignInPage');
 
@@ -50,15 +51,15 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Sign In</h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            Welcome back! Please enter your details.
-          </p>
-        </div>
-
+    <AuthLayout 
+      title="Welcome Back"
+      description="Sign in to continue your debates and discussions."
+      rightSideContent={{
+        title: "Join the conversation",
+        description: "Engage in quality debates on captivating daily topics."
+      }}
+    >
+      <div className="w-full max-w-md">
         <ErrorMessage error={error} />
         
         <form className="space-y-6" onSubmit={handleSignIn} noValidate>
@@ -86,10 +87,24 @@ export default function SignInPage() {
             autoComplete="current-password"
           />
 
-          <div className="text-right text-sm">
-            <Link href="/auth/forgot-password" className="text-accent-primary hover:text-accent-primary-dark">
-              Forgot password?
-            </Link>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-accent-primary border-gray-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
+            </div>
+            
+            <div className="text-sm">
+              <Link href="/auth/forgot-password" className="text-accent-primary hover:text-accent-primary-dark">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           <SubmitButton loading={loading} loadingText="Signing in...">
@@ -97,13 +112,13 @@ export default function SignInPage() {
           </SubmitButton>
 
           <p className="mt-4 text-center text-sm text-text-secondary">
-            Don&apos;t have an account?{" "}
+            Don't have an account?{" "}
             <Link href="/auth/signup" className="text-accent-primary hover:text-accent-primary-dark">
               Sign up
             </Link>
           </p>
         </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

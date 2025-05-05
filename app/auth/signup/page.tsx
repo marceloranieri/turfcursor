@@ -8,6 +8,7 @@ import { createLogger } from '@/lib/logger';
 import { FormInput } from '@/components/auth/FormInput';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
+import AuthLayout from '@/components/auth/AuthLayout';
 
 const logger = createLogger('SignUpPage');
 
@@ -66,15 +67,15 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Create an Account</h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            Join us and start managing your projects.
-          </p>
-        </div>
-
+    <AuthLayout 
+      title="Create an Account"
+      description="Join the Turf community and engage in quality debates."
+      rightSideContent={{
+        title: "Earn recognition for quality contributions",
+        description: "Collect Harmony Points and receive Genius Awards for thoughtful insights."
+      }}
+    >
+      <div className="w-full max-w-md">
         <ErrorMessage error={error} />
         
         <form className="space-y-6" onSubmit={handleSignUp} noValidate>
@@ -141,6 +142,6 @@ export default function SignUpPage() {
           </p>
         </form>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
