@@ -39,18 +39,33 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
+              // Base directive
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://*.supabase.in https://*.vercel.app https://vercel.live",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.in https://vercel.live",
-              "frame-src 'self' https://*.supabase.co https://*.supabase.in https://vercel.live",
-              "img-src 'self' data: blob: https://*.supabase.co https://avatars.githubusercontent.com",
+              // Scripts - including necessary unsafe-eval for Supabase
+              "script-src 'self' 'unsafe-eval' https://*.supabase.co https://*.supabase.in https://vercel.live https://app.turfyeah.com",
+              // Frames
+              "frame-src 'self' https://vercel.live https://app.turfyeah.com https://*.supabase.co https://*.supabase.in",
+              // Connect sources for APIs and WebSocket
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.in https://accounts.google.com https://www.facebook.com https://www.google.com https://vercel.live",
+              // Frame ancestors
+              "frame-ancestors 'self' https://app.turfyeah.com",
+              // Form submissions
+              "form-action 'self' https://accounts.google.com https://www.facebook.com",
+              // Styles
               "style-src 'self' 'unsafe-inline'",
-              "font-src 'self' data:"
+              // Images
+              "img-src 'self' data: blob: https://*.supabase.co https://avatars.githubusercontent.com",
+              // Fonts
+              "font-src 'self' data:",
+              // Media
+              "media-src 'self'",
+              // Object sources
+              "object-src 'none'"
             ].join('; ')
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'SAMEORIGIN'
           },
           {
             key: 'X-Content-Type-Options',
