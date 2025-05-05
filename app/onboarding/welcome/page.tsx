@@ -72,13 +72,12 @@ const SplitScreenOnboarding = () => {
       {/* Left Content Side */}
       <div className="w-full md:w-2/5 bg-white p-4 sm:p-6 md:p-8 flex flex-col justify-between min-h-[60vh] md:min-h-screen">
         <div>
-          {/* Logo using local file */}
+          {/* Logo */}
           <div className="mb-4 sm:mb-6">
             <img 
-              src="/assets/logos/turf-logo.svg" 
+              src="/images/turf-logo.svg" 
               alt="Turf Logo" 
-              className="h-8 sm:h-10 w-auto"
-              priority
+              className="h-10 w-auto"
             />
           </div>
 
