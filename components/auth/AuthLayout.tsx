@@ -32,7 +32,10 @@ export default function AuthLayout({
             <img 
               src="/images/turf-logo.svg" 
               alt="Turf Logo" 
-              className="h-10 w-auto"
+              className="h-6 sm:h-8 md:h-10 w-auto transform-gpu hover:scale-105 transition-transform duration-300"
+              width="102"
+              height="26"
+              priority="true"
             />
           </div>
           

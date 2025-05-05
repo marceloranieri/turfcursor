@@ -1,36 +1,103 @@
-import Link from "next/link"
+import { useState } from 'react';
+import Link from "next/link";
+import { supabase } from '@/lib/supabase/client';
+import { createLogger } from '@/lib/logger';
+import { FormInput } from '@/components/auth/FormInput';
+import { SubmitButton } from '@/components/auth/SubmitButton';
+import { ErrorMessage } from '@/components/auth/ErrorMessage';
+import AuthLayout from '@/components/auth/AuthLayout';
+
+const logger = createLogger('ForgotPasswordPage');
 
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      logger.info('Attempting password reset for email:', { email });
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        logger.error('Password reset error:', error);
+        setError(error.message);
+        return;
+      }
+
+      logger.info('Password reset email sent successfully');
+      setSuccess(true);
+    } catch (err: any) {
+      logger.error('Unexpected password reset error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Forgot Password</h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            Don&apos;t worry, we&apos;ll help you reset your password.
-          </p>
-        </div>
-        <form className="space-y-6">
-          <input
-            type="email"
-            required
-            placeholder="Enter your email"
-            className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-          />
-          <button
-            type="submit"
-            className="w-full rounded-message bg-accent-primary p-3 text-sm font-medium text-white hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-          >
-            Reset Password
-          </button>
-          <p className="mt-4 text-center text-sm text-text-secondary">
-            Remember your password?{" "}
-            <Link href="/auth/signin" className="text-accent-primary hover:text-accent-primary-dark">
-              Sign in
-            </Link>
-          </p>
-        </form>
+    <AuthLayout 
+      title="Reset Your Password"
+      description="Enter your email address and we'll send you a link to reset your password."
+      rightSideContent={{
+        title: "Secure Your Account",
+        description: "We take your security seriously. Our password reset process is secure and straightforward."
+      }}
+    >
+      <div className="w-full max-w-md">
+        {error && <ErrorMessage error={error} />}
+        
+        {success ? (
+          <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+            <p className="text-sm">
+              Password reset instructions have been sent to your email address.
+              Please check your inbox and follow the link to reset your password.
+            </p>
+            <p className="mt-4 text-sm">
+              Didn't receive the email?{' '}
+              <button
+                onClick={() => setSuccess(false)}
+                className="text-accent-primary hover:text-accent-primary-dark font-medium"
+              >
+                Try again
+              </button>
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <FormInput
+              id="email"
+              name="email"
+              type="email"
+              label="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="Enter your email address"
+              autoComplete="email"
+            />
+
+            <SubmitButton loading={loading} loadingText="Sending reset link...">
+              Send Reset Link
+            </SubmitButton>
+
+            <p className="mt-4 text-center text-sm text-text-secondary">
+              Remember your password?{" "}
+              <Link href="/auth/signin" className="text-accent-primary hover:text-accent-primary-dark">
+                Sign in
+              </Link>
+            </p>
+          </form>
+        )}
       </div>
-    </div>
-  )
+    </AuthLayout>
+  );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from '@/lib/supabase/client';
 import { createLogger } from '@/lib/logger';
 import { FormInput } from '@/components/auth/FormInput';
+import { PasswordInput } from '@/components/auth/PasswordInput';
 import { SubmitButton } from '@/components/auth/SubmitButton';
 import { ErrorMessage } from '@/components/auth/ErrorMessage';
 import AuthLayout from '@/components/auth/AuthLayout';
@@ -34,6 +35,18 @@ export default function SignUpPage() {
       setError('Passwords do not match');
       return;
     }
+
+    // Check password strength
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const isLongEnough = password.length >= 8;
+
+    if (!(hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar && isLongEnough)) {
+      setError('Password does not meet the minimum requirements');
+      return;
+    }
     
     setLoading(true);
     
@@ -43,6 +56,9 @@ export default function SignUpPage() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
       
       if (error) {
@@ -56,6 +72,8 @@ export default function SignUpPage() {
         router.push('/dashboard');
       } else {
         logger.info('Sign-up successful, email confirmation required');
+        localStorage.setItem('pendingVerification', 'true');
+        localStorage.setItem('pendingEmail', email);
         router.push('/auth/verify-email');
       }
     } catch (err: any) {
@@ -91,27 +109,26 @@ export default function SignUpPage() {
             autoComplete="email"
           />
           
-          <FormInput
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            placeholder="Password"
+            placeholder="Create a password"
             autoComplete="new-password"
+            showStrength={true}
           />
           
-          <FormInput
+          <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
-            type="password"
             label="Confirm Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            placeholder="Confirm Password"
+            placeholder="Confirm your password"
             autoComplete="new-password"
           />
           

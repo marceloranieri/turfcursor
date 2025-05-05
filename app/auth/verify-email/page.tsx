@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createLogger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase/client';
+import { FormInput } from '@/components/auth/FormInput';
+import { SubmitButton } from '@/components/auth/SubmitButton';
+import { ErrorMessage } from '@/components/auth/ErrorMessage';
+import AuthLayout from '@/components/auth/AuthLayout';
+import Link from 'next/link';
 
 const logger = createLogger('VerifyEmailPage');
 
@@ -12,88 +17,125 @@ export default function VerifyEmailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  const checkVerification = async () => {
+    try {
+      const pendingVerification = localStorage.getItem('pendingVerification');
+      if (!pendingVerification) {
+        router.push('/auth/signin');
+        return;
+      }
+
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw sessionError;
+      }
+
+      if (session?.user?.email_confirmed_at) {
+        setIsVerified(true);
+        localStorage.removeItem('pendingVerification');
+        
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 3000);
+      } else {
+        setIsVerified(false);
+      }
+    } catch (error: any) {
+      logger.error('Verification check error:', error);
+      setError(error.message || 'An error occurred while checking verification status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendSuccess(false);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: localStorage.getItem('pendingEmail') || '',
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setResendSuccess(true);
+      logger.info('Verification email resent successfully');
+    } catch (error: any) {
+      logger.error('Error resending verification:', error);
+      setError(error.message || 'Failed to resend verification email');
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const checkVerification = async () => {
-      try {
-        // Check if we have a pending verification flag
-        const pendingVerification = localStorage.getItem('pendingVerification');
-        if (!pendingVerification) {
-          router.push('/auth/signin');
-          return;
-        }
-
-        // Check the current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
-        }
-
-        if (session?.user?.email_confirmed_at) {
-          // User is verified
-          setIsVerified(true);
-          localStorage.removeItem('pendingVerification');
-          
-          // Redirect to dashboard after a delay
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 3000);
-        } else {
-          // User is not yet verified
-          setIsVerified(false);
-        }
-      } catch (error: any) {
-        logger.error('Verification check error:', error);
-        setError(error.message || 'An error occurred while checking verification status');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     checkVerification();
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background-primary py-12 px-4 sm:px-6 lg:px-8">
+    <AuthLayout 
+      title="Verify Your Email"
+      description="Please verify your email address to continue using Turf."
+      rightSideContent={{
+        title: "Almost There!",
+        description: "We've sent a verification link to your email. Click it to complete your registration."
+      }}
+    >
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-text-primary">
-            Email Verification
-          </h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            Please verify your email address to continue
-          </p>
-        </div>
-
+        {error && <ErrorMessage error={error} />}
+        
         {loading ? (
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto"></div>
             <p className="mt-4 text-text-secondary">Checking verification status...</p>
           </div>
-        ) : error ? (
-          <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
         ) : isVerified ? (
-          <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+          <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
             <p>Email verified successfully! Redirecting to dashboard...</p>
           </div>
         ) : (
-          <div className="p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-            <p>Please check your email and click the verification link.</p>
-            <p className="mt-2 text-sm">
-              If you haven't received the email, check your spam folder or{' '}
-              <button
-                onClick={() => router.push('/auth/signup')}
-                className="text-accent-primary hover:text-accent-primary-dark font-medium"
+          <div className="space-y-6">
+            <div className="p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
+              <p>Please check your email and click the verification link.</p>
+              <p className="mt-2 text-sm">
+                If you haven't received the email, check your spam folder.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <SubmitButton 
+                loading={resendLoading} 
+                loadingText="Resending..."
+                onClick={handleResendVerification}
               >
-                try signing up again
-              </button>
-            </p>
+                Resend Verification Email
+              </SubmitButton>
+
+              {resendSuccess && (
+                <p className="text-sm text-green-600 text-center">
+                  Verification email resent successfully!
+                </p>
+              )}
+
+              <p className="text-sm text-center text-text-secondary">
+                Need help?{' '}
+                <Link href="/support" className="text-accent-primary hover:text-accent-primary-dark">
+                  Contact Support
+                </Link>
+              </p>
+            </div>
           </div>
         )}
       </div>
-    </div>
+    </AuthLayout>
   );
 }
