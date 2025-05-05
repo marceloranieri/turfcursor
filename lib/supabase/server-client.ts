@@ -1,18 +1,9 @@
-'use server';
-
 import { createClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('SupabaseServerClient');
 
-// Use a singleton pattern to avoid multiple instantiations
-let supabaseServerClient: ReturnType<typeof createClient> | null = null;
-
-export function getSupabaseServerClient() {
-  if (supabaseServerClient) {
-    return supabaseServerClient;
-  }
-
+export function createServerSupabase() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
   }
@@ -23,8 +14,7 @@ export function getSupabaseServerClient() {
 
   logger.info('Creating Supabase server client');
   
-  // Create a standard server-side client
-  supabaseServerClient = createClient(
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
@@ -34,6 +24,4 @@ export function getSupabaseServerClient() {
       }
     }
   );
-  
-  return supabaseServerClient;
-} 
+}
