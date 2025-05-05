@@ -111,3 +111,9 @@ export async function POST(request: Request) {
     } catch (error) {
       logger.error('Unexpected error processing webhook event:', error);
       return new NextResponse('Error processing webhook', { status: 500 });
+    }
+  } catch (error) {
+    logger.error('Unexpected error processing webhook:', error);
+    return new NextResponse('Error processing webhook', { status: 500 });
+  }
+}
