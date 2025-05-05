@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from '@/lib/supabase/client';
 import { createLogger } from '@/lib/logger';
+import { FormInput } from '@/components/auth/FormInput';
+import { SubmitButton } from '@/components/auth/SubmitButton';
+import { ErrorMessage } from '@/components/auth/ErrorMessage';
 
 const logger = createLogger('SignUpPage');
 
@@ -71,71 +74,45 @@ export default function SignUpPage() {
             Join us and start managing your projects.
           </p>
         </div>
+
+        <ErrorMessage error={error} />
         
         <form className="space-y-6" onSubmit={handleSignUp} noValidate>
-          <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-text-primary">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-              aria-describedby="email-error"
-            />
-          </div>
+          <FormInput
+            id="email"
+            name="email"
+            type="email"
+            label="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="Email address"
+            autoComplete="email"
+          />
           
-          <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-text-primary">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-              aria-describedby="password-error"
-            />
-          </div>
+          <FormInput
+            id="password"
+            name="password"
+            type="password"
+            label="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            placeholder="Password"
+            autoComplete="new-password"
+          />
           
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-primary">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-              aria-describedby="confirm-password-error"
-            />
-          </div>
-
-          {error && (
-            <div 
-              className="rounded-message bg-red-100 p-3 text-sm text-red-700"
-              role="alert"
-              aria-live="polite"
-            >
-              {error}
-            </div>
-          )}
+          <FormInput
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            label="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            placeholder="Confirm Password"
+            autoComplete="new-password"
+          />
           
           <div className="flex items-start">
             <input
@@ -152,14 +129,9 @@ export default function SignUpPage() {
             </label>
           </div>
           
-          <button
-            type="submit"
-            disabled={loading || !agreedToTerms}
-            className="w-full rounded-message bg-accent-primary p-3 text-sm font-medium text-white hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary/50 disabled:bg-accent-primary/70"
-            aria-disabled={loading || !agreedToTerms}
-          >
-            {loading ? 'Signing Up...' : 'Sign Up'}
-          </button>
+          <SubmitButton loading={loading} disabled={!agreedToTerms} loadingText="Signing Up...">
+            Sign Up
+          </SubmitButton>
           
           <p className="mt-4 text-center text-sm text-text-secondary">
             Already have an account?{" "}
