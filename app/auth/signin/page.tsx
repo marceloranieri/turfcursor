@@ -56,43 +56,68 @@ export default function SignInPage() {
           </p>
         </div>
         
-        {error && (
-          <div className="rounded-message bg-red-100 p-3 text-sm text-red-700">
-            {error}
+        <form className="space-y-6" onSubmit={handleSignIn} noValidate>
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-medium text-text-primary">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
+              aria-describedby="email-error"
+            />
           </div>
-        )}
-        
-        <form className="space-y-6" onSubmit={handleSignIn}>
-          <input
-            type="email"
-            required
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-          />
-          <input
-            type="password"
-            required
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
-          />
+
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-medium text-text-primary">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              className="w-full rounded-message border border-border bg-input p-3 text-sm focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
+              aria-describedby="password-error"
+            />
+          </div>
+
+          {error && (
+            <div 
+              className="rounded-message bg-red-100 p-3 text-sm text-red-700"
+              role="alert"
+              aria-live="polite"
+            >
+              {error}
+            </div>
+          )}
+
           <div className="text-right text-sm">
             <Link href="/auth/forgot-password" className="text-accent-primary hover:text-accent-primary-dark">
               Forgot password?
             </Link>
           </div>
+
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-message bg-accent-primary p-3 text-sm font-medium text-white hover:bg-accent-primary-dark focus:outline-none focus:ring-2 focus:ring-accent-primary/50 disabled:bg-accent-primary/70"
+            aria-disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
+
           <p className="mt-4 text-center text-sm text-text-secondary">
             Don&apos;t have an account?{" "}
             <Link href="/auth/signup" className="text-accent-primary hover:text-accent-primary-dark">
