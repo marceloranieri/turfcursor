@@ -1,24 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
-import { createClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('GitHubWebhook');
-
-// Create Supabase client directly (no separate file)
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-  
-  return createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false },
-    global: { fetch: fetch }
-  });
-}
 
 // Verify webhook signature
 function verifyGitHubWebhook(payload: string, signature: string, secret: string): boolean {
@@ -29,12 +13,7 @@ function verifyGitHubWebhook(payload: string, signature: string, secret: string)
 
 export async function POST(request: Request) {
   try {
-    // Log initial request details
-    logger.info('Webhook request received', {
-      event: request.headers.get('x-github-event'),
-      delivery: request.headers.get('x-github-delivery')
-    });
-
+    logger.info('Webhook request received');
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
     
     if (!webhookSecret) {
@@ -62,41 +41,18 @@ export async function POST(request: Request) {
     const data = JSON.parse(payload);
     const event = request.headers.get('x-github-event');
 
-    logger.info('Processing webhook event:', { event, action: data.action });
-
-    try {
-      // Create Supabase client for this request
-      const supabase = getSupabaseClient();
-      
-      // Insert the event data
-      const { error: dbError } = await supabase
-        .from('github_events')
-        .insert({
-          event_type: event,
-          payload: JSON.stringify(data),
-          repository: data.repository?.full_name,
-          sender: data.sender?.login,
-          action: data.action || event
-        });
-
-      if (dbError) {
-        logger.error('Database error details:', {
-          message: dbError.message,
-          details: dbError.details,
-          code: dbError.code,
-          hint: dbError.hint
-        });
-        return new NextResponse(`Error storing event: ${JSON.stringify(dbError)}`, { status: 500 });
-      }
-
-      logger.info('Webhook event stored successfully');
-      return new NextResponse('Webhook processed successfully', { status: 200 });
-    } catch (error) {
-      logger.error('Supabase error:', error);
-      return new NextResponse(`Supabase error: ${JSON.stringify(error)}`, { status: 500 });
-    }
+    // Log event details (but don't try to store in Supabase)
+    logger.info(`Received ${event} event from ${data.repository?.full_name}`, {
+      event,
+      repository: data.repository?.full_name,
+      sender: data.sender?.login,
+      action: data.action
+    });
+    
+    // Just acknowledge receipt
+    return new NextResponse('Webhook received', { status: 200 });
   } catch (error) {
     logger.error('Error processing webhook:', error);
-    return new NextResponse(`Error processing webhook: ${JSON.stringify(error)}`, { status: 500 });
+    return new NextResponse('Error processing webhook', { status: 500 });
   }
-} 
+}
