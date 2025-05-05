@@ -1,9 +1,24 @@
 import { NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
-import { createServerSupabase } from '@/lib/supabase/server-client';
+import { createClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('GitHubWebhook');
+
+// Create Supabase client directly (no separate file)
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false },
+    global: { fetch: fetch }
+  });
+}
 
 // Verify webhook signature
 function verifyGitHubWebhook(payload: string, signature: string, secret: string): boolean {
@@ -14,9 +29,6 @@ function verifyGitHubWebhook(payload: string, signature: string, secret: string)
 
 export async function POST(request: Request) {
   try {
-    // Create server-side Supabase client
-    const supabase = createServerSupabase();
-    
     // Log initial request details
     logger.info('Webhook request received', {
       event: request.headers.get('x-github-event'),
@@ -52,40 +64,11 @@ export async function POST(request: Request) {
 
     logger.info('Processing webhook event:', { event, action: data.action });
 
-    // Handle ping events separately
-    if (event === 'ping') {
-      logger.info('Processing ping event');
-      try {
-        const { error: dbError } = await supabase
-          .from('github_events')
-          .insert({
-            event_type: 'ping',
-            payload: JSON.stringify(data),
-            repository: data.repository?.full_name,
-            sender: data.sender?.login,
-            action: 'ping'
-          });
-
-        if (dbError) {
-          logger.error('Database error details:', {
-            message: dbError.message,
-            details: dbError.details,
-            code: dbError.code,
-            hint: dbError.hint
-          });
-          return new NextResponse(`Error storing ping event: ${JSON.stringify(dbError)}`, { status: 500 });
-        }
-
-        logger.info('Ping event stored successfully');
-        return new NextResponse('Webhook ping received successfully', { status: 200 });
-      } catch (error) {
-        logger.error('Unexpected error processing ping event:', error);
-        return new NextResponse('Error processing ping event', { status: 500 });
-      }
-    }
-
-    // For non-ping events, store in Supabase
     try {
+      // Create Supabase client for this request
+      const supabase = getSupabaseClient();
+      
+      // Insert the event data
       const { error: dbError } = await supabase
         .from('github_events')
         .insert({
@@ -93,7 +76,7 @@ export async function POST(request: Request) {
           payload: JSON.stringify(data),
           repository: data.repository?.full_name,
           sender: data.sender?.login,
-          action: data.action
+          action: data.action || event
         });
 
       if (dbError) {
@@ -109,11 +92,11 @@ export async function POST(request: Request) {
       logger.info('Webhook event stored successfully');
       return new NextResponse('Webhook processed successfully', { status: 200 });
     } catch (error) {
-      logger.error('Unexpected error processing webhook event:', error);
-      return new NextResponse('Error processing webhook', { status: 500 });
+      logger.error('Supabase error:', error);
+      return new NextResponse(`Supabase error: ${JSON.stringify(error)}`, { status: 500 });
     }
   } catch (error) {
-    logger.error('Unexpected error processing webhook:', error);
-    return new NextResponse('Error processing webhook', { status: 500 });
+    logger.error('Error processing webhook:', error);
+    return new NextResponse(`Error processing webhook: ${JSON.stringify(error)}`, { status: 500 });
   }
-}
+} 
