@@ -1,19 +1,15 @@
 'use client';
 
 interface ErrorMessageProps {
-  error: string | null;
+  message: string;
 }
 
-export function ErrorMessage({ error }: ErrorMessageProps) {
-  if (!error) return null;
-
+export default function ErrorMessage({ message }: ErrorMessageProps) {
+  if (!message) return null;
+  
   return (
-    <div 
-      className="rounded-message bg-red-100 p-3 text-sm text-red-700"
-      role="alert"
-      aria-live="polite"
-    >
-      {error}
+    <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-500">
+      {message}
     </div>
   );
 } 
