@@ -1,94 +1,200 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronRightIcon } from '@heroicons/react/24/outline';
 
-// Onboarding features to highlight
-const features = [
-  {
-    title: 'Focused Debates',
-    description: 'Dive into a single daily topic for concentrated, quality debates.',
-    icon: '🎯',
-  },
-  {
-    title: 'Harmony Points',
-    description: 'Earn rewards for positive contributions and linked comments.',
-    icon: '✨',
-  },
-  {
-    title: 'Wizard of Mods',
-    description: 'Our AI assistant keeps conversations flowing with new perspectives.',
-    icon: '🧙',
-  },
-  {
-    title: 'Pincredible',
-    description: 'The most engaging messages get highlighted for everyone to see.',
-    icon: '📌',
-  },
-  {
-    title: 'Genius Awards',
-    description: 'Recognize exceptional contributions with limited daily awards.',
-    icon: '🏆',
-  },
-];
-
-export default function OnboardingWelcome(): JSX.Element {
-  const [currentStep, setCurrentStep] = useState(0);
+const SplitScreenOnboarding = () => {
   const router = useRouter();
+  const [currentSlide, setCurrentSlide] = useState(0);
   
+  const slides = [
+    {
+      title: "Welcome to Turf",
+      description: "A platform for focused debates and meaningful conversations.",
+      color: "#4f46e5", // Indigo
+      bgPattern: "radial-gradient(circle at 80% 50%, rgba(79, 70, 229, 0.7) 0%, rgba(67, 56, 202, 0.7) 50%, rgba(55, 48, 163, 0.8) 100%)"
+    },
+    {
+      title: "Daily Topics",
+      description: "Engage in carefully selected topics that inspire quality discussions.",
+      color: "#0ea5e9", // Sky blue
+      bgPattern: "radial-gradient(circle at 20% 70%, rgba(14, 165, 233, 0.7) 0%, rgba(2, 132, 199, 0.7) 50%, rgba(3, 105, 161, 0.8) 100%)"
+    },
+    {
+      title: "Earn Recognition",
+      description: "Get rewarded for thoughtful contributions and insights.",
+      color: "#f59e0b", // Amber
+      bgPattern: "radial-gradient(circle at 60% 30%, rgba(245, 158, 11, 0.7) 0%, rgba(217, 119, 6, 0.7) 50%, rgba(180, 83, 9, 0.8) 100%)"
+    },
+    {
+      title: "Join the Community",
+      description: "Connect with people who love intellectual discourse.",
+      color: "#10b981", // Emerald
+      bgPattern: "radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.7) 0%, rgba(5, 150, 105, 0.7) 50%, rgba(4, 120, 87, 0.8) 100%)"
+    }
+  ];
+
   const handleNext = () => {
-    if (currentStep < features.length - 1) {
-      setCurrentStep(currentStep + 1);
+    if (currentSlide < slides.length - 1) {
+      setCurrentSlide(currentSlide + 1);
     } else {
-      // Go to chat when onboarding is complete
       router.push('/chat');
     }
   };
-  
-  const currentFeature = features[currentStep];
-  
+
+  const handleSkip = () => {
+    router.push('/chat');
+  };
+
+  // Slide transition variants
+  const contentVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        duration: 0.5,
+        staggerChildren: 0.1
+      } 
+    },
+    exit: { opacity: 0, y: -20 }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-background-secondary">
-      <div className="max-w-md w-full bg-background-tertiary rounded-lg p-8 shadow-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-accent-primary mb-2">Welcome to Turf</h1>
-          <p className="text-text-secondary">Let&apos;s get you introduced to the platform</p>
-        </div>
-        
-        <div className="text-center py-8">
-          <div className="text-6xl mb-4">{currentFeature?.icon}</div>
-          <h2 className="text-2xl font-bold mb-2">{currentFeature?.title}</h2>
-          <p className="text-text-secondary">{currentFeature?.description}</p>
-        </div>
-        
-        {/* Progress dots */}
-        <div className="flex justify-center gap-2 my-6">
-          {features.map((_, index) => (
-            <div 
-              key={index}
-              className={`h-2 w-2 rounded-full ${index === currentStep ? 'bg-accent-primary' : 'bg-background-secondary'}`}
+    <div className="h-screen w-full flex flex-col md:flex-row">
+      {/* Left Content Side */}
+      <div className="w-full md:w-2/5 bg-white p-6 md:p-8 flex flex-col justify-between">
+        <div>
+          {/* Logo using provided URL */}
+          <div className="mb-6">
+            <img 
+              src="https://cdn.prod.website-files.com/65f88dbc45162e324f63e8e8/66226645007044ddfe9453bd_Turf_Header_Logo-01.svg" 
+              alt="Turf Logo" 
+              className="h-10 w-auto"
             />
-          ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSlide}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={contentVariants}
+              className="py-8 md:py-12"
+            >
+              <motion.h2 
+                className="text-2xl md:text-3xl font-bold mb-4" 
+                style={{ color: slides[currentSlide].color }}
+                variants={itemVariants}
+              >
+                {slides[currentSlide].title}
+              </motion.h2>
+              
+              <motion.p 
+                className="text-gray-600 text-base md:text-lg mb-8"
+                variants={itemVariants}
+              >
+                {slides[currentSlide].description}
+              </motion.p>
+              
+              <motion.div 
+                className="mt-8 md:mt-12 w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${slides[currentSlide].color}20` }}
+                variants={itemVariants}
+              >
+                <img 
+                  src="/api/placeholder/48/48" 
+                  alt="Feature icon" 
+                  className="w-6 h-6"
+                />
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
         </div>
-        
-        <div className="flex justify-between">
-          <button 
-            className="button-secondary px-4 py-2"
-            onClick={() => router.push('/chat')}
-          >
-            Skip
-          </button>
-          
-          <button 
-            className="button-primary px-6 py-2 flex items-center"
-            onClick={handleNext}
-          >
-            {currentStep < features.length - 1 ? 'Next' : 'Start Debating'}
-            <ChevronRightIcon className="h-5 w-5 ml-1" />
-          </button>
+
+        <div>
+          {/* Progress Indicator */}
+          <div className="flex space-x-2 mb-6 md:mb-8">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className="w-8 h-1 rounded-full transition-all duration-300 focus:outline-none"
+                style={{ 
+                  backgroundColor: index === currentSlide ? slides[currentSlide].color : '#e5e7eb',
+                }}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between items-center">
+            <button
+              onClick={handleSkip}
+              className="text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+            >
+              Skip
+            </button>
+
+            <button
+              onClick={handleNext}
+              className="px-6 py-3 rounded-lg text-white transition-colors duration-500 focus:outline-none"
+              style={{ backgroundColor: slides[currentSlide].color }}
+            >
+              {currentSlide < slides.length - 1 ? "Continue" : "Get Started"}
+            </button>
+          </div>
         </div>
       </div>
-    </main>
+
+      {/* Right Graphic Side - optimized for desktop/mobile */}
+      <div 
+        className="hidden md:block md:w-3/5 transition-all duration-1000 ease-in-out relative overflow-hidden"
+        style={{ 
+          background: slides[currentSlide].bgPattern
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            {/* Floating elements in background */}
+            <div className="absolute w-40 h-40 bg-white bg-opacity-10 rounded-3xl transform rotate-12 top-1/4 left-1/4" />
+            <div className="absolute w-60 h-60 bg-white bg-opacity-5 rounded-full transform -rotate-6 bottom-1/4 right-1/4" />
+            <div className="absolute w-20 h-20 bg-white bg-opacity-10 rounded-lg transform rotate-45 top-1/3 right-1/3" />
+            
+            {/* Feature illustration with larger size */}
+            <div className="relative z-10 w-72 h-72 md:w-96 md:h-96 bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl flex items-center justify-center">
+              <img 
+                src="/api/placeholder/400/400" 
+                alt="Feature illustration" 
+                className="w-56 h-56 md:w-72 md:h-72 object-contain"
+              />
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Visual elements that stay in place */}
+        <div className="absolute bottom-8 right-8 text-white text-opacity-70 text-sm">
+          <span>Elevate your conversations</span>
+        </div>
+      </div>
+    </div>
   );
-} 
+};
+
+export default SplitScreenOnboarding; 
