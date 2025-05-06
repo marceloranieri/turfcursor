@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const slides = [
   {
@@ -35,21 +36,42 @@ export default function LoginPage(): JSX.Element {
   const [rememberMe, setRememberMe] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const supabase = createClientComponentClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
     
     try {
       setIsLoading(true);
-      // Implement your authentication logic here
-      // Example:
-      // await signIn('credentials', { email, password, redirect: false });
+      setError(null);
       
-      // On successful login:
-      router.push('/chat');
-    } catch (error) {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: {
+          // Set session expiry based on "Remember Me" checkbox
+          expiresIn: rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days : 1 day
+        }
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      if (data?.session) {
+        // Successful login
+        router.refresh(); // Refresh the page to update auth state
+        router.push('/dashboard'); // Redirect to dashboard
+      }
+    } catch (error: any) {
       console.error('Login failed:', error);
+      setError(error.message || 'Failed to sign in. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -58,11 +80,27 @@ export default function LoginPage(): JSX.Element {
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       setIsLoading(true);
-      // Implement your social login logic here
-      console.log(`${provider} login clicked`);
-    } catch (error) {
+      setError(null);
+
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: provider === 'google' ? {
+            access_type: 'offline',
+            prompt: 'consent',
+          } : undefined,
+        },
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      // No need to handle redirect here as Supabase will handle it
+    } catch (error: any) {
       console.error(`${provider} login failed:`, error);
-    } finally {
+      setError(`Failed to sign in with ${provider}. Please try again.`);
       setIsLoading(false);
     }
   };
@@ -79,7 +117,13 @@ export default function LoginPage(): JSX.Element {
           {/* Logo */}
           <div className="mb-8">
             <Link href="/" className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">T</div>
+              <Image
+                src="/turf-logo.svg"
+                alt="Turf Logo"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
               <span className="ml-3 text-xl font-bold">Turf</span>
             </Link>
           </div>
@@ -89,6 +133,13 @@ export default function LoginPage(): JSX.Element {
             <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
             <p className="text-gray-600">Enter your email and password to access your account.</p>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 rounded-md bg-red-50 text-red-500 text-sm">
+              {error}
+            </div>
+          )}
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
