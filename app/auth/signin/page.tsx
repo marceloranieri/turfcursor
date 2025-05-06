@@ -6,9 +6,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const LoginPage = (): JSX.Element => {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -48,19 +50,35 @@ const LoginPage = (): JSX.Element => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
     
     try {
       setIsLoading(true);
       setError('');
-      // Authentication logic here
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Redirect to dashboard on success
-      router.push('/chat');
-    } catch (err) {
-      setError('Invalid email or password. Please try again.');
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: {
+          // Set session expiry based on "Remember Me" checkbox
+          expiresIn: rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days : 1 day
+        }
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      if (data?.session) {
+        // Successful login
+        router.refresh(); // Refresh the page to update auth state
+        router.push('/chat'); // Redirect to chat
+      }
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -70,14 +88,25 @@ const LoginPage = (): JSX.Element => {
     try {
       setIsLoading(true);
       setError('');
-      // Your social login logic here
-      console.log(`${provider} login clicked`);
       
-      // On successful login:
-      router.push('/chat');
-    } catch (error) {
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: provider === 'google' ? {
+            access_type: 'offline',
+            prompt: 'consent',
+          } : undefined,
+        },
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      // No need to handle redirect here as Supabase will handle it
+    } catch (err: any) {
       setError(`${provider} login failed. Please try again.`);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -250,58 +279,36 @@ const LoginPage = (): JSX.Element => {
           {/* Feature Content */}
           <motion.div
             key={currentSlide}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.5 }}
-            className="mb-8 max-w-lg"
+            className="max-w-lg"
           >
-            <h2 className="text-3xl font-bold">{slides[currentSlide].title}</h2>
-            <h3 className="text-3xl font-bold mb-3">{slides[currentSlide].subtitle}</h3>
-            <p className="opacity-90 text-lg">{slides[currentSlide].description}</p>
+            <h2 className="text-4xl font-bold mb-4">{slides[currentSlide].title}</h2>
+            <h3 className="text-2xl font-semibold mb-4">{slides[currentSlide].subtitle}</h3>
+            <p className="text-lg mb-8">{slides[currentSlide].description}</p>
+            <div className="relative h-64">
+              <Image
+                src={slides[currentSlide].image}
+                alt={slides[currentSlide].title}
+                fill
+                className="object-contain"
+              />
+            </div>
           </motion.div>
-          
-          {/* Dashboard Preview */}
-          <div className="flex justify-center mb-12">
-            <motion.div
-              key={currentSlide}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-sm p-6 rounded-lg shadow-xl w-full max-w-lg transform rotate-1 transition-all duration-500"
-            >
-              {slides[currentSlide].image && (
-                <div className="relative w-full h-64">
-                  <Image 
-                    src={slides[currentSlide].image} 
-                    alt="Feature illustration"
-                    width={400}
-                    height={300}
-                    className="rounded-md object-contain mx-auto"
-                  />
-                </div>
-              )}
-            </motion.div>
-          </div>
-          
+
           {/* Navigation Dots */}
-          <div className="flex justify-center space-x-3">
+          <div className="flex justify-center mt-8 space-x-2">
             {slides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white bg-opacity-40'
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  currentSlide === index ? 'bg-white' : 'bg-white/50'
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
-          </div>
-
-          {/* Tagline */}
-          <div className="absolute bottom-8 right-8 text-white text-opacity-90 text-sm font-medium">
-            Elevate your conversations
           </div>
         </div>
       </div>
