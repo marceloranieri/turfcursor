@@ -28,47 +28,26 @@ const LoginPage = (): JSX.Element => {
       title: "Something New Every Day",
       description: "Gaming, music, sports, series—you name it. Fresh daily topics to test your wit.",
       image: "/images/carousel/debate-topics.jpg",
-      color: "from-blue-600/80 to-indigo-900/90"
     },
     {
       title: "Build Your Reputation",
       description: "Earn points for smart takes, community awe, and more.",
       image: "/images/carousel/reputation.jpg",
-      color: "from-cyan-600/80 to-blue-900/90"
     },
     {
       title: "Meet Great Minds",
       description: "Find people through shared passions. Expand your circle with real conversations.",
       image: "/images/carousel/connect.jpg",
-      color: "from-indigo-600/80 to-purple-900/90"
     },
     {
       title: "From Beta to Big Time",
       description: "Help shape Turf. Share your opinions, make it better, and grow with us.",
       image: "/images/carousel/expand.jpg",
-      color: "from-violet-600/80 to-indigo-900/90"
     }
   ];
 
   // Auto rotate slides every 5 seconds
   useEffect(() => {
-    // Fade in animations
-    const introElement = document.querySelector('.intro-content');
-    const carouselElement = document.querySelector('.carousel-content');
-    
-    if (introElement) {
-      setTimeout(() => {
-        introElement.classList.add('opacity-100', 'translate-y-0');
-      }, 100);
-    }
-    
-    if (carouselElement) {
-      setTimeout(() => {
-        carouselElement.classList.add('opacity-100', 'translate-x-0');
-      }, 300);
-    }
-    
-    // Auto rotate slides
     const interval = setInterval(() => {
       setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
     }, 5000);
@@ -76,7 +55,7 @@ const LoginPage = (): JSX.Element => {
     return () => clearInterval(interval);
   }, [slides.length]);
 
-  // Carousel navigation functions
+  // Carousel navigation
   const goToNextSlide = useCallback(() => {
     setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
   }, [slides.length]);
@@ -89,7 +68,7 @@ const LoginPage = (): JSX.Element => {
     setCurrentSlide(index);
   }, []);
 
-  // Form handling functions
+  // Form handling
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -130,7 +109,7 @@ const LoginPage = (): JSX.Element => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+  const handleSocialLogin = async (provider: 'google' | 'apple' | 'facebook') => {
     try {
       setIsLoading(true);
       setError(null);
@@ -142,6 +121,8 @@ const LoginPage = (): JSX.Element => {
           queryParams: provider === 'google' ? {
             access_type: 'offline',
             prompt: 'consent',
+          } : provider === 'facebook' ? {
+            auth_type: 'reauthenticate'
           } : undefined,
         },
       });
@@ -158,75 +139,69 @@ const LoginPage = (): JSX.Element => {
   };
 
   return (
-    <div className="min-h-screen flex overflow-hidden bg-white">
+    <div className="min-h-screen flex overflow-hidden">
       {/* Left Column - Login Form */}
-      <div className="w-full md:w-2/5 p-8 flex flex-col justify-between">
-        <div>
-          {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center">
-              <Image
-                src="/turf-logo.svg"
-                alt="Turf Logo"
-                width={40}
-                height={40}
-                className="mr-3"
-              />
-              <span className="text-xl font-bold text-gray-900">TURF</span>
-            </div>
+      <div className="w-full md:w-1/2 flex flex-col p-12">
+        <div className="flex-grow flex flex-col max-w-md mx-auto w-full justify-center">
+          {/* Logo - Only SVG, 25% bigger */}
+          <div className="mb-10">
+            <Image
+              src="/turf-logo.svg" 
+              alt="Turf Logo"
+              width={45}  // Increased by 25% from original 36
+              height={45} // Increased by 25% from original 36
+              priority
+            />
           </div>
-
-          {/* Introduction Text */}
-          <div className="mb-8 intro-content opacity-0 translate-y-4 transition-all duration-500 ease-out">
-            <h1 className="text-[34px] leading-tight font-bold text-[#0C1421] mb-2">Welcome Back</h1>
-            <p className="text-[20px] leading-8 tracking-[0.2px] text-gray-600">
-              Enter your email and password to access your account.
-            </p>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Login Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* Email Input */}
+          
+          {/* Exact heading from Figma */}
+          <h1 className="text-[34px] leading-tight font-normal font-['SF_Compact_Rounded',_-apple-system,_Roboto,_Helvetica,_sans-serif] text-[#0C1421] mb-7">
+            Welcome to Turf 👋
+          </h1>
+          
+          {/* Exact description from Figma */}
+          <p className="text-[20px] leading-8 tracking-[0.2px] font-['SF_Pro_Display',_-apple-system,_Roboto,_Helvetica,_sans-serif] text-[#0C1421] mb-12">
+            Chatrooms with daily-curated debates on your favorite topics. Fresh ideas, your kind of people.
+          </p>
+          
+          {/* Login Form - Styled to match Figma */}
+          <form onSubmit={handleLogin} className="w-full space-y-6">
+            {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium text-[#0C1421] mb-1.5">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-[#0C1421] mb-1.5">Email</label>
               <div className="mt-2 rounded-[12px] text-[#8897AD]">
                 <div className="flex flex-col items-start justify-center p-[17px] rounded-[12px] border border-[#D4D7E3] bg-[#F7FBFF]">
                   <input
+                    id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Example@email.com"
-                    className="w-full bg-transparent outline-none"
+                    className="w-full bg-transparent outline-none text-[#0C1421]"
                     required
                   />
                 </div>
               </div>
             </div>
-
-            {/* Password Input */}
+            
+            {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium text-[#0C1421] mb-1.5">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-[#0C1421] mb-1.5">Password</label>
               <div className="mt-2 rounded-[12px] text-[#8897AD]">
                 <div className="relative flex flex-col items-start justify-center p-[17px] rounded-[12px] border border-[#D4D7E3] bg-[#F7FBFF]">
                   <input
+                    id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 8 characters"
-                    className="w-full bg-transparent outline-none pr-10"
+                    className="w-full bg-transparent outline-none text-[#0C1421]"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-600"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8897AD]"
                   >
                     {showPassword ? (
                       <EyeSlashIcon className="h-5 w-5" />
@@ -237,171 +212,153 @@ const LoginPage = (): JSX.Element => {
                 </div>
               </div>
             </div>
-
-            {/* Forgot Password Link */}
-            <Link
-              href="/auth/forgot-password"
-              className="self-end block text-right text-[#1E4AE9] text-sm hover:underline"
-            >
-              Forgot Password?
-            </Link>
-
-            {/* Remember Me Checkbox */}
+            
+            {/* Forgot Password - Positioned exactly as in Figma */}
+            <div className="flex justify-end">
+              <Link 
+                href="/auth/forgot-password" 
+                className="text-[#1E4AE9] text-right"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+            
+            {/* Remember Me - Styled to match Figma */}
             <div className="flex items-center">
               <input
-                type="checkbox"
                 id="remember-me"
+                type="checkbox"
                 checked={rememberMe}
                 onChange={() => setRememberMe(!rememberMe)}
                 className="h-4 w-4 accent-[#1E4AE9] rounded border-gray-300"
               />
-              <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-[#0C1421]">
                 Remember Me
               </label>
             </div>
-
-            {/* Sign In Button */}
+            
+            {/* Sign In Button - Styled exactly as in Figma */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#162D3A] text-white py-4 rounded-[12px] text-[20px] tracking-[0.2px] hover:bg-[#162D3A]/90 transition-colors focus:outline-none disabled:opacity-70"
+              className="w-full flex justify-center py-4 px-4 border border-transparent rounded-[12px] text-[20px] font-medium text-white bg-[#162D3A] hover:bg-[#162D3A]/90 focus:outline-none disabled:opacity-75 tracking-[0.2px]"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
-
-          {/* Or Separator */}
-          <div className="flex items-center justify-center w-full py-[10px] mt-6 gap-4 text-[#294957] text-center">
-            <div className="flex-1 h-[1px] bg-[#CFDFE2]"></div>
+          
+          {/* Or separator - Styled to match Figma */}
+          <div className="mt-12 mb-6 flex items-center py-[10px] gap-4 text-[#294957] text-center">
+            <div className="flex-grow h-[1px] bg-[#CFDFE2]"></div>
             <span>Or</span>
-            <div className="flex-1 h-[1px] bg-[#CFDFE2]"></div>
+            <div className="flex-grow h-[1px] bg-[#CFDFE2]"></div>
           </div>
-
-          {/* Social Login Buttons */}
-          <div className="flex flex-col items-stretch w-full mt-6 text-[#313957]">
-            {/* Google Button */}
-            <button 
+          
+          {/* Social Login Buttons - Styled to match Figma */}
+          <div className="space-y-4">
+            <button
               type="button"
               onClick={() => handleSocialLogin('google')}
-              disabled={isLoading}
-              className="flex items-center justify-center w-full gap-4 py-3 px-[9px] rounded-[12px] bg-[#F3F9FA] hover:bg-[#F3F9FA]/80 transition-colors disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-4 py-3 px-[9px] rounded-[12px] bg-[#F3F9FA] text-[#313957]"
             >
-              <svg viewBox="0 0 24 24" className="w-5 h-5 mr-2">
+              <svg className="w-7 h-7" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
                   d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
                 />
               </svg>
-              <span className="text-sm">Sign in with Google</span>
+              <span className="w-[159px]">Sign in with Google</span>
             </button>
-
-            {/* Apple Button */}
-            <button 
+            
+            <button
               type="button"
-              onClick={() => handleSocialLogin('apple')}
-              disabled={isLoading}
-              className="flex items-center justify-center w-full gap-4 py-3 px-[9px] mt-4 rounded-[12px] bg-[#F3F9FA] hover:bg-[#F3F9FA]/80 transition-colors disabled:opacity-70"
+              onClick={() => handleSocialLogin('facebook')}
+              className="w-full flex items-center justify-center gap-4 py-3 px-[9px] rounded-[12px] bg-[#F3F9FA] text-[#313957]"
             >
-              <svg viewBox="0 0 24 24" className="w-5 h-5 mr-2">
+              <svg className="w-7 h-7" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
-                  d="M13.04,10.25c-0.04-3.35,2.74-4.98,2.87-5.06c-1.56-2.29-4-2.61-4.87-2.64c-2.07-0.21-4.04,1.21-5.09,1.21 c-1.05,0-2.68-1.19-4.41-1.16c-2.27,0.04-4.35,1.32-5.53,3.34c-2.36,4.1-0.6,10.17,1.69,13.49c1.12,1.63,2.46,3.46,4.21,3.39 c1.7-0.07,2.33-1.1,4.38-1.1c2.04,0,2.63,1.1,4.42,1.06c1.82-0.03,2.98-1.66,4.1-3.29c1.29-1.89,1.82-3.72,1.86-3.82 C16.54,12.34,13.08,10.4,13.04,10.25z M10.85,3.17c0.94-1.14,1.57-2.72,1.4-4.3c-1.35,0.05-2.99,0.9-3.96,2.04 C7.42,1.96,6.67,3.5,6.85,5.03C8.32,5.11,9.91,4.31,10.85,3.17z"
+                  d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"
                 />
               </svg>
-              <span className="text-sm">Sign in with Apple</span>
+              <span className="w-[159px]">Sign in with Facebook</span>
             </button>
           </div>
-        </div>
-
-        {/* Don't have an account & Privacy Policy */}
-        <div className="mt-12 text-center">
-          <p className="text-[18px] leading-[1.6] tracking-[0.18px] text-[#313957]">
-            Don't you have an account? <Link href="/auth/signup" className="text-[#1E4AE9] hover:underline">Sign up</Link>
+          
+          {/* Sign up link - Styled to match Figma */}
+          <p className="mt-12 text-center text-[18px] leading-[1.6] tracking-[0.18px] text-[#313957]">
+            Don't you have an account? <Link href="/auth/signup" className="text-[#1E4AE9]">Sign up</Link>
           </p>
-          <Link 
-            href="/privacy-policy"
-            className="mt-8 block text-center text-[14px] leading-[1.6] tracking-[0.14px] text-[#AEAEB2]"
-          >
-            Privacy Policy
-          </Link>
+          
+          {/* Privacy Policy - Styled to match Figma */}
+          <p className="mt-12 text-center text-[14px] leading-[1.6] tracking-[0.14px] text-[#AEAEB2]">
+            <Link href="/privacy-policy">
+              Privacy Policy
+            </Link>
+          </p>
         </div>
       </div>
-
-      {/* Right Column - Image Carousel */}
-      <div className="hidden md:block md:w-3/5 bg-blue-600 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute w-96 h-96 rounded-full bg-blue-500 opacity-30 -top-20 -right-20"></div>
-          <div className="absolute w-80 h-80 rounded-full bg-indigo-600 opacity-20 bottom-10 left-10"></div>
-        </div>
-
-        <div className="absolute inset-0 flex flex-col justify-center px-12 text-white z-10">
-          {/* Carousel Content */}
-          <div className="max-w-lg carousel-content opacity-0 translate-x-4 transition-all duration-500 ease-out">
-            {/* Slides */}
+      
+      {/* Right Column - Carousel */}
+      <div className="hidden md:block md:w-1/2 bg-blue-600">
+        <div className="relative h-full w-full overflow-hidden">
+          {/* Carousel slides */}
+          <div className="absolute inset-0 flex items-center justify-center">
             {slides.map((slide, index) => (
-              <div 
+              <div
                 key={index}
-                className={`${index === currentSlide ? 'block' : 'hidden'} transition-opacity duration-1000 ease-in-out`}
+                className={`absolute inset-0 flex flex-col justify-center items-center p-12 transition-opacity duration-500 ${
+                  index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
               >
-                <h2 className="text-4xl font-bold mb-4">{slide.title}</h2>
-                <p className="text-xl opacity-90 mb-8">{slide.description}</p>
-                
-                {/* Image with Gradient Overlay */}
-                <div className="relative h-72 mb-8 rounded-lg overflow-hidden">
-                  {/* Background Image */}
-                  <div className={`absolute inset-0 bg-gradient-to-b ${slide.color}`}></div>
+                <div className="max-w-md text-white">
+                  <h2 className="text-3xl font-bold mb-2">{slide.title}</h2>
+                  <p className="text-lg text-white/90 mb-6">{slide.description}</p>
                   
-                  {/* Actual Image */}
-                  <div className="relative z-10 h-full flex items-center justify-center">
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden">
                     <Image
                       src={slide.image}
                       alt={slide.title}
-                      width={400}
-                      height={300}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       priority={index === 0}
-                      className="object-contain max-h-full rounded-md"
+                      className="object-cover"
                     />
                   </div>
                 </div>
               </div>
             ))}
-
-            {/* Navigation Arrows */}
-            <div className="absolute inset-x-0 top-1/2 flex justify-between items-center -translate-y-1/2 px-6">
-              <button 
-                onClick={goToPrevSlide}
-                className="p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
-                aria-label="Previous slide"
-              >
-                <ChevronLeftIcon className="h-6 w-6" />
-              </button>
-              <button 
-                onClick={goToNextSlide}
-                className="p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
-                aria-label="Next slide"
-              >
-                <ChevronRightIcon className="h-6 w-6" />
-              </button>
-            </div>
-
-            {/* Navigation Dots */}
-            <div className="flex justify-center mt-4 space-x-2">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`h-2 transition-all duration-300 rounded-full ${
-                    index === currentSlide ? 'w-8 bg-white' : 'w-2 bg-white/50'
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
           </div>
-
-          {/* Tagline */}
-          <div className="absolute bottom-6 right-6 text-white/80 text-sm font-medium">
-            Elevate your conversations
+          
+          {/* Navigation arrows */}
+          <button
+            onClick={goToPrevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 focus:outline-none transition-colors"
+            aria-label="Previous slide"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </button>
+          
+          <button
+            onClick={goToNextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 focus:outline-none transition-colors"
+            aria-label="Next slide"
+          >
+            <ChevronRightIcon className="h-5 w-5" />
+          </button>
+          
+          {/* Navigation dots */}
+          <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-20">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === currentSlide ? 'w-6 bg-white' : 'bg-white/40'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </div>
