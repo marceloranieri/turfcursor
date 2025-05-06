@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  redirect('/onboarding/welcome');
+  redirect('/auth/signin?returnUrl=%2Fchat');
 }
