@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Login - Turf',
-  description: 'Sign in to your Turf account',
+  title: 'Login | Turf',
+  description: 'Login to Turf - Your social debate platform',
   robots: {
     index: false,
     follow: false,
