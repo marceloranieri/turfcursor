@@ -24,6 +24,7 @@ const nextConfig = {
       'csfdshydwdzexxosevml.supabase.co',
       'graph.facebook.com',
       'platform-lookaside.fbsbx.com',
+      'app.turfyeah.com',
     ],
   },
   // Change from 'server' to 'standalone'

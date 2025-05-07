@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation';
+import SplitPageSignup from '@/components/SplitPageSignup';
 
-export default function HomePage() {
-  redirect('/auth/signin?returnUrl=%2Fchat');
-  return null;
+export default function Home() {
+  return <SplitPageSignup />;
 }
