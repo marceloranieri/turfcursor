@@ -1,245 +1,509 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import AuthLayout from "@/components/auth/AuthLayout";
-import ErrorMessage from "@/components/auth/ErrorMessage";
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-export default function SignUp() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    agreeTerms: false
-  });
+const SignUpPage = () => {
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+  
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [visibleMessages, setVisibleMessages] = useState([]);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Four different slides with their messages and positions
+  const slides = [
+    {
+      background: "bg-gray-100",
+      image: "/images/carousel/debate-topics.jpg",
+      messages: [
+        { 
+          id: 1, 
+          type: 'text', 
+          content: 'Bom dia, mãe 🤗 🧡', 
+          time: '11:54', 
+          position: 'right',
+          top: '50%',
+          right: '10%'
+        },
+        { 
+          id: 2, 
+          type: 'heart', 
+          content: '❤️', 
+          position: 'right',
+          top: '55%',
+          right: '15%'
+        },
+        { 
+          id: 3, 
+          type: 'voice', 
+          duration: '0:03', 
+          time: '11:57', 
+          position: 'right',
+          top: '70%',
+          left: '20%'
+        },
+        { 
+          id: 4, 
+          type: 'image', 
+          content: '/images/carousel/message-image-1.jpg',
+          time: '11:57', 
+          position: 'right',
+          bottom: '25%',
+          right: '5%'
+        },
+        { 
+          id: 5, 
+          type: 'text', 
+          content: 'Quero logo outra viagem de família!', 
+          time: '11:59', 
+          position: 'right',
+          bottom: '15%',
+          left: '2%'
+        },
+      ],
+      bottomBar: {
+        backgroundColor: "#0095f6",
+        text: "Should violent movies be restricted to adult audiences only?",
+        textColor: "white"
+      }
+    },
+    {
+      background: "bg-gray-100",
+      image: "/images/carousel/reputation.jpg",
+      messages: [
+        { 
+          id: 1, 
+          type: 'text', 
+          content: 'What do you think about this topic?', 
+          time: '10:42', 
+          position: 'right',
+          top: '30%',
+          right: '5%'
+        },
+        { 
+          id: 2, 
+          type: 'text', 
+          content: 'I have some strong opinions on this!', 
+          time: '10:43', 
+          position: 'left',
+          top: '40%',
+          left: '5%'
+        },
+        { 
+          id: 3, 
+          type: 'image', 
+          content: '/images/carousel/message-image-2.jpg',
+          time: '10:45', 
+          position: 'right',
+          bottom: '30%',
+          right: '10%'
+        },
+      ],
+      bottomBar: {
+        backgroundColor: "#0095f6",
+        text: "Is social media making us more or less connected?",
+        textColor: "white"
+      }
+    },
+    {
+      background: "bg-gray-100",
+      image: "/images/carousel/connect.jpg",
+      messages: [
+        { 
+          id: 1, 
+          type: 'text', 
+          content: 'Have you seen the latest debate?', 
+          time: '14:22', 
+          position: 'left',
+          top: '35%',
+          left: '10%'
+        },
+        { 
+          id: 2, 
+          type: 'voice', 
+          duration: '0:15', 
+          time: '14:24', 
+          position: 'right',
+          top: '50%',
+          right: '15%'
+        },
+        { 
+          id: 3, 
+          type: 'text', 
+          content: 'Really interesting points!', 
+          time: '14:26', 
+          position: 'left',
+          bottom: '25%',
+          left: '15%'
+        },
+      ],
+      bottomBar: {
+        backgroundColor: "#0095f6",
+        text: "Should healthcare be free for everyone?",
+        textColor: "white"
+      }
+    },
+    {
+      background: "bg-gray-100",
+      image: "/images/carousel/expand.jpg",
+      messages: [
+        { 
+          id: 1, 
+          type: 'text', 
+          content: 'Join us for tonight\'s discussion!', 
+          time: '18:05', 
+          position: 'right',
+          top: '30%',
+          right: '10%'
+        },
+        { 
+          id: 2, 
+          type: 'text', 
+          content: 'What time does it start?', 
+          time: '18:06', 
+          position: 'left',
+          top: '45%',
+          left: '5%'
+        },
+        { 
+          id: 3, 
+          type: 'text', 
+          content: '8PM sharp! Don\'t miss it 😉', 
+          time: '18:07', 
+          position: 'right',
+          bottom: '30%',
+          right: '5%'
+        },
+      ],
+      bottomBar: {
+        backgroundColor: "#0095f6",
+        text: "Is technology improving or harming education?",
+        textColor: "white"
+      }
+    },
+  ];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value
-    }));
+  // Function to animate message appearance
+  useEffect(() => {
+    setVisibleMessages([]);
+    
+    const currentMessages = slides[activeSlide].messages;
+    
+    currentMessages.forEach((message, index) => {
+      setTimeout(() => {
+        setVisibleMessages(prev => [...prev, message.id]);
+      }, 1000 + (index * 800)); // Show each message with a delay
+    });
+    
+    // Auto-advance the carousel
+    const timer = setTimeout(() => {
+      setActiveSlide((prev) => (prev + 1) % slides.length);
+    }, 8000); // Change slide every 8 seconds
+    
+    return () => clearTimeout(timer);
+  }, [activeSlide]);
+
+  // Render a message bubble with precise positioning
+  const renderMessage = (message) => {
+    const isVisible = visibleMessages.includes(message.id);
+    
+    if (!isVisible) return null;
+    
+    // Position styles based on the message's position data
+    const positionStyles = {
+      position: 'absolute',
+      zIndex: 20,
+      ...(message.top && { top: message.top }),
+      ...(message.bottom && { bottom: message.bottom }),
+      ...(message.left && { left: message.left }),
+      ...(message.right && { right: message.right }),
+    };
+    
+    return (
+      <div key={message.id} className="animate-in fade-in duration-300 slide-in-from-bottom-3" style={positionStyles}>
+        <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
+          {message.type === 'text' && (
+            <div className={`rounded-2xl px-3 py-2 shadow-sm ${message.position === 'left' ? 'bg-white' : 'bg-green-100'} max-w-xs`}>
+              {message.content}
+              <div className="text-xs text-gray-400 text-right mt-1">{message.time}</div>
+            </div>
+          )}
+          
+          {message.type === 'heart' && (
+            <div className="text-2xl">
+              {message.content}
+            </div>
+          )}
+          
+          {message.type === 'image' && (
+            <div className={`rounded-lg overflow-hidden border ${message.position === 'left' ? 'border-gray-200' : 'border-green-200'} max-w-xs`}>
+              <img src={message.content} alt="Shared image" className="w-48 h-36 object-cover" />
+              <div className="text-xs text-gray-400 text-right p-1">{message.time}</div>
+            </div>
+          )}
+          
+          {message.type === 'voice' && (
+            <div className={`flex items-center gap-2 rounded-full px-3 py-2 ${message.position === 'left' ? 'bg-white' : 'bg-white'} shadow-sm`}>
+              <div className="text-gray-500">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" fill="#25D366" />
+                  <path d="M9 8L16 12L9 16V8Z" fill="white" />
+                </svg>
+              </div>
+              <div className="flex-1 h-6 w-32">
+                <div className="bg-gray-200 h-full rounded-full relative">
+                  <div className="absolute inset-0 flex items-center justify-between px-1">
+                    {[...Array(12)].map((_, i) => (
+                      <div key={i} className="w-0.5 bg-gray-400" style={{ height: `${20 + Math.random() * 80}%` }}></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500">{message.duration}</div>
+              <div className="text-xs text-gray-400 ml-1">{message.time}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    
-    // Validate passwords match
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
+    if (!email || !password) {
+      setError('Please enter both email and password');
       return;
     }
     
     try {
-      // Registration logic here
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsLoading(true);
+      setError(null);
       
-      // Redirect to onboarding or dashboard
-      window.location.href = "/onboarding";
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      if (data?.user) {
+        // Redirect to verification page or show success message
+        router.push('/auth/verify-email');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during sign up');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSocialSignUp = async (provider: 'google' | 'facebook') => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error: signUpError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: provider === 'google' ? {
+            access_type: 'offline',
+            prompt: 'consent',
+          } : provider === 'facebook' ? {
+            auth_type: 'reauthenticate'
+          } : undefined,
+        },
+      });
+
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      // No need to handle redirect here as Supabase will handle it
+    } catch (err: any) {
+      setError(`${provider} sign up failed. Please try again.`);
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <AuthLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mx-auto w-full max-w-md"
-      >
-        <h1 className="mb-2 text-3xl font-bold">Create Your Account</h1>
-        <p className="mb-8 text-gray-500">Enter your details to get started with Turf.</p>
-        
-        {error && <ErrorMessage message={error} />}
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="John Doe"
-              required
+    <div className="flex flex-col md:flex-row h-screen">
+      {/* Left side - Sign up form */}
+      <div className="w-full md:w-1/2 p-6 flex flex-col justify-center bg-white">
+        <div className="max-w-md w-full mx-auto">
+          <div className="mb-6">
+            <Image 
+              src="/turf-logo.svg" 
+              alt="Turf Logo" 
+              width={45}
+              height={45}
+              priority 
             />
           </div>
           
-          <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full rounded-md border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              placeholder="yourname@example.com"
-              required
-            />
-          </div>
+          <h1 className="text-[34px] leading-tight font-normal font-['SF_Compact_Rounded',_-apple-system,_Roboto,_Helvetica,_sans-serif] text-[#0C1421] mb-7">
+            Welcome to Turf 👋
+          </h1>
           
-          <div>
-            <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full rounded-md border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                required
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
-                onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-              >
-                {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                )}
-              </button>
+          <p className="text-[20px] leading-8 tracking-[0.2px] font-['SF_Pro_Display',_-apple-system,_Roboto,_Helvetica,_sans-serif] text-[#0C1421] mb-12">
+            Chatrooms with daily-curated debates on your favorite topics.
+            <br />Fresh ideas, your kind of people.
+          </p>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
+              {error}
             </div>
-          </div>
+          )}
           
-          <div>
-            <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-gray-700">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full rounded-md border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                required
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 focus:outline-none"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                tabIndex={-1}
-              >
-                {showConfirmPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                )}
-              </button>
+          <form onSubmit={handleSignUp} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-[#0C1421] mb-1.5">Email</label>
+              <div className="mt-2 rounded-[12px] text-[#8897AD]">
+                <div className="flex flex-col items-start justify-center p-[17px] rounded-[12px] border border-[#D4D7E3] bg-[#F7FBFF]">
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Example@email.com"
+                    className="w-full bg-transparent outline-none text-[#0C1421]"
+                    required
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <div className="flex items-center">
-              <input
-                id="agreeTerms"
-                name="agreeTerms"
-                type="checkbox"
-                checked={formData.agreeTerms}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                required
-              />
-              <label htmlFor="agreeTerms" className="ml-2 text-sm text-gray-600">
-                I agree to the{" "}
-                <Link href="/legal/terms" className="text-blue-600 hover:text-blue-800">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="/legal/privacy" className="text-blue-600 hover:text-blue-800">
-                  Privacy Policy
-                </Link>
-              </label>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-[#0C1421] mb-1.5">Password</label>
+              <div className="mt-2 rounded-[12px] text-[#8897AD]">
+                <div className="flex flex-col items-start justify-center p-[17px] rounded-[12px] border border-[#D4D7E3] bg-[#F7FBFF]">
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    className="w-full bg-transparent outline-none text-[#0C1421]"
+                    required
+                  />
+                </div>
+              </div>
             </div>
+            
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex justify-center py-4 px-4 border border-transparent rounded-[12px] text-[20px] font-medium text-white bg-[#162D3A] hover:bg-[#162D3A]/90 focus:outline-none disabled:opacity-75 tracking-[0.2px]"
+            >
+              {isLoading ? 'Creating account...' : 'Sign up'}
+            </button>
+          </form>
+          
+          <div className="mt-12 mb-6 flex items-center py-[10px] gap-4 text-[#294957] text-center">
+            <div className="flex-grow h-[1px] bg-[#CFDFE2]"></div>
+            <span>Or</span>
+            <div className="flex-grow h-[1px] bg-[#CFDFE2]"></div>
           </div>
           
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-md bg-blue-600 py-3 text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-300"
-          >
-            {isLoading ? "Creating Account..." : "Sign Up"}
-          </button>
-          
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Or Sign Up With
-            </p>
-            <div className="mt-3 flex justify-center space-x-4">
-              <button 
-                type="button"
-                className="flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
-              >
-                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
-                Google
-              </button>
-              <button 
-                type="button"
-                className="flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
-              >
-                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="#000000">
-                  <path d="M13.04,10.25c-0.04-3.35,2.74-4.98,2.87-5.06c-1.56-2.29-4-2.61-4.87-2.64c-2.07-0.21-4.04,1.21-5.09,1.21 c-1.05,0-2.68-1.19-4.41-1.16c-2.27,0.04-4.35,1.32-5.53,3.34c-2.36,4.1-0.6,10.17,1.69,13.49c1.12,1.63,2.46,3.46,4.21,3.39 c1.7-0.07,2.33-1.1,4.38-1.1c2.04,0,2.63,1.1,4.42,1.06c1.82-0.03,2.98-1.66,4.1-3.29c1.29-1.89,1.82-3.72,1.86-3.82 C16.54,12.34,13.08,10.4,13.04,10.25z M10.85,3.17c0.94-1.14,1.57-2.72,1.4-4.3c-1.35,0.05-2.99,0.9-3.96,2.04 C7.42,1.96,6.67,3.5,6.85,5.03C8.32,5.11,9.91,4.31,10.85,3.17z"/>
-                </svg>
-                Apple
-              </button>
-            </div>
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => handleSocialSignUp('google')}
+              className="w-full flex items-center justify-center gap-4 py-3 px-[9px] rounded-[12px] bg-[#F3F9FA] text-[#313957]"
+            >
+              <svg className="w-7 h-7" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
+                />
+              </svg>
+              <span className="w-[159px]">Sign up with Google</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => handleSocialSignUp('facebook')}
+              className="w-full flex items-center justify-center gap-4 py-3 px-[9px] rounded-[12px] bg-[#F3F9FA] text-[#313957]"
+            >
+              <svg className="w-7 h-7" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"
+                />
+              </svg>
+              <span className="w-[159px]">Sign up with Facebook</span>
+            </button>
           </div>
-        </form>
-        
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
-            Already Have An Account?{" "}
-            <Link href="/auth/signin" className="text-blue-600 hover:text-blue-800">
-              Sign In
-            </Link>
+          
+          <p className="mt-12 text-center text-[18px] leading-[1.6] tracking-[0.18px] text-[#313957]">
+            Already have an account? <a href="/auth/signin" className="text-[#1E4AE9]">Sign in</a>
+          </p>
+          
+          <p className="mt-12 text-center text-[14px] leading-[1.6] tracking-[0.14px] text-[#AEAEB2]">
+            <a href="/privacy-policy">Privacy Policy</a>
           </p>
         </div>
-      </motion.div>
-    </AuthLayout>
+      </div>
+      
+      {/* Right side - WhatsApp-style Carousel */}
+      <div className="hidden md:block md:w-1/2 relative overflow-hidden">
+        {slides.map((slide, index) => (
+          <div 
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${slide.background} ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+          >
+            {/* Background image */}
+            <div className="relative w-full h-full">
+              <img 
+                src={slide.image} 
+                alt={`Slide ${index + 1}`} 
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Message overlay - each message positioned absolutely on the image */}
+              {slide.messages.map(message => renderMessage(message))}
+              
+              {/* Bottom bar with debate topic */}
+              {slide.bottomBar && (
+                <div 
+                  className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center"
+                  style={{ 
+                    backgroundColor: slide.bottomBar.backgroundColor,
+                    color: slide.bottomBar.textColor
+                  }}
+                >
+                  <h3 className="text-xl font-medium">{slide.bottomBar.text}</h3>
+                </div>
+              )}
+              
+              {/* Dots navigation */}
+              <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2 z-30">
+                {slides.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveSlide(i)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeSlide ? 'bg-white w-4' : 'bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
-}
+};
+
+export default SignUpPage;
