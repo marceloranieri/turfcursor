@@ -161,65 +161,73 @@ const SplitPageSignup = () => {
         { 
           id: "1", 
           username: 'JediMaster42',
-          avatar: '/users-avatars/JediMaster42.webp',
           content: "The Force is strong with this one... but the Ring's power is stronger. Luke would've been corrupted faster than Frodo.",
           reaction: "🤔",
-          position: 'left'
+          position: 'left',
+          top: '15%',
+          left: '5%'
         },
         { 
           id: "2", 
-          username: 'Tolkien_Lore', 
-          avatar: '/users-avatars/Tolkien_Lore.webp',
+          username: 'Tolkien_Lore',
           content: "The Ring corrupts power. Luke's stronger = faster fall", 
           position: 'right',
+          top: '25%',
+          right: '5%',
           reaction: null
         },
         { 
           id: "3", 
-          username: 'ForceIsWithMe', 
-          avatar: '/users-avatars/ForceIsWithMe.webp',
+          username: 'ForceIsWithMe',
           content: "Y'all forgetting Luke resisted Emperor's temptation…", 
           position: 'left',
+          top: '35%',
+          left: '5%',
           reaction: '👍'
         },
         { 
           id: "4", 
-          username: 'HobbitFeet99', 
-          avatar: '/users-avatars/HobbitFeet99.webp',
+          username: 'HobbitFeet99',
           content: "Luke? No way. Read the book: The Ring isn't about willpower, it's about humility!", 
           position: 'right',
+          top: '45%',
+          right: '5%',
           reaction: null
         },
         { 
           id: "5", 
-          username: 'DarthFrodo', 
-          avatar: '/users-avatars/DarthFrodo.webp',
+          username: 'DarthFrodo',
           content: "Plot twist: Luke puts on the Ring and becomes invisible to the Force. Checkmate, Palpatine 🧠", 
           position: 'left',
+          top: '55%',
+          left: '5%',
           reaction: '🤣'
         },
         { 
           id: "6", 
-          username: 'EagleEyes', 
-          avatar: '/users-avatars/EagleEyes.webp',
+          username: 'EagleEyes',
           content: "Frodo literally failed at the end though?? Sam was the real MVP of that quest", 
           position: 'right',
+          top: '65%',
+          right: '5%',
           reaction: null
         },
         { 
           id: "7", 
-          username: 'GondorCalling', 
-          avatar: '/users-avatars/GondorCalling.webp',
+          username: 'GondorCalling',
           content: "The Force is basically just midichlorian mind control. The Ring would use that connection.", 
           position: 'left',
+          top: '75%',
+          left: '5%',
           reaction: null
         },
         { 
           id: "8", 
-          username: 'MiddleEarthScience', 
-          avatar: '/users-avatars/MiddleEarthScience.webp',
+          username: 'MiddleEarthScience',
           content: "Am I the only one wondering if lightsabers could cut the Ring?", 
           position: 'right',
+          top: '85%',
+          right: '5%',
           reaction: '🤔'
         },
       ],
@@ -892,7 +900,7 @@ const SplitPageSignup = () => {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             
-            {/* Desktop message bubbles - Enhanced with proper positioning */}
+            {/* Desktop message bubbles - Fixed positioning and avatar handling */}
             {slide.messages.map(message => {
               const isVisible = visibleMessages.includes(message.id);
               
@@ -912,13 +920,26 @@ const SplitPageSignup = () => {
                   }}
                 >
                   <div className={`flex ${message.position === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
-                    {/* User Avatar */}
+                    {/* User Avatar with fallback */}
                     <div className={`flex-shrink-0 ${message.position === 'left' ? 'mr-2' : 'ml-2'}`}>
-                      <img 
-                        src={message.avatar} 
-                        alt={message.username} 
-                        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-                      />
+                      <div 
+                        className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-2 border-gray-200"
+                      >
+                        {message.username && (
+                          message.username.charAt(0).toUpperCase()
+                        )}
+                        <img 
+                          src={`/user_avatars/${message.username}.webp`}
+                          onError={(e) => {
+                            // Try PNG if WEBP fails
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = `/user_avatars/${message.username}.png`;
+                            // If that fails too, the text initial will remain visible
+                          }}
+                          alt={message.username} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
                     
                     {/* Message Content */}
@@ -1058,20 +1079,29 @@ const SplitPageSignup = () => {
             <p className="text-gray-400 text-sm">© 2023 ALL RIGHTS RESERVED</p>
           </div>
 
-          {/* Single message for mobile */}
+          {/* Single message for mobile - with fixed avatar handling */}
           {slides[activeSlide].messages[mobileMessageIndex] && (
             <div 
               className="absolute inset-0 flex items-center justify-center p-4 z-20"
               style={{ animation: 'fadeIn 0.5s ease-out' }}
             >
               <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
-                {/* User Avatar for Mobile */}
+                {/* User Avatar for Mobile with fallback */}
                 <div className="flex-shrink-0 mr-2">
-                  <img 
-                    src={slides[activeSlide].messages[mobileMessageIndex].avatar} 
-                    alt={slides[activeSlide].messages[mobileMessageIndex].username} 
-                    className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-                  />
+                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-2 border-gray-200">
+                    {slides[activeSlide].messages[mobileMessageIndex].username && (
+                      slides[activeSlide].messages[mobileMessageIndex].username.charAt(0).toUpperCase()
+                    )}
+                    <img 
+                      src={`/user_avatars/${slides[activeSlide].messages[mobileMessageIndex].username}.webp`}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = `/user_avatars/${slides[activeSlide].messages[mobileMessageIndex].username}.png`;
+                      }}
+                      alt={slides[activeSlide].messages[mobileMessageIndex].username} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </div>
                 
                 {/* Message content for Mobile */}
