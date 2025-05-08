@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function SupabaseTest() {
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResults, setTestResults] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function testSupabase() {
       try {
-        // Create Supabase client
         const supabase = createClientComponentClient();
 
         // Test database connection
@@ -20,55 +19,30 @@ export default function SupabaseTest() {
           .select('count')
           .limit(1);
 
-        if (dbError) {
-          throw new Error(`Database connection error: ${dbError.message}`);
-        }
-
         // Test auth configuration
         const { data: authTest, error: authError } = await supabase.auth.getSession();
-
-        if (authError) {
-          throw new Error(`Auth configuration error: ${authError.message}`);
-        }
 
         // Test OAuth providers
         const { data: providers, error: providersError } = await supabase.auth.getProviders();
 
-        if (providersError) {
-          throw new Error(`OAuth providers error: ${providersError.message}`);
-        }
-
-        setTestResult({
-          status: 'success',
-          message: 'Supabase configuration is valid',
-          details: {
-            database: {
-              connected: true,
-              message: 'Database connection successful'
-            },
-            auth: {
-              configured: true,
-              session: authTest.session ? 'Session available' : 'No active session',
-              providers: providers
-            }
+        setTestResults({
+          success: true,
+          database: {
+            connected: !dbError,
+            error: dbError?.message
+          },
+          auth: {
+            configured: !authError,
+            error: authError?.message,
+            providers: providers || []
+          },
+          environment: {
+            url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing',
+            anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing'
           }
         });
       } catch (error: any) {
         setError(error.message);
-        setTestResult({
-          status: 'error',
-          message: error.message,
-          details: {
-            database: {
-              connected: false,
-              error: error.message
-            },
-            auth: {
-              configured: false,
-              error: error.message
-            }
-          }
-        });
       } finally {
         setLoading(false);
       }
@@ -79,48 +53,79 @@ export default function SupabaseTest() {
 
   if (loading) {
     return (
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <p className="text-gray-600">Testing Supabase configuration...</p>
+      <div className="p-4">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 rounded-lg">
-        <h3 className="text-red-600 font-medium mb-2">Configuration Error</h3>
-        <p className="text-red-500">{error}</p>
+      <div className="p-4 bg-red-50 text-red-600 rounded-md">
+        <h3 className="font-semibold mb-2">Error Testing Supabase Configuration</h3>
+        <p>{error}</p>
       </div>
     );
   }
 
+  if (!testResults) {
+    return null;
+  }
+
   return (
-    <div className="p-4 bg-gray-50 rounded-lg">
-      <h3 className="text-gray-800 font-medium mb-2">Supabase Configuration Test</h3>
-      <div className="space-y-2">
-        <div className="flex items-center">
-          <span className={`w-2 h-2 rounded-full mr-2 ${testResult?.status === 'success' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-          <span className="text-gray-600">{testResult?.message}</span>
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold mb-4">Supabase Configuration Test</h2>
+      
+      <div className="space-y-4">
+        <div className="p-4 bg-gray-50 rounded-md">
+          <h3 className="font-semibold mb-2">Environment Variables</h3>
+          <div className="space-y-2">
+            <p>
+              <span className="font-medium">NEXT_PUBLIC_SUPABASE_URL:</span>{' '}
+              <span className={testResults.environment.url === 'Set' ? 'text-green-600' : 'text-red-600'}>
+                {testResults.environment.url}
+              </span>
+            </p>
+            <p>
+              <span className="font-medium">NEXT_PUBLIC_SUPABASE_ANON_KEY:</span>{' '}
+              <span className={testResults.environment.anonKey === 'Set' ? 'text-green-600' : 'text-red-600'}>
+                {testResults.environment.anonKey}
+              </span>
+            </p>
+          </div>
         </div>
-        <div className="pl-4 border-l-2 border-gray-200">
-          <div className="mb-2">
-            <h4 className="text-sm font-medium text-gray-700">Database</h4>
-            <p className="text-sm text-gray-600">{testResult?.details.database.message}</p>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-gray-700">Authentication</h4>
-            <p className="text-sm text-gray-600">{testResult?.details.auth.session}</p>
-            {testResult?.details.auth.providers && (
-              <div className="mt-1">
-                <p className="text-xs text-gray-500">Available providers:</p>
-                <ul className="text-xs text-gray-600 list-disc list-inside">
-                  {Object.keys(testResult.details.auth.providers).map(provider => (
-                    <li key={provider}>{provider}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+
+        <div className="p-4 bg-gray-50 rounded-md">
+          <h3 className="font-semibold mb-2">Database Connection</h3>
+          <p className={testResults.database.connected ? 'text-green-600' : 'text-red-600'}>
+            {testResults.database.connected ? 'Connected' : 'Not Connected'}
+          </p>
+          {testResults.database.error && (
+            <p className="text-sm text-red-500 mt-1">{testResults.database.error}</p>
+          )}
+        </div>
+
+        <div className="p-4 bg-gray-50 rounded-md">
+          <h3 className="font-semibold mb-2">Authentication</h3>
+          <p className={testResults.auth.configured ? 'text-green-600' : 'text-red-600'}>
+            {testResults.auth.configured ? 'Configured' : 'Not Configured'}
+          </p>
+          {testResults.auth.error && (
+            <p className="text-sm text-red-500 mt-1">{testResults.auth.error}</p>
+          )}
+          {testResults.auth.providers.length > 0 && (
+            <div className="mt-2">
+              <p className="text-sm font-medium">Available Providers:</p>
+              <ul className="list-disc list-inside text-sm mt-1">
+                {testResults.auth.providers.map((provider: any) => (
+                  <li key={provider.id}>{provider.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
