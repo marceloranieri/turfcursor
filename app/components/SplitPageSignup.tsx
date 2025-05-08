@@ -4,12 +4,60 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
+// Add type definitions
+interface Message {
+  id: number;
+  username: string;
+  avatar: string;
+  content: string;
+  position: string;
+  reaction: string | null;
+}
+
+interface Slide {
+  background: string;
+  image: string;
+  messages: Message[];
+  bottomBar: {
+    text: string;
+    backgroundColor: string;
+    textColor: string;
+  };
+}
+
+interface BubblePosition {
+  left: string | null;
+  right: string | null;
+  top: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface UsedArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface ScreenSection {
+  xStart: number;
+  xEnd: number;
+  yStart: number;
+  yEnd: number;
+}
+
 // Add utility function for avatar paths
-const getAvatarPath = (username) => `/user_avatars/${username}.webp`;
+const getAvatarPath = (username: string): string => {
+  const cleanUsername = username.replace(/\s+/g, '');
+  return `/user_avatars/${cleanUsername}.webp`;
+};
 
 // Add DebugAvatarImage component
-const DebugAvatarImage = ({ src, alt }) => {
-  const [status, setStatus] = useState('loading');
+const DebugAvatarImage = ({ src, alt }: { src: string; alt: string }) => {
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [attempts, setAttempts] = useState(0);
   
   useEffect(() => {
@@ -330,7 +378,7 @@ const SplitPageSignup = () => {
   ];
 
   // Add bubble positions state
-  const [bubblePositions, setBubblePositions] = useState([]);
+  const [bubblePositions, setBubblePositions] = useState<BubblePosition[]>([]);
   
   // Clean up timers on component unmount
   useEffect(() => {
@@ -515,23 +563,21 @@ const SplitPageSignup = () => {
     timersRef.current = [];
   };
 
-  // Add createNonOverlappingPositions function
-  const createNonOverlappingPositions = (messageCount) => {
-    const screenSections = [
+  // Add positioning utility functions
+  const createNonOverlappingPositions = (messageCount: number): BubblePosition[] => {
+    const screenSections: ScreenSection[] = [
       { xStart: 5, xEnd: 30, yStart: 10, yEnd: 35 },    // Top left
       { xStart: 70, xEnd: 95, yStart: 10, yEnd: 35 },   // Top right
-      { xStart: 5, xEnd: 30, yStart: 40, yEnd: 65 },    // Middle left
-      { xStart: 70, xEnd: 95, yStart: 40, yEnd: 65 },   // Middle right
-      { xStart: 5, xEnd: 30, yStart: 70, yEnd: 85 },    // Bottom left
-      { xStart: 70, xEnd: 95, yStart: 70, yEnd: 85 },   // Bottom right
+      { xStart: 5, xEnd: 30, yStart: 40, yEnd: 65 },    // Bottom left
+      { xStart: 70, xEnd: 95, yStart: 40, yEnd: 65 }    // Bottom right
     ];
     
-    const positions = [];
-    const usedAreas = [];
+    const positions: BubblePosition[] = [];
+    const usedAreas: UsedArea[] = [];
     const bubbleSize = { width: 300, height: 100 };
     const safetyMargin = 20;
     
-    const wouldOverlap = (x, y) => {
+    const wouldOverlap = (x: number, y: number): boolean => {
       for (const area of usedAreas) {
         if (
           x < area.x + area.width + safetyMargin &&
@@ -591,11 +637,105 @@ const SplitPageSignup = () => {
     }
   }, [activeSlide, isMobile]);
 
+  // Add message bubble rendering function
+  const renderMessageBubbles = (slide: Slide, visibleMessages: number[]) => {
+    // Group messages into distinct columns to prevent overlap
+    const leftColumnMessages: Message[] = [];
+    const rightColumnMessages: Message[] = [];
+    
+    // Split messages between left and right columns evenly
+    slide.messages.forEach((message: Message, index: number) => {
+      if (index % 2 === 0) {
+        leftColumnMessages.push(message);
+      } else {
+        rightColumnMessages.push(message);
+      }
+    });
+    
+    // Render function for a single message
+    const renderMessage = (message: Message, verticalPosition: number, isLeftColumn: boolean) => {
+      if (!visibleMessages.includes(message.id)) return null;
+      
+      return (
+        <div
+          key={`message-${message.id}`}
+          className={`absolute ${isLeftColumn ? 'left-4' : 'right-4'}`}
+          style={{
+            top: `${10 + verticalPosition * 15}%`,
+            maxWidth: '280px',
+            zIndex: 20 + verticalPosition
+          }}
+        >
+          <div className="flex items-start gap-2">
+            {/* Avatar - always on left */}
+            <div className="flex-shrink-0 mt-1">
+              <DebugAvatarImage 
+                src={getAvatarPath(message.username)}
+                alt={message.username}
+              />
+            </div>
+            
+            {/* Message content */}
+            <div className="flex flex-col">
+              {/* Username with background for readability */}
+              <div className="text-sm font-semibold text-white mb-1 px-2 py-0.5 bg-black bg-opacity-60 rounded-md inline-block">
+                {message.username}
+              </div>
+              
+              {/* Message bubble */}
+              <div className="rounded-xl px-3 py-2 bg-white bg-opacity-90 text-gray-800 shadow-md relative">
+                {message.content}
+                
+                {/* Reaction */}
+                {message.reaction && (
+                  <div className="absolute -bottom-2 -right-2 bg-white rounded-full px-1.5 py-1.5 shadow-md text-sm border border-gray-200">
+                    {message.reaction}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    
+    return (
+      <>
+        {/* Left column messages */}
+        {leftColumnMessages.map((message: Message, idx: number) => 
+          renderMessage(message, idx, true)
+        )}
+        
+        {/* Right column messages */}
+        {rightColumnMessages.map((message: Message, idx: number) => 
+          renderMessage(message, idx, false)
+        )}
+      </>
+    );
+  };
+
+  // Add debugging effect for avatar paths
+  useEffect(() => {
+    console.log("Public path check for avatars:");
+    console.log("Environment:", process.env.NODE_ENV);
+    console.log("Trying to access:", "/user_avatars/JediMaster42.webp");
+    
+    if (typeof window !== 'undefined') {
+      fetch('/user_avatars/JediMaster42.webp')
+        .then(response => {
+          console.log("Avatar fetch response:", response.status, response.ok);
+        })
+        .catch(error => {
+          console.error("Avatar fetch error:", error);
+        });
+    }
+  }, []);
+
   return (
     <div className="flex flex-col md:flex-row h-screen">
       {/* Left side - Sign up form */}
-      <div className="w-full md:w-1/2 p-4 md:p-6 flex flex-col justify-center bg-white">
-        <div className="max-w-md w-full mx-auto">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
           <div className="mb-6">
             <img 
               src="/turf-logo.svg" 
@@ -701,7 +841,7 @@ const SplitPageSignup = () => {
       
       {/* Right side - Turf Debate Carousel (visible only on desktop) */}
       <div className={`${isMobile ? 'hidden' : 'block'} w-1/2 relative overflow-hidden`}>
-        {slides.map((slide, index) => (
+        {slides.map((slide: Slide, index: number) => (
           <div 
             key={`desktop-slide-${index}`}
             className={`absolute inset-0 transition-opacity duration-1000 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
@@ -717,53 +857,8 @@ const SplitPageSignup = () => {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             
-            {/* Desktop message bubbles - Updated with improved positioning and styling */}
-            {slide.messages.map((message, index) => {
-              const isVisible = visibleMessages.includes(message.id);
-              
-              if (!isVisible) return null;
-              
-              const position = bubblePositions[index] || {};
-              
-              return (
-                <div
-                  key={`desktop-message-${message.id}`}
-                  style={{
-                    position: 'absolute',
-                    zIndex: 20 + index,
-                    maxWidth: '260px',
-                    top: position.top,
-                    left: position.left,
-                    right: position.right,
-                    animation: 'fadeIn 0.5s ease-out'
-                  }}
-                >
-                  <div className={`flex ${message.position === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
-                    {/* User Avatar with debug component */}
-                    <div className={`flex-shrink-0 ${message.position === 'left' ? 'mr-2' : 'ml-2'}`}>
-                      <DebugAvatarImage src={getAvatarPath(message.username)} alt={message.username} />
-                    </div>
-                    
-                    {/* Message Content with improved styling */}
-                    <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
-                      <div className="text-sm font-semibold text-white mb-1 px-2 py-0.5 bg-black bg-opacity-50 rounded-md">
-                        {message.username}
-                      </div>
-                      <div className="rounded-xl px-3 py-2 bg-white bg-opacity-90 text-gray-800 shadow-lg relative">
-                        {message.content}
-                        
-                        {/* Improved reaction styling */}
-                        {message.reaction && (
-                          <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1.5 py-1.5 shadow-lg text-sm border border-gray-200">
-                            {message.reaction}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {/* Desktop message bubbles - Updated with structured layout */}
+            {renderMessageBubbles(slide, visibleMessages)}
             
             {/* Bottom bar with topic */}
             <div 
@@ -778,178 +873,176 @@ const SplitPageSignup = () => {
         ))}
       </div>
       
-      {/* Mobile carousel - separate component for mobile */}
-      {isMobile && (
-        <div className="w-full h-screen absolute top-0 left-0 z-10 md:hidden">
-          {/* Form overlay to ensure it's visible */}
-          <div className="absolute inset-0 z-20 bg-white px-4 pt-4 pb-6 flex flex-col">
-            <div className="mb-6">
-              <img 
-                src="/turf-logo.svg" 
-                alt="Turf Logo" 
-                className="h-10 w-auto"
+      {/* Mobile carousel */}
+      <div className={`${isMobile ? 'block' : 'hidden'} fixed bottom-0 left-0 right-0 h-1/2 bg-white rounded-t-3xl shadow-lg z-50`}>
+        {/* Form overlay to ensure it's visible */}
+        <div className="absolute inset-0 z-20 bg-white px-4 pt-4 pb-6 flex flex-col">
+          <div className="mb-6">
+            <img 
+              src="/turf-logo.svg" 
+              alt="Turf Logo" 
+              className="h-10 w-auto"
+            />
+          </div>
+          
+          <h1 className="text-2xl font-bold mb-2">Welcome to Turf 👋</h1>
+          <p className="text-gray-600 mb-6">
+            Chatrooms with daily-curated debates on your favorite topics.
+            <br />Fresh ideas, your kind of people.
+          </p>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSignIn} className="flex-1">
+            <div className="mb-4">
+              <label htmlFor="email" className="block text-gray-700 mb-2">Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Example@email.com" 
+                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
             </div>
             
-            <h1 className="text-2xl font-bold mb-2">Welcome to Turf 👋</h1>
+            <div className="mb-4">
+              <label htmlFor="password" className="block text-gray-700 mb-2">Password</label>
+              <input 
+                type="password" 
+                id="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters" 
+                className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div className="mb-6 text-right">
+              <Link href="/auth/forgot-password" className="text-blue-500 hover:underline">Forgot Password?</Link>
+            </div>
+            
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gray-800 text-white p-3 rounded font-medium mb-6 hover:bg-gray-700 disabled:opacity-70"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </form>
+          
+          <div className="flex items-center my-6">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="mx-4 text-gray-500">Or sign in with</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
+          
+          <div className="flex gap-4 mb-6">
+            <button 
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="flex-1 border border-gray-300 p-3 rounded font-medium flex items-center justify-center hover:bg-gray-50 disabled:opacity-70"
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+              Google
+            </button>
+            
+            <button 
+              onClick={handleFacebookSignIn}
+              disabled={loading}
+              className="flex-1 border border-gray-300 p-3 rounded font-medium flex items-center justify-center hover:bg-gray-50 disabled:opacity-70"
+            >
+              <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </button>
+          </div>
+          
+          <div className="text-center mt-auto">
             <p className="text-gray-600 mb-6">
-              Chatrooms with daily-curated debates on your favorite topics.
-              <br />Fresh ideas, your kind of people.
+              Don't you have an account? <Link href="/auth/signup" className="text-blue-500 hover:underline">Sign up</Link>
             </p>
             
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md">
-                {error}
-              </div>
-            )}
+            <p className="text-gray-400 text-sm">© 2023 ALL RIGHTS RESERVED</p>
+          </div>
 
-            <form onSubmit={handleSignIn} className="flex-1">
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-gray-700 mb-2">Email</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Example@email.com" 
-                  className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+          {/* Carousel at the bottom of mobile view */}
+          <div className="fixed bottom-0 left-0 right-0 h-56 bg-gray-900 mt-4">
+            {slides.map((slide: Slide, index: number) => (
+              <div 
+                key={`mobile-slide-${index}`}
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                }`}
+              >
+                {/* Background image */}
+                <img 
+                  src={slide.image} 
+                  alt={`Slide ${index + 1}`} 
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-gray-700 mb-2">Password</label>
-                <input 
-                  type="password" 
-                  id="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters" 
-                  className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              
-              <div className="mb-6 text-right">
-                <Link href="/auth/forgot-password" className="text-blue-500 hover:underline">Forgot Password?</Link>
-              </div>
-              
-              <button 
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gray-800 text-white p-3 rounded font-medium mb-6 hover:bg-gray-700 disabled:opacity-70"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </button>
-            </form>
-            
-            <div className="flex items-center my-6">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="mx-4 text-gray-500">Or sign in with</span>
-              <div className="flex-grow border-t border-gray-300"></div>
-            </div>
-            
-            <div className="flex gap-4 mb-6">
-              <button 
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="flex-1 border border-gray-300 p-3 rounded font-medium flex items-center justify-center hover:bg-gray-50 disabled:opacity-70"
-              >
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                </svg>
-                Google
-              </button>
-              
-              <button 
-                onClick={handleFacebookSignIn}
-                disabled={loading}
-                className="flex-1 border border-gray-300 p-3 rounded font-medium flex items-center justify-center hover:bg-gray-50 disabled:opacity-70"
-              >
-                <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-                Facebook
-              </button>
-            </div>
-            
-            <div className="text-center mt-auto">
-              <p className="text-gray-600 mb-6">
-                Don't you have an account? <Link href="/auth/signup" className="text-blue-500 hover:underline">Sign up</Link>
-              </p>
-              
-              <p className="text-gray-400 text-sm">© 2023 ALL RIGHTS RESERVED</p>
-            </div>
-
-            {/* Carousel at the bottom of mobile view */}
-            <div className="fixed bottom-0 left-0 right-0 h-56 bg-gray-900 mt-4">
-              {slides.map((slide, index) => (
-                <div 
-                  key={`mobile-slide-${index}`}
-                  className={`absolute inset-0 transition-opacity duration-1000 ${
-                    index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                  }`}
-                >
-                  {/* Background image */}
-                  <img 
-                    src={slide.image} 
-                    alt={`Slide ${index + 1}`} 
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                  
-                  {/* Dark overlay */}
-                  <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                  
-                  {/* Mobile message with improved styling */}
-                  {slide.messages[mobileMessageIndex] && (
-                    <div className="absolute inset-0 flex items-center justify-center p-4 z-20">
-                      <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
-                        {/* User Avatar for Mobile with debug component */}
-                        <div className="flex-shrink-0 mr-2">
-                          <DebugAvatarImage 
-                            src={getAvatarPath(slide.messages[mobileMessageIndex].username)} 
-                            alt={slide.messages[mobileMessageIndex].username} 
-                          />
+                
+                {/* Dark overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                
+                {/* Mobile message with improved styling */}
+                {slide.messages[mobileMessageIndex] && (
+                  <div className="absolute inset-0 flex items-center justify-center p-4 z-20">
+                    <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
+                      {/* User Avatar for Mobile with debug component */}
+                      <div className="flex-shrink-0 mr-2">
+                        <DebugAvatarImage 
+                          src={getAvatarPath(slide.messages[mobileMessageIndex].username)} 
+                          alt={slide.messages[mobileMessageIndex].username} 
+                        />
+                      </div>
+                      
+                      {/* Message content for Mobile with improved styling */}
+                      <div className="flex flex-col flex-grow">
+                        <div className="text-sm font-semibold text-white mb-1 px-2 py-0.5 bg-black bg-opacity-50 rounded-md">
+                          {slide.messages[mobileMessageIndex].username}
                         </div>
-                        
-                        {/* Message content for Mobile with improved styling */}
-                        <div className="flex flex-col flex-grow">
-                          <div className="text-sm font-semibold text-white mb-1 px-2 py-0.5 bg-black bg-opacity-50 rounded-md">
-                            {slide.messages[mobileMessageIndex].username}
-                          </div>
-                          <div className="rounded-xl px-3 py-2 bg-white bg-opacity-90 text-gray-800 shadow-lg relative">
-                            {slide.messages[mobileMessageIndex].content}
-                            
-                            {/* Improved reaction styling for mobile */}
-                            {slide.messages[mobileMessageIndex].reaction && (
-                              <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1.5 py-1.5 shadow-lg text-sm border border-gray-200">
-                                {slide.messages[mobileMessageIndex].reaction}
-                              </div>
-                            )}
-                          </div>
+                        <div className="rounded-xl px-3 py-2 bg-white bg-opacity-90 text-gray-800 shadow-lg relative">
+                          {slide.messages[mobileMessageIndex].content}
+                          
+                          {/* Improved reaction styling for mobile */}
+                          {slide.messages[mobileMessageIndex].reaction && (
+                            <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1.5 py-1.5 shadow-lg text-sm border border-gray-200">
+                              {slide.messages[mobileMessageIndex].reaction}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                  )}
-                  
-                  {/* Bottom bar with topic */}
-                  <div 
-                    className="absolute bottom-0 left-0 right-0 py-2 px-4 text-center z-30"
-                    style={{ backgroundColor: slide.bottomBar.backgroundColor }}
-                  >
-                    <h3 className="text-white text-sm font-medium">
-                      {slide.bottomBar.text}
-                    </h3>
                   </div>
+                )}
+                
+                {/* Bottom bar with topic */}
+                <div 
+                  className="absolute bottom-0 left-0 right-0 py-2 px-4 text-center z-30"
+                  style={{ backgroundColor: slide.bottomBar.backgroundColor }}
+                >
+                  <h3 className="text-white text-sm font-medium">
+                    {slide.bottomBar.text}
+                  </h3>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
