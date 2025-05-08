@@ -56,13 +56,12 @@ interface ScreenSection {
 // Add utility function for avatar paths
 const getAvatarPath = (username: string): string => {
   const cleanUsername = username.replace(/\s+/g, '');
-  return `/user_avatars/${cleanUsername}.png`;
+  return `/${cleanUsername}.png`;
 };
 
 // Add DebugAvatarImage component
 const DebugAvatarImage = ({ src, alt }: { src: string; alt: string }) => {
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const [attempts, setAttempts] = useState(0);
   
   useEffect(() => {
     console.log(`Attempting to load avatar: ${src}`);
@@ -75,17 +74,9 @@ const DebugAvatarImage = ({ src, alt }: { src: string; alt: string }) => {
     img.onerror = () => {
       console.error(`Failed to load avatar: ${src}`);
       setStatus('error');
-      
-      if (attempts < 1) {
-        setAttempts(prev => prev + 1);
-        const newSrc = src.endsWith('.png') 
-          ? src.replace('.png', '.webp') 
-          : src.replace('.webp', '.png');
-        console.log(`Retrying with alternative format: ${newSrc}`);
-      }
     };
     img.src = src;
-  }, [src, attempts]);
+  }, [src]);
   
   return (
     <div className="relative">
