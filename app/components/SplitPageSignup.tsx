@@ -4,20 +4,47 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-// Add AvatarImage component for better error handling
-const AvatarImage = ({ src, alt }) => {
-  const [error, setError] = useState(false);
+// Add utility function for avatar paths
+const getAvatarPath = (username) => `/user_avatars/${username}.webp`;
+
+// Add DebugAvatarImage component
+const DebugAvatarImage = ({ src, alt }) => {
+  const [status, setStatus] = useState('loading');
+  const [attempts, setAttempts] = useState(0);
+  
+  useEffect(() => {
+    console.log(`Attempting to load: ${src}`);
+    
+    const img = new Image();
+    img.onload = () => setStatus('loaded');
+    img.onerror = () => {
+      setStatus('error');
+      console.error(`Failed to load: ${src}`);
+      
+      if (attempts < 1) {
+        setAttempts(prev => prev + 1);
+        const newSrc = src.endsWith('.png') 
+          ? src.replace('.png', '.webp') 
+          : src.replace('.webp', '.png');
+        console.log(`Retrying with: ${newSrc}`);
+      }
+    };
+    img.src = src;
+  }, [src, attempts]);
   
   return (
-    <img 
-      src={error ? '/default-avatar.png' : src}
-      alt={alt}
-      className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-      onError={(e) => {
-        console.error(`Failed to load image: ${src}`);
-        setError(true);
-      }}
-    />
+    <div className="relative">
+      <img 
+        src={status === 'error' ? '/default-avatar.svg' : src}
+        alt={alt}
+        className={`w-8 h-8 rounded-full object-cover border-2 ${
+          status === 'loaded' ? 'border-green-500' : 'border-gray-200'
+        }`}
+      />
+      {status === 'error' && (
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+      )}
+    </div>
   );
 };
 
@@ -488,32 +515,81 @@ const SplitPageSignup = () => {
     timersRef.current = [];
   };
 
-  // Add createBubblePositions function
-  const createBubblePositions = (count) => {
-    const grid = [];
-    const rows = 6;
-    const cols = 4;
+  // Add createNonOverlappingPositions function
+  const createNonOverlappingPositions = (messageCount) => {
+    const screenSections = [
+      { xStart: 5, xEnd: 30, yStart: 10, yEnd: 35 },    // Top left
+      { xStart: 70, xEnd: 95, yStart: 10, yEnd: 35 },   // Top right
+      { xStart: 5, xEnd: 30, yStart: 40, yEnd: 65 },    // Middle left
+      { xStart: 70, xEnd: 95, yStart: 40, yEnd: 65 },   // Middle right
+      { xStart: 5, xEnd: 30, yStart: 70, yEnd: 85 },    // Bottom left
+      { xStart: 70, xEnd: 95, yStart: 70, yEnd: 85 },   // Bottom right
+    ];
     
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        grid.push({
-          top: `${10 + (row * 13)}%`,
-          left: col < 2 ? `${5 + (col * 20)}%` : null,
-          right: col >= 2 ? `${5 + ((3-col) * 20)}%` : null,
-          zIndex: 20 + (row * cols + col)
-        });
+    const positions = [];
+    const usedAreas = [];
+    const bubbleSize = { width: 300, height: 100 };
+    const safetyMargin = 20;
+    
+    const wouldOverlap = (x, y) => {
+      for (const area of usedAreas) {
+        if (
+          x < area.x + area.width + safetyMargin &&
+          x + bubbleSize.width + safetyMargin > area.x &&
+          y < area.y + area.height + safetyMargin &&
+          y + bubbleSize.height + safetyMargin > area.y
+        ) {
+          return true;
+        }
       }
+      return false;
+    };
+    
+    const assignedSections = [...Array(messageCount)].map((_, i) => 
+      i % screenSections.length
+    ).sort(() => Math.random() - 0.5);
+    
+    for (let i = 0; i < messageCount; i++) {
+      const section = screenSections[assignedSections[i]];
+      let attempts = 0;
+      let position;
+      
+      do {
+        const xPercent = Math.random() * (section.xEnd - section.xStart) + section.xStart;
+        const yPercent = Math.random() * (section.yEnd - section.yStart) + section.yStart;
+        
+        position = {
+          left: xPercent < 50 ? `${xPercent}%` : null,
+          right: xPercent >= 50 ? `${100 - xPercent}%` : null,
+          top: `${yPercent}%`,
+          x: (xPercent / 100) * window.innerWidth,
+          y: (yPercent / 100) * window.innerHeight,
+          width: bubbleSize.width,
+          height: bubbleSize.height
+        };
+        
+        attempts++;
+      } while (wouldOverlap(position.x, position.y) && attempts < 20);
+      
+      positions.push(position);
+      usedAreas.push({
+        x: position.x,
+        y: position.y,
+        width: bubbleSize.width,
+        height: bubbleSize.height
+      });
     }
     
-    return grid.sort(() => Math.random() - 0.5).slice(0, count);
+    return positions;
   };
 
-  // Add effect to update bubble positions when slide changes
+  // Update effect to use new positioning
   useEffect(() => {
-    if (slides[activeSlide]?.messages) {
-      setBubblePositions(createBubblePositions(slides[activeSlide].messages.length));
+    if (!isMobile && typeof window !== 'undefined') {
+      const messages = slides[activeSlide]?.messages || [];
+      setBubblePositions(createNonOverlappingPositions(messages.length));
     }
-  }, [activeSlide]);
+  }, [activeSlide, isMobile]);
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
@@ -641,7 +717,7 @@ const SplitPageSignup = () => {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             
-            {/* Desktop message bubbles - Updated with improved positioning */}
+            {/* Desktop message bubbles - Updated with improved positioning and styling */}
             {slide.messages.map((message, index) => {
               const isVisible = visibleMessages.includes(message.id);
               
@@ -654,8 +730,8 @@ const SplitPageSignup = () => {
                   key={`desktop-message-${message.id}`}
                   style={{
                     position: 'absolute',
-                    zIndex: position.zIndex || 20,
-                    maxWidth: '270px',
+                    zIndex: 20 + index,
+                    maxWidth: '260px',
                     top: position.top,
                     left: position.left,
                     right: position.right,
@@ -663,20 +739,22 @@ const SplitPageSignup = () => {
                   }}
                 >
                   <div className={`flex ${message.position === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
-                    {/* User Avatar with error handling */}
+                    {/* User Avatar with debug component */}
                     <div className={`flex-shrink-0 ${message.position === 'left' ? 'mr-2' : 'ml-2'}`}>
-                      <AvatarImage src={message.avatar} alt={message.username} />
+                      <DebugAvatarImage src={getAvatarPath(message.username)} alt={message.username} />
                     </div>
                     
-                    {/* Message Content */}
+                    {/* Message Content with improved styling */}
                     <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
-                      <div className="text-sm font-semibold text-white mb-1">{message.username}</div>
-                      <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+                      <div className="text-sm font-semibold text-white mb-1 px-2 py-0.5 bg-black bg-opacity-50 rounded-md">
+                        {message.username}
+                      </div>
+                      <div className="rounded-xl px-3 py-2 bg-white bg-opacity-90 text-gray-800 shadow-lg relative">
                         {message.content}
                         
-                        {/* Reaction */}
+                        {/* Improved reaction styling */}
                         {message.reaction && (
-                          <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
+                          <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1.5 py-1.5 shadow-lg text-sm border border-gray-200">
                             {message.reaction}
                           </div>
                         )}
@@ -825,29 +903,29 @@ const SplitPageSignup = () => {
                   {/* Dark overlay */}
                   <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                   
-                  {/* Mobile message with AvatarImage component */}
+                  {/* Mobile message with improved styling */}
                   {slide.messages[mobileMessageIndex] && (
                     <div className="absolute inset-0 flex items-center justify-center p-4 z-20">
                       <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
-                        {/* User Avatar for Mobile with error handling */}
+                        {/* User Avatar for Mobile with debug component */}
                         <div className="flex-shrink-0 mr-2">
-                          <AvatarImage 
-                            src={slide.messages[mobileMessageIndex].avatar} 
+                          <DebugAvatarImage 
+                            src={getAvatarPath(slide.messages[mobileMessageIndex].username)} 
                             alt={slide.messages[mobileMessageIndex].username} 
                           />
                         </div>
                         
-                        {/* Message content for Mobile */}
+                        {/* Message content for Mobile with improved styling */}
                         <div className="flex flex-col flex-grow">
-                          <div className="text-sm font-semibold text-white mb-1">
+                          <div className="text-sm font-semibold text-white mb-1 px-2 py-0.5 bg-black bg-opacity-50 rounded-md">
                             {slide.messages[mobileMessageIndex].username}
                           </div>
-                          <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+                          <div className="rounded-xl px-3 py-2 bg-white bg-opacity-90 text-gray-800 shadow-lg relative">
                             {slide.messages[mobileMessageIndex].content}
                             
-                            {/* Reaction for Mobile */}
+                            {/* Improved reaction styling for mobile */}
                             {slide.messages[mobileMessageIndex].reaction && (
-                              <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
+                              <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1.5 py-1.5 shadow-lg text-sm border border-gray-200">
                                 {slide.messages[mobileMessageIndex].reaction}
                               </div>
                             )}
