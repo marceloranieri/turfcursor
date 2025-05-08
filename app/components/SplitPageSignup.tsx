@@ -30,7 +30,7 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'JediMaster42',
-          avatar: '/user_avatars/JediMaster42.png',
+          avatar: '/user_avatars/JediMaster42.webp',
           content: "Luke couldn't even resist a hologram of his sister lmao, Frodo carried that ring for MONTHS 💪", 
           position: 'left',
           top: '15%',
@@ -40,7 +40,7 @@ const SplitPageSignup = () => {
         { 
           id: 2, 
           username: 'Tolkien_Lore', 
-          avatar: '/user_avatars/Tolkien_Lore.png',
+          avatar: '/user_avatars/Tolkien_Lore.webp',
           content: "The Ring corrupts power. Luke's stronger = faster fall", 
           position: 'right',
           top: '25%',
@@ -50,7 +50,7 @@ const SplitPageSignup = () => {
         { 
           id: 3, 
           username: 'ForceIsWithMe', 
-          avatar: '/user_avatars/ForceIsWithMe.png',
+          avatar: '/user_avatars/ForceIsWithMe.webp',
           content: "Y'all forgetting Luke resisted Emperor's temptation…", 
           position: 'left',
           top: '35%',
@@ -60,7 +60,7 @@ const SplitPageSignup = () => {
         { 
           id: 4, 
           username: 'HobbitFeet99', 
-          avatar: '/user_avatars/HobbitFeet99.png',
+          avatar: '/user_avatars/HobbitFeet99.webp',
           content: "Luke? No way. Read the book: The Ring isn't about willpower, it's about humility!", 
           position: 'right',
           top: '45%',
@@ -70,7 +70,7 @@ const SplitPageSignup = () => {
         { 
           id: 5, 
           username: 'DarthFrodo', 
-          avatar: '/user_avatars/DarthFrodo.png',
+          avatar: '/user_avatars/DarthFrodo.webp',
           content: "Plot twist: Luke puts on the Ring and becomes invisible to the Force. Checkmate, Palpatine 🧠", 
           position: 'left',
           top: '55%',
@@ -80,7 +80,7 @@ const SplitPageSignup = () => {
         { 
           id: 6, 
           username: 'EagleEyes', 
-          avatar: '/user_avatars/EagleEyes.png',
+          avatar: '/user_avatars/EagleEyes.webp',
           content: "Frodo literally failed at the end though?? Sam was the real MVP of that quest", 
           position: 'right',
           top: '65%',
@@ -90,7 +90,7 @@ const SplitPageSignup = () => {
         { 
           id: 7, 
           username: 'GondorCalling', 
-          avatar: '/user_avatars/GondorCalling.png',
+          avatar: '/user_avatars/GondorCalling.webp',
           content: "The Force is basically just midichlorian mind control. The Ring would use that connection.", 
           position: 'left',
           bottom: '25%',
@@ -100,7 +100,7 @@ const SplitPageSignup = () => {
         { 
           id: 8, 
           username: 'MiddleEarthScience', 
-          avatar: '/user_avatars/MiddleEarthScience.png',
+          avatar: '/user_avatars/MiddleEarthScience.webp',
           content: "Am I the only one wondering if lightsabers could cut the Ring?", 
           position: 'right',
           bottom: '15%',
@@ -121,7 +121,7 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'BeatsMaker95', 
-          avatar: '/user_avatars/BeatsMaker95.png',
+          avatar: '/user_avatars/BeatsMaker95.webp',
           content: "Sampling's just digital collage. Good artists copy, great artists steal", 
           position: 'left',
           top: '15%',
@@ -131,7 +131,7 @@ const SplitPageSignup = () => {
         { 
           id: 2, 
           username: 'OldSchoolDJ', 
-          avatar: '/user_avatars/OldSchoolDJ.png',
+          avatar: '/user_avatars/OldSchoolDJ.webp',
           content: "Kids these days think pressing ctrl+c ctrl+v is 'producing' smh my head", 
           position: 'right',
           top: '25%',
@@ -141,7 +141,7 @@ const SplitPageSignup = () => {
         { 
           id: 3, 
           username: 'MusicTheory101', 
-          avatar: '/user_avatars/MusicTheory101.png',
+          avatar: '/user_avatars/MusicTheory101.webp',
           content: "The problem isn't sampling, it's LAZY sampling. Add something new or don't bother!", 
           position: 'left',
           top: '35%',
@@ -151,7 +151,7 @@ const SplitPageSignup = () => {
         { 
           id: 4, 
           username: 'VinylOnly', 
-          avatar: '/user_avatars/VinylOnly.png',
+          avatar: '/user_avatars/VinylOnly.webp',
           content: "There hasn't been an original thought in music since 1978.", 
           position: 'right',
           top: '45%',
@@ -161,7 +161,7 @@ const SplitPageSignup = () => {
         { 
           id: 5, 
           username: 'StreamingKing', 
-          avatar: '/user_avatars/StreamingKing.png',
+          avatar: '/user_avatars/StreamingKing.webp',
           content: "Imagine if we told chefs they can't use ingredients others discovered.", 
           position: 'left',
           top: '55%',
@@ -171,7 +171,7 @@ const SplitPageSignup = () => {
         { 
           id: 6, 
           username: 'AutotunedOut', 
-          avatar: '/user_avatars/AutotunedOut.png',
+          avatar: '/user_avatars/AutotunedOut.webp',
           content: "Sampling used to require skill and crate-digging tbh…", 
           position: 'right',
           top: '65%',
@@ -181,7 +181,7 @@ const SplitPageSignup = () => {
         { 
           id: 7, 
           username: 'DanceMixGirl', 
-          avatar: '/user_avatars/DanceMixGirl.png',
+          avatar: '/user_avatars/DanceMixGirl.webp',
           content: "Without sampling we wouldn't have had Daft Punk, Chemical Brothers…", 
           position: 'left',
           bottom: '22%',
@@ -191,7 +191,7 @@ const SplitPageSignup = () => {
         { 
           id: 8, 
           username: 'MusicalPurist', 
-          avatar: '/user_avatars/MusicalPurist.png',
+          avatar: '/user_avatars/MusicalPurist.webp',
           content: "There's a difference between being influenced by something and straight up theft💰", 
           position: 'right',
           bottom: '12%',
@@ -212,7 +212,7 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'OldGamerDad', 
-          avatar: '/user_avatars/OldGamerDad.png',
+          avatar: '/user_avatars/OldGamerDad.webp',
           content: "My 8yo downloads 5 new games daily, plays each for 3 mins between ads. Kid's casino", 
           position: 'left',
           top: '15%',
@@ -222,7 +222,7 @@ const SplitPageSignup = () => {
         { 
           id: 2, 
           username: 'DevLife24', 
-          avatar: '/user_avatars/DevLife24.png',
+          avatar: '/user_avatars/DevLife24.webp',
           content: "As a small dev, those 'trash games' pay my bills. Not everyone has AAA studio resources 🤷‍♂️", 
           position: 'right',
           top: '25%',
@@ -232,7 +232,7 @@ const SplitPageSignup = () => {
         { 
           id: 3, 
           username: 'BrainRotGang', 
-          avatar: '/user_avatars/BrainRotGang.png',
+          avatar: '/user_avatars/BrainRotGang.webp',
           content: "Kids' 1st gaming experience is watching ads to get in-game currency, sad…", 
           position: 'left',
           top: '35%',
@@ -242,7 +242,7 @@ const SplitPageSignup = () => {
         { 
           id: 4, 
           username: 'MobileCasual', 
-          avatar: '/user_avatars/MobileCasual.png',
+          avatar: '/user_avatars/MobileCasual.webp',
           content: "The cream rises. Good mobile games still exist, you just gotta be willing to actually pay for them.", 
           position: 'right',
           top: '45%',
@@ -252,7 +252,7 @@ const SplitPageSignup = () => {
         { 
           id: 5, 
           username: 'GameDesign101', 
-          avatar: '/user_avatars/GameDesign101.png',
+          avatar: '/user_avatars/GameDesign101.webp',
           content: "Hot take: bad games teach kids to recognize quality. I played plenty of trash NES games growing up too 🕹️", 
           position: 'left',
           top: '55%',
@@ -262,7 +262,7 @@ const SplitPageSignup = () => {
         { 
           id: 6, 
           username: 'TouchScreenHater', 
-          avatar: '/user_avatars/TouchScreenHater.png',
+          avatar: '/user_avatars/TouchScreenHater.webp',
           content: "Remember when games were meant to be fun?", 
           position: 'right',
           top: '65%',
@@ -272,7 +272,7 @@ const SplitPageSignup = () => {
         { 
           id: 7, 
           username: 'AdBlockPlus', 
-          avatar: '/user_avatars/AdBlockPlus.png',
+          avatar: '/user_avatars/AdBlockPlus.webp',
           content: "Parents are using phones as babysitters. The games are just filling market demand,.", 
           position: 'left',
           bottom: '22%',
@@ -282,7 +282,7 @@ const SplitPageSignup = () => {
         { 
           id: 8, 
           username: 'RetroRevival', 
-          avatar: '/user_avatars/RetroRevival.png',
+          avatar: '/user_avatars/RetroRevival.webp',
           content: "Mobile gaming was a mistake. Return to gameboy. Reject modernity. Embrace cartridge. 🎮", 
           position: 'right',
           bottom: '12%',
@@ -303,7 +303,7 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'GrassIsGreener', 
-          avatar: '/user_avatars/GrassIsGreener.png',
+          avatar: '/user_avatars/GrassIsGreener.webp',
           content: "Loving Turf so far! Maybe add option to save custom map layouts?", 
           position: 'left',
           top: '30%',
@@ -313,7 +313,7 @@ const SplitPageSignup = () => {
         { 
           id: 2, 
           username: 'NewUser23', 
-          avatar: '/user_avatars/NewUser23.png',
+          avatar: '/user_avatars/NewUser23.webp',
           content: "Interface is clean but took me a while to figure out how friends lists work 👍", 
           position: 'right',
           top: '50%',
@@ -323,7 +323,7 @@ const SplitPageSignup = () => {
         { 
           id: 3, 
           username: 'RegularJoe', 
-          avatar: '/user_avatars/RegularJoe.png',
+          avatar: '/user_avatars/RegularJoe.webp',
           content: "The notification system needs work guys 📱", 
           position: 'left',
           bottom: '30%',
