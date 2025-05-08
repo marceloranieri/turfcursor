@@ -964,23 +964,10 @@ const SplitPageSignup = () => {
                   <div className={`flex ${message.position === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
                     {/* User avatar with correct path */}
                     <div className={`flex-shrink-0 ${message.position === 'left' ? 'mr-2' : 'ml-2'}`}>
-                      <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-2 border-gray-200 relative">
-                        {/* Fallback letter */}
-                        <span className="text-gray-700 font-bold absolute">
-                          {message.username.charAt(0).toUpperCase()}
-                        </span>
-                        
-                        {/* Try loading the image with absolute URL */}
-                        <img 
-                          src={`/user_avatars/${message.username}.png`}
-                          onError={(e) => {
-                            console.log(`Failed to load avatar for ${message.username}`);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                          alt={message.username}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                      <DebugAvatarImage 
+                        src={getAvatarPath(message.username)}
+                        alt={message.username}
+                      />
                     </div>
                     
                     {/* Message Content */}
@@ -1148,25 +1135,12 @@ const SplitPageSignup = () => {
                       className="absolute inset-0 flex items-center justify-center p-4 z-50"
                     >
                       <div className="w-4/5 mx-auto flex animate-fadeIn" style={{ maxWidth: '300px' }}>
-                        {/* User Avatar for Mobile with simple letter fallback */}
+                        {/* User Avatar for Mobile */}
                         <div className="flex-shrink-0 mr-2">
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-2 border-gray-200 relative">
-                            {/* Fallback letter */}
-                            <span className="text-gray-700 font-bold absolute">
-                              {slide.messages[mobileMessageIndex].username.charAt(0).toUpperCase()}
-                            </span>
-                            
-                            {/* Try loading the image with absolute URL */}
-                            <img 
-                              src={`/user_avatars/${slide.messages[mobileMessageIndex].username}.png`}
-                              onError={(e) => {
-                                console.log(`Failed to load mobile avatar for ${slide.messages[mobileMessageIndex].username}`);
-                                e.currentTarget.style.display = 'none';
-                              }}
-                              alt={slide.messages[mobileMessageIndex].username}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+                          <DebugAvatarImage 
+                            src={getAvatarPath(slide.messages[mobileMessageIndex].username)}
+                            alt={slide.messages[mobileMessageIndex].username}
+                          />
                         </div>
                         
                         {/* Message content for Mobile */}
