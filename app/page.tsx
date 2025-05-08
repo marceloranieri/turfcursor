@@ -1,5 +1,5 @@
-import SplitPageSignup from '@/components/SplitPageSignup';
-import '@/components/splitPageSignup.css';
+import SplitPageSignup from './components/SplitPageSignup';
+import './components/splitPageSignup.css';
 
 export default function Home() {
   return (
