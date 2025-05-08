@@ -6,22 +6,25 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Add type definitions
 interface Message {
-  id: number;
+  id: string;
   username: string;
   avatar: string;
   content: string;
-  position: string;
   reaction: string | null;
+  position: 'left' | 'right';
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
 }
 
 interface Slide {
-  background: string;
+  id: string;
   image: string;
   messages: Message[];
   bottomBar: {
     text: string;
     backgroundColor: string;
-    textColor: string;
   };
 }
 
@@ -52,7 +55,7 @@ interface ScreenSection {
 // Add utility function for avatar paths
 const getAvatarPath = (username: string): string => {
   const cleanUsername = username.replace(/\s+/g, '');
-  return `/user_avatars/${cleanUsername}.webp`;
+  return `/users-avatars/${cleanUsername}.webp`;
 };
 
 // Add DebugAvatarImage component
@@ -96,10 +99,43 @@ const DebugAvatarImage = ({ src, alt }: { src: string; alt: string }) => {
   );
 };
 
+// ChatBubble component to handle individual messages
+const ChatBubble = ({ message, position }: { message: Message; position: 'left' | 'right' }) => {
+  const { username, avatar, content, reaction } = message;
+  
+  return (
+    <div className={`flex ${position === 'left' ? 'flex-row' : 'flex-row-reverse'} mb-4 animate-fadeIn`}>
+      {/* User Avatar */}
+      <div className={`flex-shrink-0 ${position === 'left' ? 'mr-2' : 'ml-2'}`}>
+        <img 
+          src={avatar} 
+          alt={username} 
+          className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+        />
+      </div>
+      
+      {/* Message Content */}
+      <div className={`flex flex-col ${position === 'left' ? 'items-start' : 'items-end'}`}>
+        <div className="text-sm font-semibold text-white mb-1">{username}</div>
+        <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+          {content}
+          
+          {/* Reaction */}
+          {reaction && (
+            <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
+              {reaction}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SplitPageSignup = () => {
   // Essential state
   const [activeSlide, setActiveSlide] = useState(0);
-  const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
+  const [visibleMessages, setVisibleMessages] = useState<string[]>([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -114,21 +150,21 @@ const SplitPageSignup = () => {
   const supabase = createClientComponentClient();
   
   // Content data - updated with user avatars
-  const slides = [
+  const slides: Slide[] = [
     {
-      background: "bg-gray-900",
+      id: "1",
       image: "/star_rings_turf.webp",
       messages: [
         { 
-          id: 1, 
+          id: "1", 
           username: 'JediMaster42',
           avatar: '/users-avatars/JediMaster42.webp',
-          content: "Luke couldn't even resist a hologram of his sister lmao, Frodo carried that ring for MONTHS 💪", 
-          position: 'left',
-          reaction: null
+          content: "The Force is strong with this one... but the Ring's power is stronger. Luke would've been corrupted faster than Frodo.",
+          reaction: "🤔",
+          position: 'left'
         },
         { 
-          id: 2, 
+          id: "2", 
           username: 'Tolkien_Lore', 
           avatar: '/users-avatars/Tolkien_Lore.webp',
           content: "The Ring corrupts power. Luke's stronger = faster fall", 
@@ -136,7 +172,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 3, 
+          id: "3", 
           username: 'ForceIsWithMe', 
           avatar: '/users-avatars/ForceIsWithMe.webp',
           content: "Y'all forgetting Luke resisted Emperor's temptation…", 
@@ -144,7 +180,7 @@ const SplitPageSignup = () => {
           reaction: '👍'
         },
         { 
-          id: 4, 
+          id: "4", 
           username: 'HobbitFeet99', 
           avatar: '/users-avatars/HobbitFeet99.webp',
           content: "Luke? No way. Read the book: The Ring isn't about willpower, it's about humility!", 
@@ -152,7 +188,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 5, 
+          id: "5", 
           username: 'DarthFrodo', 
           avatar: '/users-avatars/DarthFrodo.webp',
           content: "Plot twist: Luke puts on the Ring and becomes invisible to the Force. Checkmate, Palpatine 🧠", 
@@ -160,7 +196,7 @@ const SplitPageSignup = () => {
           reaction: '🤣'
         },
         { 
-          id: 6, 
+          id: "6", 
           username: 'EagleEyes', 
           avatar: '/users-avatars/EagleEyes.webp',
           content: "Frodo literally failed at the end though?? Sam was the real MVP of that quest", 
@@ -168,7 +204,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 7, 
+          id: "7", 
           username: 'GondorCalling', 
           avatar: '/users-avatars/GondorCalling.webp',
           content: "The Force is basically just midichlorian mind control. The Ring would use that connection.", 
@@ -176,7 +212,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 8, 
+          id: "8", 
           username: 'MiddleEarthScience', 
           avatar: '/users-avatars/MiddleEarthScience.webp',
           content: "Am I the only one wondering if lightsabers could cut the Ring?", 
@@ -187,15 +223,14 @@ const SplitPageSignup = () => {
       bottomBar: {
         backgroundColor: "#0095f6",
         text: "Could Luke have resisted the One Ring better than Frodo? Or the Force just speeds up corruption?",
-        textColor: "white"
       }
     },
     {
-      background: "bg-gray-900",
+      id: "2",
       image: "/music_turf.webp",
       messages: [
         { 
-          id: 1, 
+          id: "1", 
           username: 'BeatsMaker95', 
           avatar: '/users-avatars/BeatsMaker95.webp',
           content: "Sampling's just digital collage. Good artists copy, great artists steal", 
@@ -203,7 +238,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 2, 
+          id: "2", 
           username: 'OldSchoolDJ', 
           avatar: '/users-avatars/OldSchoolDJ.webp',
           content: "Kids these days think pressing ctrl+c ctrl+v is 'producing' smh my head", 
@@ -211,7 +246,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 3, 
+          id: "3", 
           username: 'MusicTheory101', 
           avatar: '/users-avatars/MusicTheory101.webp',
           content: "The problem isn't sampling, it's LAZY sampling. Add something new or don't bother!", 
@@ -219,7 +254,7 @@ const SplitPageSignup = () => {
           reaction: '💯'
         },
         { 
-          id: 4, 
+          id: "4", 
           username: 'VinylOnly', 
           avatar: '/users-avatars/VinylOnly.webp',
           content: "There hasn't been an original thought in music since 1978.", 
@@ -227,7 +262,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 5, 
+          id: "5", 
           username: 'StreamingKing', 
           avatar: '/users-avatars/StreamingKing.webp',
           content: "Imagine if we told chefs they can't use ingredients others discovered.", 
@@ -235,7 +270,7 @@ const SplitPageSignup = () => {
           reaction: '👏'
         },
         { 
-          id: 6, 
+          id: "6", 
           username: 'AutotunedOut', 
           avatar: '/users-avatars/AutotunedOut.webp',
           content: "Sampling used to require skill and crate-digging tbh…", 
@@ -243,7 +278,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 7, 
+          id: "7", 
           username: 'DanceMixGirl', 
           avatar: '/users-avatars/DanceMixGirl.webp',
           content: "Without sampling we wouldn't have had Daft Punk, Chemical Brothers…", 
@@ -251,7 +286,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 8, 
+          id: "8", 
           username: 'MusicalPurist', 
           avatar: '/users-avatars/MusicalPurist.webp',
           content: "There's a difference between being influenced by something and straight up theft💰", 
@@ -262,15 +297,14 @@ const SplitPageSignup = () => {
       bottomBar: {
         backgroundColor: "#0095f6",
         text: "Is sampling the death of creativity? The line between art and lazy theft's getting blurrier.",
-        textColor: "white"
       }
     },
     {
-      background: "bg-gray-900",
+      id: "3",
       image: "/gamer_turf.webp",
       messages: [
         { 
-          id: 1, 
+          id: "1", 
           username: 'OldGamerDad', 
           avatar: '/users-avatars/OldGamerDad.webp',
           content: "My 8yo downloads 5 new games daily, plays each for 3 mins between ads. Kid's casino", 
@@ -278,7 +312,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 2, 
+          id: "2", 
           username: 'DevLife24', 
           avatar: '/users-avatars/DevLife24.webp',
           content: "As a small dev, those 'trash games' pay my bills. Not everyone has AAA studio resources 🤷‍♂️", 
@@ -286,7 +320,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 3, 
+          id: "3", 
           username: 'BrainRotGang', 
           avatar: '/users-avatars/BrainRotGang.webp',
           content: "Kids' 1st gaming experience is watching ads to get in-game currency, sad…", 
@@ -294,7 +328,7 @@ const SplitPageSignup = () => {
           reaction: '😢'
         },
         { 
-          id: 4, 
+          id: "4", 
           username: 'MobileCasual', 
           avatar: '/users-avatars/MobileCasual.webp',
           content: "The cream rises. Good mobile games still exist, you just gotta be willing to actually pay for them.", 
@@ -302,7 +336,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 5, 
+          id: "5", 
           username: 'GameDesign101', 
           avatar: '/users-avatars/GameDesign101.webp',
           content: "Hot take: bad games teach kids to recognize quality. I played plenty of trash NES games growing up too 🕹️", 
@@ -310,7 +344,7 @@ const SplitPageSignup = () => {
           reaction: '😂'
         },
         { 
-          id: 6, 
+          id: "6", 
           username: 'TouchScreenHater', 
           avatar: '/users-avatars/TouchScreenHater.webp',
           content: "Remember when games were meant to be fun?", 
@@ -318,7 +352,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 7, 
+          id: "7", 
           username: 'AdBlockPlus', 
           avatar: '/users-avatars/AdBlockPlus.webp',
           content: "Parents are using phones as babysitters. The games are just filling market demand,.", 
@@ -326,7 +360,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 8, 
+          id: "8", 
           username: 'RetroRevival', 
           avatar: '/users-avatars/RetroRevival.webp',
           content: "Mobile gaming was a mistake. Return to gameboy. Reject modernity. Embrace cartridge. 🎮", 
@@ -337,15 +371,14 @@ const SplitPageSignup = () => {
       bottomBar: {
         backgroundColor: "#0095f6",
         text: "Quick dev, cheap games: app stores flooded with ad-soaked trash. Is the next gen of gamers growing up braindead?",
-        textColor: "white"
       }
     },
     {
-      background: "bg-gray-900",
+      id: "4",
       image: "/Turf_App.webp",
       messages: [
         { 
-          id: 1, 
+          id: "1", 
           username: 'GrassIsGreener', 
           avatar: '/users-avatars/GrassIsGreener.webp',
           content: "Loving Turf so far! Maybe add option to save custom map layouts?", 
@@ -353,7 +386,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 2, 
+          id: "2", 
           username: 'NewUser23', 
           avatar: '/users-avatars/NewUser23.webp',
           content: "Interface is clean but took me a while to figure out how friends lists work 👍", 
@@ -361,7 +394,7 @@ const SplitPageSignup = () => {
           reaction: null
         },
         { 
-          id: 3, 
+          id: "3", 
           username: 'RegularJoe', 
           avatar: '/users-avatars/RegularJoe.webp',
           content: "The notification system needs work guys 📱", 
@@ -372,7 +405,6 @@ const SplitPageSignup = () => {
       bottomBar: {
         backgroundColor: "#0095f6",
         text: "From Beta to mainstream. Help us make Turf better.",
-        textColor: "white"
       }
     },
   ];
@@ -425,16 +457,16 @@ const SplitPageSignup = () => {
     // Reset visible messages
     setVisibleMessages([]);
     
-    // Show messages progressively
+    // Show messages progressively with improved timing
     slides[activeSlide].messages.forEach((message, index) => {
       const timer = setTimeout(() => {
         setVisibleMessages(prev => [...prev, message.id]);
-      }, 1000 + (index * 800));
+      }, 1000 + (index * 800)); // Slightly longer delay for smoother appearance
       
       timersRef.current.push(timer);
     });
     
-    // Auto-advance carousel after delay
+    // Auto-advance carousel after all messages have appeared
     const slideChangeTime = 1000 + (slides[activeSlide].messages.length * 800) + 4000;
     const advanceTimer = setTimeout(() => {
       setActiveSlide((prev) => (prev + 1) % slides.length);
@@ -638,7 +670,7 @@ const SplitPageSignup = () => {
   }, [activeSlide, isMobile]);
 
   // Add message bubble rendering function
-  const renderMessageBubbles = (slide: Slide, visibleMessages: number[]) => {
+  const renderMessageBubbles = (slide: Slide, visibleMessages: string[]) => {
     // Group messages into distinct columns to prevent overlap
     const leftColumnMessages: Message[] = [];
     const rightColumnMessages: Message[] = [];
@@ -857,8 +889,33 @@ const SplitPageSignup = () => {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             
-            {/* Desktop message bubbles - Updated with structured layout */}
-            {renderMessageBubbles(slide, visibleMessages)}
+            {/* Desktop message bubbles - Enhanced with better fade-in animations */}
+            {slide.messages.map(message => {
+              const isVisible = visibleMessages.includes(message.id);
+              
+              if (!isVisible) return null;
+              
+              return (
+                <div
+                  key={`desktop-message-${message.id}`}
+                  style={{
+                    position: 'absolute',
+                    zIndex: 20,
+                    maxWidth: '300px',
+                    ...(message.top && { top: message.top }),
+                    ...(message.bottom && { bottom: message.bottom }),
+                    ...(message.left && { left: message.left }),
+                    ...(message.right && { right: message.right }),
+                    animation: 'fadeIn 0.5s ease-out forwards'
+                  }}
+                >
+                  <ChatBubble 
+                    message={message} 
+                    position={message.position} 
+                  />
+                </div>
+              );
+            })}
             
             {/* Bottom bar with topic */}
             <div 
@@ -978,69 +1035,41 @@ const SplitPageSignup = () => {
             <p className="text-gray-400 text-sm">© 2023 ALL RIGHTS RESERVED</p>
           </div>
 
-          {/* Carousel at the bottom of mobile view */}
-          <div className="fixed bottom-0 left-0 right-0 h-56 bg-gray-900 mt-4">
-            {slides.map((slide: Slide, index: number) => (
-              <div 
-                key={`mobile-slide-${index}`}
-                className={`absolute inset-0 transition-opacity duration-1000 ${
-                  index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                }`}
-              >
-                {/* Background image */}
-                <img 
-                  src={slide.image} 
-                  alt={`Slide ${index + 1}`} 
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+          {/* Single message for mobile */}
+          {slides[activeSlide].messages[mobileMessageIndex] && (
+            <div 
+              className="absolute inset-0 flex items-center justify-center p-4 z-20"
+              style={{ animation: 'fadeIn 0.5s ease-out' }}
+            >
+              <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
+                {/* User Avatar for Mobile */}
+                <div className="flex-shrink-0 mr-2">
+                  <img 
+                    src={slides[activeSlide].messages[mobileMessageIndex].avatar} 
+                    alt={slides[activeSlide].messages[mobileMessageIndex].username} 
+                    className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                  />
+                </div>
                 
-                {/* Dark overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                
-                {/* Mobile message with improved styling */}
-                {slide.messages[mobileMessageIndex] && (
-                  <div className="absolute inset-0 flex items-center justify-center p-4 z-20">
-                    <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
-                      {/* User Avatar for Mobile with debug component */}
-                      <div className="flex-shrink-0 mr-2">
-                        <DebugAvatarImage 
-                          src={getAvatarPath(slide.messages[mobileMessageIndex].username)} 
-                          alt={slide.messages[mobileMessageIndex].username} 
-                        />
-                      </div>
-                      
-                      {/* Message content for Mobile with improved styling */}
-                      <div className="flex flex-col flex-grow">
-                        <div className="text-sm font-semibold text-white mb-1 px-2 py-0.5 bg-black bg-opacity-50 rounded-md">
-                          {slide.messages[mobileMessageIndex].username}
-                        </div>
-                        <div className="rounded-xl px-3 py-2 bg-white bg-opacity-90 text-gray-800 shadow-lg relative">
-                          {slide.messages[mobileMessageIndex].content}
-                          
-                          {/* Improved reaction styling for mobile */}
-                          {slide.messages[mobileMessageIndex].reaction && (
-                            <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1.5 py-1.5 shadow-lg text-sm border border-gray-200">
-                              {slide.messages[mobileMessageIndex].reaction}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                {/* Message content for Mobile */}
+                <div className="flex flex-col flex-grow">
+                  <div className="text-sm font-semibold text-white mb-1">
+                    {slides[activeSlide].messages[mobileMessageIndex].username}
                   </div>
-                )}
-                
-                {/* Bottom bar with topic */}
-                <div 
-                  className="absolute bottom-0 left-0 right-0 py-2 px-4 text-center z-30"
-                  style={{ backgroundColor: slide.bottomBar.backgroundColor }}
-                >
-                  <h3 className="text-white text-sm font-medium">
-                    {slide.bottomBar.text}
-                  </h3>
+                  <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+                    {slides[activeSlide].messages[mobileMessageIndex].content}
+                    
+                    {/* Reaction for Mobile */}
+                    {slides[activeSlide].messages[mobileMessageIndex].reaction && (
+                      <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
+                        {slides[activeSlide].messages[mobileMessageIndex].reaction}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
