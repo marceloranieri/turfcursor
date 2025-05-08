@@ -889,7 +889,7 @@ const SplitPageSignup = () => {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             
-            {/* Desktop message bubbles - Enhanced with better fade-in animations */}
+            {/* Desktop message bubbles - Enhanced with proper positioning */}
             {slide.messages.map(message => {
               const isVisible = visibleMessages.includes(message.id);
               
@@ -898,21 +898,41 @@ const SplitPageSignup = () => {
               return (
                 <div
                   key={`desktop-message-${message.id}`}
+                  className="absolute z-20"
                   style={{
-                    position: 'absolute',
-                    zIndex: 20,
                     maxWidth: '300px',
-                    ...(message.top && { top: message.top }),
-                    ...(message.bottom && { bottom: message.bottom }),
-                    ...(message.left && { left: message.left }),
-                    ...(message.right && { right: message.right }),
+                    top: message.top || 'auto',
+                    bottom: message.bottom || 'auto',
+                    left: message.left || 'auto',
+                    right: message.right || 'auto',
                     animation: 'fadeIn 0.5s ease-out forwards'
                   }}
                 >
-                  <ChatBubble 
-                    message={message} 
-                    position={message.position} 
-                  />
+                  <div className={`flex ${message.position === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
+                    {/* User Avatar */}
+                    <div className={`flex-shrink-0 ${message.position === 'left' ? 'mr-2' : 'ml-2'}`}>
+                      <img 
+                        src={message.avatar} 
+                        alt={message.username} 
+                        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    </div>
+                    
+                    {/* Message Content */}
+                    <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
+                      <div className="text-sm font-semibold text-white mb-1">{message.username}</div>
+                      <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+                        {message.content}
+                        
+                        {/* Reaction */}
+                        {message.reaction && (
+                          <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
+                            {message.reaction}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             })}
