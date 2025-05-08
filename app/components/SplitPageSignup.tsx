@@ -55,7 +55,7 @@ interface ScreenSection {
 // Add utility function for avatar paths
 const getAvatarPath = (username: string): string => {
   const cleanUsername = username.replace(/\s+/g, '');
-  return `/users-avatars/${cleanUsername}.webp`;
+  return `/user_avatars/${cleanUsername}.webp`;
 };
 
 // Add DebugAvatarImage component
@@ -64,20 +64,23 @@ const DebugAvatarImage = ({ src, alt }: { src: string; alt: string }) => {
   const [attempts, setAttempts] = useState(0);
   
   useEffect(() => {
-    console.log(`Attempting to load: ${src}`);
+    console.log(`Attempting to load avatar: ${src}`);
     
     const img = new Image();
-    img.onload = () => setStatus('loaded');
+    img.onload = () => {
+      console.log(`Successfully loaded avatar: ${src}`);
+      setStatus('loaded');
+    };
     img.onerror = () => {
+      console.error(`Failed to load avatar: ${src}`);
       setStatus('error');
-      console.error(`Failed to load: ${src}`);
       
       if (attempts < 1) {
         setAttempts(prev => prev + 1);
-        const newSrc = src.endsWith('.png') 
-          ? src.replace('.png', '.webp') 
-          : src.replace('.webp', '.png');
-        console.log(`Retrying with: ${newSrc}`);
+        const newSrc = src.endsWith('.webp') 
+          ? src.replace('.webp', '.png') 
+          : src.replace('.png', '.webp');
+        console.log(`Retrying with alternative format: ${newSrc}`);
       }
     };
     img.src = src;
