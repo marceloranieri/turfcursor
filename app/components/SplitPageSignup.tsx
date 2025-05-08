@@ -21,7 +21,7 @@ const SplitPageSignup = () => {
   
   const supabase = createClientComponentClient();
   
-  // Content data
+  // Content data - updated with user avatars
   const slides = [
     {
       background: "bg-gray-900",
@@ -30,66 +30,82 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'JediMaster42',
+          avatar: '/user_avatars/JediMaster42.png',
           content: "Luke couldn't even resist a hologram of his sister lmao, Frodo carried that ring for MONTHS 💪", 
           position: 'left',
           top: '15%',
-          left: '5%'
+          left: '5%',
+          reaction: null
         },
         { 
           id: 2, 
           username: 'Tolkien_Lore', 
+          avatar: '/user_avatars/Tolkien_Lore.png',
           content: "The Ring corrupts power. Luke's stronger = faster fall", 
           position: 'right',
           top: '25%',
-          right: '5%'
+          right: '5%',
+          reaction: null
         },
         { 
           id: 3, 
           username: 'ForceIsWithMe', 
+          avatar: '/user_avatars/ForceIsWithMe.png',
           content: "Y'all forgetting Luke resisted Emperor's temptation…", 
           position: 'left',
           top: '35%',
-          left: '10%'
+          left: '10%',
+          reaction: '👍'
         },
         { 
           id: 4, 
           username: 'HobbitFeet99', 
+          avatar: '/user_avatars/HobbitFeet99.png',
           content: "Luke? No way. Read the book: The Ring isn't about willpower, it's about humility!", 
           position: 'right',
           top: '45%',
-          right: '8%'
+          right: '8%',
+          reaction: null
         },
         { 
           id: 5, 
           username: 'DarthFrodo', 
+          avatar: '/user_avatars/DarthFrodo.png',
           content: "Plot twist: Luke puts on the Ring and becomes invisible to the Force. Checkmate, Palpatine 🧠", 
           position: 'left',
           top: '55%',
-          left: '7%'
+          left: '7%',
+          reaction: '🤣'
         },
         { 
           id: 6, 
           username: 'EagleEyes', 
+          avatar: '/user_avatars/EagleEyes.png',
           content: "Frodo literally failed at the end though?? Sam was the real MVP of that quest", 
           position: 'right',
           top: '65%',
-          right: '10%'
+          right: '10%',
+          reaction: null
         },
         { 
           id: 7, 
           username: 'GondorCalling', 
+          avatar: '/user_avatars/GondorCalling.png',
           content: "The Force is basically just midichlorian mind control. The Ring would use that connection.", 
           position: 'left',
           bottom: '25%',
-          left: '6%'
+          left: '6%',
+          reaction: null
         },
         { 
           id: 8, 
           username: 'MiddleEarthScience', 
+          avatar: '/user_avatars/MiddleEarthScience.png',
           content: "Am I the only one wondering if lightsabers could cut the Ring?", 
           position: 'right',
           bottom: '15%',
-          right: '5%'
+          right: '5%',
+          reaction: '🤔'
         },
       ],
       bottomBar: {
@@ -105,66 +121,82 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'BeatsMaker95', 
+          avatar: '/user_avatars/BeatsMaker95.png',
           content: "Sampling's just digital collage. Good artists copy, great artists steal", 
           position: 'left',
           top: '15%',
-          left: '5%'
+          left: '5%',
+          reaction: null
         },
         { 
           id: 2, 
           username: 'OldSchoolDJ', 
+          avatar: '/user_avatars/OldSchoolDJ.png',
           content: "Kids these days think pressing ctrl+c ctrl+v is 'producing' smh my head", 
           position: 'right',
           top: '25%',
-          right: '8%'
+          right: '8%',
+          reaction: null
         },
         { 
           id: 3, 
           username: 'MusicTheory101', 
+          avatar: '/user_avatars/MusicTheory101.png',
           content: "The problem isn't sampling, it's LAZY sampling. Add something new or don't bother!", 
           position: 'left',
           top: '35%',
-          left: '7%'
+          left: '7%',
+          reaction: '💯'
         },
         { 
           id: 4, 
           username: 'VinylOnly', 
+          avatar: '/user_avatars/VinylOnly.png',
           content: "There hasn't been an original thought in music since 1978.", 
           position: 'right',
           top: '45%',
-          right: '5%'
+          right: '5%',
+          reaction: null
         },
         { 
           id: 5, 
           username: 'StreamingKing', 
+          avatar: '/user_avatars/StreamingKing.png',
           content: "Imagine if we told chefs they can't use ingredients others discovered.", 
           position: 'left',
           top: '55%',
-          left: '10%'
+          left: '10%',
+          reaction: '👏'
         },
         { 
           id: 6, 
           username: 'AutotunedOut', 
+          avatar: '/user_avatars/AutotunedOut.png',
           content: "Sampling used to require skill and crate-digging tbh…", 
           position: 'right',
           top: '65%',
-          right: '8%'
+          right: '8%',
+          reaction: null
         },
         { 
           id: 7, 
           username: 'DanceMixGirl', 
+          avatar: '/user_avatars/DanceMixGirl.png',
           content: "Without sampling we wouldn't have had Daft Punk, Chemical Brothers…", 
           position: 'left',
           bottom: '22%',
-          left: '5%'
+          left: '5%',
+          reaction: null
         },
         { 
           id: 8, 
           username: 'MusicalPurist', 
+          avatar: '/user_avatars/MusicalPurist.png',
           content: "There's a difference between being influenced by something and straight up theft💰", 
           position: 'right',
           bottom: '12%',
-          right: '5%'
+          right: '5%',
+          reaction: null
         },
       ],
       bottomBar: {
@@ -180,66 +212,82 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'OldGamerDad', 
+          avatar: '/user_avatars/OldGamerDad.png',
           content: "My 8yo downloads 5 new games daily, plays each for 3 mins between ads. Kid's casino", 
           position: 'left',
           top: '15%',
-          left: '5%'
+          left: '5%',
+          reaction: null
         },
         { 
           id: 2, 
           username: 'DevLife24', 
+          avatar: '/user_avatars/DevLife24.png',
           content: "As a small dev, those 'trash games' pay my bills. Not everyone has AAA studio resources 🤷‍♂️", 
           position: 'right',
           top: '25%',
-          right: '8%'
+          right: '8%',
+          reaction: null
         },
         { 
           id: 3, 
           username: 'BrainRotGang', 
+          avatar: '/user_avatars/BrainRotGang.png',
           content: "Kids' 1st gaming experience is watching ads to get in-game currency, sad…", 
           position: 'left',
           top: '35%',
-          left: '8%'
+          left: '8%',
+          reaction: '😢'
         },
         { 
           id: 4, 
           username: 'MobileCasual', 
+          avatar: '/user_avatars/MobileCasual.png',
           content: "The cream rises. Good mobile games still exist, you just gotta be willing to actually pay for them.", 
           position: 'right',
           top: '45%',
-          right: '5%'
+          right: '5%',
+          reaction: null
         },
         { 
           id: 5, 
           username: 'GameDesign101', 
+          avatar: '/user_avatars/GameDesign101.png',
           content: "Hot take: bad games teach kids to recognize quality. I played plenty of trash NES games growing up too 🕹️", 
           position: 'left',
           top: '55%',
-          left: '6%'
+          left: '6%',
+          reaction: '😂'
         },
         { 
           id: 6, 
           username: 'TouchScreenHater', 
+          avatar: '/user_avatars/TouchScreenHater.png',
           content: "Remember when games were meant to be fun?", 
           position: 'right',
           top: '65%',
-          right: '10%'
+          right: '10%',
+          reaction: null
         },
         { 
           id: 7, 
           username: 'AdBlockPlus', 
+          avatar: '/user_avatars/AdBlockPlus.png',
           content: "Parents are using phones as babysitters. The games are just filling market demand,.", 
           position: 'left',
           bottom: '22%',
-          left: '8%'
+          left: '8%',
+          reaction: null
         },
         { 
           id: 8, 
           username: 'RetroRevival', 
+          avatar: '/user_avatars/RetroRevival.png',
           content: "Mobile gaming was a mistake. Return to gameboy. Reject modernity. Embrace cartridge. 🎮", 
           position: 'right',
           bottom: '12%',
-          right: '6%'
+          right: '6%',
+          reaction: '👍'
         },
       ],
       bottomBar: {
@@ -255,26 +303,32 @@ const SplitPageSignup = () => {
         { 
           id: 1, 
           username: 'GrassIsGreener', 
+          avatar: '/user_avatars/GrassIsGreener.png',
           content: "Loving Turf so far! Maybe add option to save custom map layouts?", 
           position: 'left',
           top: '30%',
-          left: '10%'
+          left: '10%',
+          reaction: null
         },
         { 
           id: 2, 
           username: 'NewUser23', 
+          avatar: '/user_avatars/NewUser23.png',
           content: "Interface is clean but took me a while to figure out how friends lists work 👍", 
           position: 'right',
           top: '50%',
-          right: '10%'
+          right: '10%',
+          reaction: null
         },
         { 
           id: 3, 
           username: 'RegularJoe', 
+          avatar: '/user_avatars/RegularJoe.png',
           content: "The notification system needs work guys 📱", 
           position: 'left',
           bottom: '30%',
-          left: '10%'
+          left: '10%',
+          reaction: '👍'
         },
       ],
       bottomBar: {
@@ -458,7 +512,7 @@ const SplitPageSignup = () => {
     }
   };
 
-  // Manual slide navigation
+  // Manual slide navigation (hidden function but kept for functionality)
   const goToSlide = (index: number) => {
     setActiveSlide(index);
     setVisibleMessages([]);
@@ -594,7 +648,7 @@ const SplitPageSignup = () => {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             
-            {/* Desktop message bubbles */}
+            {/* Desktop message bubbles - Updated with user avatars */}
             {slide.messages.map(message => {
               const isVisible = visibleMessages.includes(message.id);
               
@@ -614,18 +668,30 @@ const SplitPageSignup = () => {
                     animation: 'fadeIn 0.5s ease-out'
                   }}
                 >
-                  <div className={`flex ${message.position === 'left' ? 'justify-start' : 'justify-end'}`}>
-                    {message.position === 'left' ? (
-                      <div className="px-3 py-2 rounded-xl bg-blue-900 shadow-md">
-                        <div className="text-sm font-semibold text-blue-400">{message.username}</div>
-                        <div className="text-white">{message.content}</div>
+                  <div className={`flex ${message.position === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
+                    {/* User Avatar */}
+                    <div className={`flex-shrink-0 ${message.position === 'left' ? 'mr-2' : 'ml-2'}`}>
+                      <img 
+                        src={message.avatar} 
+                        alt={message.username} 
+                        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                      />
+                    </div>
+                    
+                    {/* Message Content */}
+                    <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
+                      <div className="text-sm font-semibold text-white mb-1">{message.username}</div>
+                      <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+                        {message.content}
+                        
+                        {/* Reaction */}
+                        {message.reaction && (
+                          <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
+                            {message.reaction}
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="px-3 py-2 rounded-xl bg-green-800 shadow-md">
-                        <div className="text-sm font-semibold text-green-400">{message.username}</div>
-                        <div className="text-white">{message.content}</div>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               );
@@ -639,20 +705,6 @@ const SplitPageSignup = () => {
               <h3 className="text-white text-lg md:text-xl font-medium">
                 {slide.bottomBar.text}
               </h3>
-            </div>
-            
-            {/* Navigation dots */}
-            <div className="absolute bottom-16 left-0 right-0 flex justify-center space-x-2 z-30">
-              {slides.map((_, i) => (
-                <button
-                  key={`desktop-dot-${i}`}
-                  onClick={() => goToSlide(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    i === activeSlide ? 'bg-white w-4' : 'bg-white/50'
-                  }`}
-                  aria-label={`Go to slide ${i + 1}`}
-                />
-              ))}
             </div>
           </div>
         ))}
@@ -788,26 +840,32 @@ const SplitPageSignup = () => {
                     <div 
                       className="absolute inset-0 flex items-center justify-center p-4 z-20"
                     >
-                      <div className="w-4/5 mx-auto" style={{ maxWidth: '300px' }}>
-                        {slide.messages[mobileMessageIndex].position === 'left' ? (
-                          <div className="px-3 py-2 rounded-xl bg-blue-900 shadow-md">
-                            <div className="text-sm font-semibold text-blue-400">
-                              {slide.messages[mobileMessageIndex].username}
-                            </div>
-                            <div className="text-white">
-                              {slide.messages[mobileMessageIndex].content}
-                            </div>
+                      <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
+                        {/* User Avatar for Mobile */}
+                        <div className="flex-shrink-0 mr-2">
+                          <img 
+                            src={slide.messages[mobileMessageIndex].avatar} 
+                            alt={slide.messages[mobileMessageIndex].username} 
+                            className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                          />
+                        </div>
+                        
+                        {/* Message content for Mobile */}
+                        <div className="flex flex-col flex-grow">
+                          <div className="text-sm font-semibold text-white mb-1">
+                            {slide.messages[mobileMessageIndex].username}
                           </div>
-                        ) : (
-                          <div className="px-3 py-2 rounded-xl bg-green-800 shadow-md">
-                            <div className="text-sm font-semibold text-green-400">
-                              {slide.messages[mobileMessageIndex].username}
-                            </div>
-                            <div className="text-white">
-                              {slide.messages[mobileMessageIndex].content}
-                            </div>
+                          <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+                            {slide.messages[mobileMessageIndex].content}
+                            
+                            {/* Reaction for Mobile */}
+                            {slide.messages[mobileMessageIndex].reaction && (
+                              <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
+                                {slide.messages[mobileMessageIndex].reaction}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -820,20 +878,6 @@ const SplitPageSignup = () => {
                     <h3 className="text-white text-sm font-medium">
                       {slide.bottomBar.text}
                     </h3>
-                  </div>
-                  
-                  {/* Navigation dots */}
-                  <div className="absolute bottom-10 left-0 right-0 flex justify-center space-x-2 z-30">
-                    {slides.map((_, i) => (
-                      <button
-                        key={`mobile-dot-${i}`}
-                        onClick={() => goToSlide(i)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                          i === activeSlide ? 'bg-white w-4' : 'bg-white/50'
-                        }`}
-                        aria-label={`Go to slide ${i + 1}`}
-                      />
-                    ))}
                   </div>
                 </div>
               ))}
