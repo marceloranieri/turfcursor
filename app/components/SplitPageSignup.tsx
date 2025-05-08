@@ -4,6 +4,23 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
+// Add AvatarImage component for better error handling
+const AvatarImage = ({ src, alt }) => {
+  const [error, setError] = useState(false);
+  
+  return (
+    <img 
+      src={error ? '/default-avatar.png' : src}
+      alt={alt}
+      className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+      onError={(e) => {
+        console.error(`Failed to load image: ${src}`);
+        setError(true);
+      }}
+    />
+  );
+};
+
 const SplitPageSignup = () => {
   // Essential state
   const [activeSlide, setActiveSlide] = useState(0);
@@ -285,6 +302,9 @@ const SplitPageSignup = () => {
     },
   ];
 
+  // Add bubble positions state
+  const [bubblePositions, setBubblePositions] = useState([]);
+  
   // Clean up timers on component unmount
   useEffect(() => {
     return () => {
@@ -468,6 +488,33 @@ const SplitPageSignup = () => {
     timersRef.current = [];
   };
 
+  // Add createBubblePositions function
+  const createBubblePositions = (count) => {
+    const grid = [];
+    const rows = 6;
+    const cols = 4;
+    
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        grid.push({
+          top: `${10 + (row * 13)}%`,
+          left: col < 2 ? `${5 + (col * 20)}%` : null,
+          right: col >= 2 ? `${5 + ((3-col) * 20)}%` : null,
+          zIndex: 20 + (row * cols + col)
+        });
+      }
+    }
+    
+    return grid.sort(() => Math.random() - 0.5).slice(0, count);
+  };
+
+  // Add effect to update bubble positions when slide changes
+  useEffect(() => {
+    if (slides[activeSlide]?.messages) {
+      setBubblePositions(createBubblePositions(slides[activeSlide].messages.length));
+    }
+  }, [activeSlide]);
+
   return (
     <div className="flex flex-col md:flex-row h-screen">
       {/* Left side - Sign up form */}
@@ -594,39 +641,31 @@ const SplitPageSignup = () => {
             {/* Dark overlay for readability */}
             <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             
-            {/* Desktop message bubbles - Updated with dynamic positioning */}
+            {/* Desktop message bubbles - Updated with improved positioning */}
             {slide.messages.map((message, index) => {
               const isVisible = visibleMessages.includes(message.id);
               
               if (!isVisible) return null;
               
-              // Calculate dynamic positioning based on message index
-              const rowIndex = Math.floor(index / 2);
-              const isEven = index % 2 === 0;
-              
-              const topPosition = `${15 + (rowIndex * 12)}%`;
-              const horizontalPosition = isEven ? { left: '5%' } : { right: '5%' };
+              const position = bubblePositions[index] || {};
               
               return (
                 <div
                   key={`desktop-message-${message.id}`}
                   style={{
                     position: 'absolute',
-                    zIndex: 20 + index, // Increasing z-index ensures proper stacking
-                    maxWidth: '300px',
-                    top: topPosition,
-                    ...horizontalPosition,
+                    zIndex: position.zIndex || 20,
+                    maxWidth: '270px',
+                    top: position.top,
+                    left: position.left,
+                    right: position.right,
                     animation: 'fadeIn 0.5s ease-out'
                   }}
                 >
                   <div className={`flex ${message.position === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
-                    {/* User Avatar */}
+                    {/* User Avatar with error handling */}
                     <div className={`flex-shrink-0 ${message.position === 'left' ? 'mr-2' : 'ml-2'}`}>
-                      <img 
-                        src={message.avatar} 
-                        alt={message.username} 
-                        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-                      />
+                      <AvatarImage src={message.avatar} alt={message.username} />
                     </div>
                     
                     {/* Message Content */}
@@ -786,18 +825,15 @@ const SplitPageSignup = () => {
                   {/* Dark overlay */}
                   <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                   
-                  {/* Single message for mobile */}
+                  {/* Mobile message with AvatarImage component */}
                   {slide.messages[mobileMessageIndex] && (
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center p-4 z-20"
-                    >
+                    <div className="absolute inset-0 flex items-center justify-center p-4 z-20">
                       <div className="w-4/5 mx-auto flex" style={{ maxWidth: '300px' }}>
-                        {/* User Avatar for Mobile */}
+                        {/* User Avatar for Mobile with error handling */}
                         <div className="flex-shrink-0 mr-2">
-                          <img 
+                          <AvatarImage 
                             src={slide.messages[mobileMessageIndex].avatar} 
                             alt={slide.messages[mobileMessageIndex].username} 
-                            className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
                           />
                         </div>
                         
