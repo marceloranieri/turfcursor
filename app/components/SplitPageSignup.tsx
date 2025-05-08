@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -8,28 +8,14 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 const SplitPageSignup = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
-  const [activeMobileMessage, setActiveMobileMessage] = useState(0);
+  const [mobileMessageIndex, setMobileMessageIndex] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   
   const supabase = createClientComponentClient();
-  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
-  
-  // Detect if the device is mobile/tablet
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-    
-    return () => window.removeEventListener('resize', checkIfMobile);
-  }, []);
   
   // Custom slides with user-provided content
   const slides = [
@@ -322,98 +308,103 @@ const SplitPageSignup = () => {
     },
   ];
 
-  // Function for desktop message animation - show messages progressively
+  // Handle mobile detection
   useEffect(() => {
-    // Clear any existing timeouts to prevent memory leaks
-    timeoutsRef.current.forEach(clearTimeout);
-    timeoutsRef.current = [];
-    
-    // Reset visible messages when slide changes
-    setVisibleMessages([]);
-    
-    // Skip progressively showing messages on mobile
+    // Check if we're in a browser environment
+    if (typeof window !== 'undefined') {
+      // Initial check
+      setIsMobile(window.innerWidth < 768);
+      
+      // Add event listener
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      
+      // Cleanup
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, []);
+
+  // Desktop: Progressive message display
+  useEffect(() => {
+    // Only for desktop
     if (isMobile) return;
     
-    const currentMessages = slides[activeSlide].messages;
+    // Reset messages when slide changes
+    setVisibleMessages([]);
     
-    // Create new timeouts to show messages progressively
-    currentMessages.forEach((message, index) => {
-      const timeout = setTimeout(() => {
+    // Clear any existing timers
+    const timers: NodeJS.Timeout[] = [];
+    
+    // Show each message progressively
+    slides[activeSlide].messages.forEach((message, index) => {
+      const timer = setTimeout(() => {
         setVisibleMessages(prev => [...prev, message.id]);
       }, 1000 + (index * 800));
       
-      timeoutsRef.current.push(timeout);
+      timers.push(timer);
     });
     
-    // Auto-advance the carousel after all messages have been shown + 5 seconds
-    const slideDuration = 1000 + (currentMessages.length * 800) + 5000;
-    const advanceTimeout = setTimeout(() => {
-      setActiveSlide(prev => (prev + 1) % slides.length);
-    }, slideDuration);
+    // Auto-advance carousel after messages are shown
+    const advanceTimer = setTimeout(() => {
+      setActiveSlide((prev) => (prev + 1) % slides.length);
+    }, 1000 + (slides[activeSlide].messages.length * 800) + 5000); // Add 5s after last message
     
-    timeoutsRef.current.push(advanceTimeout);
+    timers.push(advanceTimer);
     
-    // Cleanup timeouts on unmount or slide change
+    // Cleanup
     return () => {
-      timeoutsRef.current.forEach(clearTimeout);
-      timeoutsRef.current = [];
+      timers.forEach(clearTimeout);
     };
   }, [activeSlide, isMobile, slides]);
 
-  // Function for mobile message animation - show one message at a time
+  // Mobile: Single message display
   useEffect(() => {
+    // Only for mobile
     if (!isMobile) return;
     
-    // Clear any existing timeouts
-    timeoutsRef.current.forEach(clearTimeout);
-    timeoutsRef.current = [];
+    // Reset message index when slide changes
+    if (activeSlide !== slides.indexOf(slides[activeSlide])) {
+      setMobileMessageIndex(0);
+    }
     
     const currentMessages = slides[activeSlide].messages;
     if (currentMessages.length === 0) return;
     
-    // Reset active message when switching slides
-    if (activeMobileMessage >= currentMessages.length) {
-      setActiveMobileMessage(0);
-      return;
-    }
-    
-    // Handle message transitions
-    setIsTransitioning(false);
+    // Clear any existing timers
+    const mobileTimers: NodeJS.Timeout[] = [];
     
     // Show next message after 3 seconds
-    const messageTimeout = setTimeout(() => {
-      setIsTransitioning(true);
-      
-      // After fade out, change to next message
-      const transitionTimeout = setTimeout(() => {
-        setActiveMobileMessage(prev => {
-          if (prev + 1 >= currentMessages.length) {
-            // When we reach the last message, prepare to go to next slide
-            const slideChangeTimeout = setTimeout(() => {
-              setActiveSlide(prevSlide => (prevSlide + 1) % slides.length);
-            }, 500);
-            
-            timeoutsRef.current.push(slideChangeTimeout);
-            return 0;
-          }
-          return prev + 1;
-        });
-        
-        setIsTransitioning(false);
-      }, 500); // Short transition time
-      
-      timeoutsRef.current.push(transitionTimeout);
-    }, 3000); // Show each message for 3 seconds
+    const messageTimer = setTimeout(() => {
+      setMobileMessageIndex(prev => {
+        // If at the last message, advance to next slide
+        if (prev + 1 >= currentMessages.length) {
+          // Schedule slide change
+          const slideTimer = setTimeout(() => {
+            setActiveSlide(prevSlide => (prevSlide + 1) % slides.length);
+            setMobileMessageIndex(0); // Reset message index for new slide
+          }, 1000);
+          
+          mobileTimers.push(slideTimer);
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 3000);
     
-    timeoutsRef.current.push(messageTimeout);
+    mobileTimers.push(messageTimer);
     
+    // Cleanup
     return () => {
-      timeoutsRef.current.forEach(clearTimeout);
-      timeoutsRef.current = [];
+      mobileTimers.forEach(clearTimeout);
     };
-  }, [activeMobileMessage, activeSlide, isMobile, slides]);
+  }, [activeSlide, mobileMessageIndex, isMobile, slides]);
 
-  // Handle sign in
+  // Handle sign in with email
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -473,17 +464,16 @@ const SplitPageSignup = () => {
     }
   };
 
-  // Render a message bubble for desktop view
+  // Render a message for desktop
   const renderDesktopMessage = (message: any) => {
     const isVisible = visibleMessages.includes(message.id);
     
     if (!isVisible) return null;
     
-    // Position styles based on the message's position data
-    const positionStyles = {
+    const style = {
       position: 'absolute',
       zIndex: 20,
-      maxWidth: '280px',
+      maxWidth: '300px',
       ...(message.top && { top: message.top }),
       ...(message.bottom && { bottom: message.bottom }),
       ...(message.left && { left: message.left }),
@@ -492,9 +482,9 @@ const SplitPageSignup = () => {
     
     return (
       <div 
-        key={message.id} 
-        className="animate-in fade-in slide-in-from-bottom-3 duration-500" 
-        style={positionStyles}
+        key={`desktop-${message.id}`} 
+        className="animate-fadeIn" 
+        style={style}
       >
         <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
           <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
@@ -506,18 +496,19 @@ const SplitPageSignup = () => {
     );
   };
   
-  // Render a single message for mobile view
+  // Render current message for mobile
   const renderMobileMessage = () => {
     const currentMessages = slides[activeSlide].messages;
-    if (currentMessages.length === 0 || activeMobileMessage >= currentMessages.length) {
+    if (currentMessages.length === 0 || mobileMessageIndex >= currentMessages.length) {
       return null;
     }
-
-    const message = currentMessages[activeMobileMessage];
+    
+    const message = currentMessages[mobileMessageIndex];
     
     return (
       <div 
-        className={`w-4/5 mx-auto transform transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100'}`}
+        key={`mobile-${message.id}`} 
+        className="w-4/5 mx-auto animate-fadeIn"
       >
         <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
           <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
@@ -535,12 +526,10 @@ const SplitPageSignup = () => {
       <div className="w-full md:w-1/2 p-4 md:p-6 flex flex-col justify-center bg-white">
         <div className="max-w-md w-full mx-auto">
           <div className="mb-6">
-            <Image 
+            <img 
               src="/turf-logo.svg" 
               alt="Turf Logo" 
-              width={120} 
-              height={40} 
-              priority 
+              className="h-10 w-auto"
             />
           </div>
           
@@ -644,7 +633,7 @@ const SplitPageSignup = () => {
         {slides.map((slide, index) => (
           <div 
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${slide.background} ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${slide.background} ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           >
             {/* Background image */}
             <div className="relative w-full h-full">
@@ -657,30 +646,28 @@ const SplitPageSignup = () => {
               {/* Dark overlay for readability */}
               <div className="absolute inset-0 bg-black bg-opacity-20"></div>
               
-              {/* Message display - different for mobile and desktop */}
+              {/* Messages - conditional rendering based on device */}
               {isMobile ? (
-                // Mobile: Show single message at a time
-                <div className="absolute inset-0 flex items-center justify-center p-4">
+                // Mobile: Single message at a time
+                <div className="absolute inset-0 flex items-center justify-center">
                   {renderMobileMessage()}
                 </div>
               ) : (
-                // Desktop: Show multiple messages with positioning
+                // Desktop: Multiple messages with positioning
                 <div className="absolute inset-0">
                   {slide.messages.map(message => renderDesktopMessage(message))}
                 </div>
               )}
               
-              {/* Bottom bar with debate topic - explicitly set white text */}
-              {slide.bottomBar && (
-                <div 
-                  className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center"
-                  style={{ 
-                    backgroundColor: slide.bottomBar.backgroundColor
-                  }}
-                >
-                  <h3 className="text-lg md:text-xl font-medium text-white">{slide.bottomBar.text}</h3>
-                </div>
-              )}
+              {/* Bottom bar with debate topic */}
+              <div 
+                className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center"
+                style={{ backgroundColor: slide.bottomBar.backgroundColor }}
+              >
+                <h3 className="text-lg md:text-xl font-medium text-white">
+                  {slide.bottomBar.text}
+                </h3>
+              </div>
               
               {/* Dots navigation */}
               <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2 z-30">
@@ -689,8 +676,8 @@ const SplitPageSignup = () => {
                     key={i}
                     onClick={() => {
                       setActiveSlide(i);
-                      setActiveMobileMessage(0); // Reset message index when changing slides
-                      setVisibleMessages([]); // Reset visible messages
+                      setMobileMessageIndex(0); 
+                      setVisibleMessages([]);
                     }}
                     aria-label={`Go to slide ${i + 1}`}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeSlide ? 'bg-white w-4' : 'bg-white/50'}`}

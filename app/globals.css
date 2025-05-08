@@ -133,8 +133,8 @@
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideUp {
@@ -159,16 +159,8 @@
   }
 }
 
-.fade-in {
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-.slide-up {
-  animation: slideUp 0.2s ease-out;
-}
-
-.slide-down {
-  animation: slideDown 0.2s ease-out;
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
 /* Accessibility */
@@ -597,4 +589,9 @@ body {
     right: 0 !important;
     margin: 0 !important;
   }
+}
+
+/* Override any potential conflicting styles to ensure white text */
+.text-white {
+  color: white !important;
 }
