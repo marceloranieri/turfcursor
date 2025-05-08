@@ -611,3 +611,26 @@ body {
 .text-white {
   color: white !important;
 }
+
+/* Simple fade-in animation for messages */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Make sure text is white */
+.text-white {
+  color: white !important;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 767px) {
+  .fixed-carousel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    z-index: 30;
+  }
+}
