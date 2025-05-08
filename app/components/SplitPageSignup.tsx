@@ -1,100 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
-
-interface Message {
-  id: number;
-  type: 'text';
-  username: string;
-  content: string;
-  position: 'left' | 'right';
-  top?: string;
-  bottom?: string;
-  left?: string;
-  right?: string;
-}
-
-interface Slide {
-  background: string;
-  image: string;
-  messages: Message[];
-  bottomBar: {
-    backgroundColor: string;
-    text: string;
-    textColor: string;
-  };
-}
-
-// Separate component for message bubbles
-const MessageBubble = ({ message, isMobile }: { message: Message; isMobile: boolean }) => {
-  const positionStyles = isMobile ? {} : {
-    position: 'absolute',
-    zIndex: 20,
-    maxWidth: '300px',
-    ...(message.top && { top: message.top }),
-    ...(message.bottom && { bottom: message.bottom }),
-    ...(message.left && { left: message.left }),
-    ...(message.right && { right: message.right }),
-  } as React.CSSProperties;
-
-  return (
-    <div 
-      className={`${isMobile ? 'animate-in fade-in duration-300 w-full max-w-xs mx-auto mb-4' : 'animate-in fade-in duration-300 slide-in-from-bottom-3'}`}
-      style={positionStyles}
-    >
-      <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
-        {message.type === 'text' && (
-          <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
-            <div className="text-sm font-semibold text-blue-400 mb-1">{message.username}</div>
-            <div className="text-white">{message.content}</div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Separate component for social login buttons
-const SocialLoginButton = ({ 
-  provider, 
-  onClick, 
-  disabled 
-}: { 
-  provider: 'google' | 'facebook'; 
-  onClick: () => void; 
-  disabled: boolean;
-}) => {
-  const icons = {
-    google: (
-      <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-      </svg>
-    ),
-    facebook: (
-      <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-      </svg>
-    ),
-  };
-
-  return (
-    <button 
-      onClick={onClick}
-      disabled={disabled}
-      className="flex-1 border border-gray-300 p-3 rounded font-medium flex items-center justify-center hover:bg-gray-50 disabled:opacity-70"
-    >
-      {icons[provider]}
-      {provider.charAt(0).toUpperCase() + provider.slice(1)}
-    </button>
-  );
-};
 
 const SplitPageSignup = () => {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -105,39 +14,32 @@ const SplitPageSignup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   const supabase = createClientComponentClient();
-  const router = useRouter();
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
   
-  // Optimize mobile detection with debounce
+  // Detect if the device is mobile/tablet
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
     const checkIfMobile = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        setIsMobile(window.innerWidth < 768);
-      }, 100);
+      setIsMobile(window.innerWidth < 768);
     };
     
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
     
-    return () => {
-      window.removeEventListener('resize', checkIfMobile);
-      clearTimeout(timeoutId);
-    };
+    return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
   
   // Custom slides with user-provided content
-  const slides: Slide[] = [
+  const slides = [
     {
       background: "bg-gray-900",
       image: "/star_rings_turf.webp",
       messages: [
         { 
           id: 1, 
-          type: 'text',
+          type: 'text', 
           username: 'JediMaster42',
           content: "Luke couldn't even resist a hologram of his sister lmao, Frodo carried that ring for MONTHS 💪", 
           position: 'left',
@@ -422,58 +324,96 @@ const SplitPageSignup = () => {
 
   // Function for desktop message animation - show messages progressively
   useEffect(() => {
-    if (isMobile) return; // Skip for mobile
+    // Clear any existing timeouts to prevent memory leaks
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
     
+    // Reset visible messages when slide changes
     setVisibleMessages([]);
+    
+    // Skip progressively showing messages on mobile
+    if (isMobile) return;
     
     const currentMessages = slides[activeSlide].messages;
     
+    // Create new timeouts to show messages progressively
     currentMessages.forEach((message, index) => {
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         setVisibleMessages(prev => [...prev, message.id]);
-      }, 1000 + (index * 600)); // Showing messages faster for better UX
+      }, 1000 + (index * 800));
+      
+      timeoutsRef.current.push(timeout);
     });
     
-    // Auto-advance the carousel
-    const timer = setTimeout(() => {
-      setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 12000); // Show each slide longer since there are more messages
+    // Auto-advance the carousel after all messages have been shown + 5 seconds
+    const slideDuration = 1000 + (currentMessages.length * 800) + 5000;
+    const advanceTimeout = setTimeout(() => {
+      setActiveSlide(prev => (prev + 1) % slides.length);
+    }, slideDuration);
     
-    return () => clearTimeout(timer);
-  }, [activeSlide, isMobile]);
+    timeoutsRef.current.push(advanceTimeout);
+    
+    // Cleanup timeouts on unmount or slide change
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
+  }, [activeSlide, isMobile, slides]);
 
   // Function for mobile message animation - show one message at a time
   useEffect(() => {
-    if (!isMobile) return; // Skip for desktop
+    if (!isMobile) return;
+    
+    // Clear any existing timeouts
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
     
     const currentMessages = slides[activeSlide].messages;
-    
     if (currentMessages.length === 0) return;
     
-    // Reset the active message when slide changes
+    // Reset active message when switching slides
     if (activeMobileMessage >= currentMessages.length) {
       setActiveMobileMessage(0);
+      return;
     }
     
-    // Show messages one at a time with transitions
-    const timer = setTimeout(() => {
-      setActiveMobileMessage((prev) => {
-        // Move to next message or next slide if reached the end
-        if (prev + 1 >= currentMessages.length) {
-          // Schedule slide change
-          setTimeout(() => {
-            setActiveSlide((prevSlide) => (prevSlide + 1) % slides.length);
-          }, 1000);
-          return 0;
-        }
-        return prev + 1;
-      });
-    }, 4000); // Show each message for 4 seconds
+    // Handle message transitions
+    setIsTransitioning(false);
     
-    return () => clearTimeout(timer);
+    // Show next message after 3 seconds
+    const messageTimeout = setTimeout(() => {
+      setIsTransitioning(true);
+      
+      // After fade out, change to next message
+      const transitionTimeout = setTimeout(() => {
+        setActiveMobileMessage(prev => {
+          if (prev + 1 >= currentMessages.length) {
+            // When we reach the last message, prepare to go to next slide
+            const slideChangeTimeout = setTimeout(() => {
+              setActiveSlide(prevSlide => (prevSlide + 1) % slides.length);
+            }, 500);
+            
+            timeoutsRef.current.push(slideChangeTimeout);
+            return 0;
+          }
+          return prev + 1;
+        });
+        
+        setIsTransitioning(false);
+      }, 500); // Short transition time
+      
+      timeoutsRef.current.push(transitionTimeout);
+    }, 3000); // Show each message for 3 seconds
+    
+    timeoutsRef.current.push(messageTimeout);
+    
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current = [];
+    };
   }, [activeMobileMessage, activeSlide, isMobile, slides]);
 
-  // Handle sign in with email
+  // Handle sign in
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -486,7 +426,6 @@ const SplitPageSignup = () => {
       });
 
       if (error) throw error;
-      // Successful login will be handled by the middleware redirecting
     } catch (error: any) {
       setError(error.message || 'Error signing in');
     } finally {
@@ -532,6 +471,62 @@ const SplitPageSignup = () => {
       setError(error.message || 'Error signing in with Facebook');
       setLoading(false);
     }
+  };
+
+  // Render a message bubble for desktop view
+  const renderDesktopMessage = (message: any) => {
+    const isVisible = visibleMessages.includes(message.id);
+    
+    if (!isVisible) return null;
+    
+    // Position styles based on the message's position data
+    const positionStyles = {
+      position: 'absolute',
+      zIndex: 20,
+      maxWidth: '280px',
+      ...(message.top && { top: message.top }),
+      ...(message.bottom && { bottom: message.bottom }),
+      ...(message.left && { left: message.left }),
+      ...(message.right && { right: message.right }),
+    } as React.CSSProperties;
+    
+    return (
+      <div 
+        key={message.id} 
+        className="animate-in fade-in slide-in-from-bottom-3 duration-500" 
+        style={positionStyles}
+      >
+        <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
+          <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
+            <div className="text-sm font-semibold text-blue-400 mb-1">{message.username}</div>
+            <div className="text-white">{message.content}</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Render a single message for mobile view
+  const renderMobileMessage = () => {
+    const currentMessages = slides[activeSlide].messages;
+    if (currentMessages.length === 0 || activeMobileMessage >= currentMessages.length) {
+      return null;
+    }
+
+    const message = currentMessages[activeMobileMessage];
+    
+    return (
+      <div 
+        className={`w-4/5 mx-auto transform transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100'}`}
+      >
+        <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
+          <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
+            <div className="text-sm font-semibold text-blue-400 mb-1">{message.username}</div>
+            <div className="text-white">{message.content}</div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -608,16 +603,30 @@ const SplitPageSignup = () => {
           </div>
           
           <div className="flex gap-4 mb-6">
-            <SocialLoginButton 
-              provider="google"
+            <button 
               onClick={handleGoogleSignIn}
               disabled={loading}
-            />
-            <SocialLoginButton 
-              provider="facebook"
+              className="flex-1 border border-gray-300 p-3 rounded font-medium flex items-center justify-center hover:bg-gray-50 disabled:opacity-70"
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+              </svg>
+              Google
+            </button>
+            
+            <button 
               onClick={handleFacebookSignIn}
               disabled={loading}
-            />
+              className="flex-1 border border-gray-300 p-3 rounded font-medium flex items-center justify-center hover:bg-gray-50 disabled:opacity-70"
+            >
+              <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              Facebook
+            </button>
           </div>
           
           <div className="text-center">
@@ -637,6 +646,7 @@ const SplitPageSignup = () => {
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ${slide.background} ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
           >
+            {/* Background image */}
             <div className="relative w-full h-full">
               <img 
                 src={slide.image} 
@@ -644,45 +654,43 @@ const SplitPageSignup = () => {
                 className="w-full h-full object-cover"
               />
               
+              {/* Dark overlay for readability */}
               <div className="absolute inset-0 bg-black bg-opacity-20"></div>
               
+              {/* Message display - different for mobile and desktop */}
               {isMobile ? (
-                <div className="absolute inset-0 flex flex-col justify-center p-4">
-                  {slide.messages.length > 0 && activeMobileMessage < slide.messages.length && (
-                    <MessageBubble 
-                      message={slide.messages[activeMobileMessage]} 
-                      isMobile={true}
-                    />
-                  )}
+                // Mobile: Show single message at a time
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  {renderMobileMessage()}
                 </div>
               ) : (
-                <>
-                  {slide.messages.map(message => (
-                    <MessageBubble 
-                      key={message.id}
-                      message={message} 
-                      isMobile={false}
-                    />
-                  ))}
-                </>
+                // Desktop: Show multiple messages with positioning
+                <div className="absolute inset-0">
+                  {slide.messages.map(message => renderDesktopMessage(message))}
+                </div>
               )}
               
+              {/* Bottom bar with debate topic - explicitly set white text */}
               {slide.bottomBar && (
                 <div 
                   className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center"
-                  style={{ backgroundColor: slide.bottomBar.backgroundColor }}
+                  style={{ 
+                    backgroundColor: slide.bottomBar.backgroundColor
+                  }}
                 >
                   <h3 className="text-lg md:text-xl font-medium text-white">{slide.bottomBar.text}</h3>
                 </div>
               )}
               
+              {/* Dots navigation */}
               <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2 z-30">
                 {slides.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => {
                       setActiveSlide(i);
-                      setActiveMobileMessage(0);
+                      setActiveMobileMessage(0); // Reset message index when changing slides
+                      setVisibleMessages([]); // Reset visible messages
                     }}
                     aria-label={`Go to slide ${i + 1}`}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeSlide ? 'bg-white w-4' : 'bg-white/50'}`}
