@@ -74,6 +74,7 @@
   
   .message-bubble {
     @apply bg-background-secondary rounded-lg shadow-md p-3;
+    animation: fadeIn 0.5s ease-out;
   }
   
   .message-bubble.wizard {
@@ -592,6 +593,21 @@ body {
 }
 
 /* Override any potential conflicting styles to ensure white text */
+.text-white {
+  color: white !important;
+}
+
+/* Message animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-bubble {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Ensure text is white in bottom bar */
 .text-white {
   color: white !important;
 }

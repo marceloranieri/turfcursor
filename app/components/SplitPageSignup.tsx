@@ -1,23 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 const SplitPageSignup = () => {
+  // Essential state
   const [activeSlide, setActiveSlide] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
-  const [mobileMessageIndex, setMobileMessageIndex] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileMessageIndex, setMobileMessageIndex] = useState(0);
+  
+  // Track timers to prevent memory leaks
+  const timersRef = useRef<NodeJS.Timeout[]>([]);
+  const initialized = useRef(false);
   
   const supabase = createClientComponentClient();
   
-  // Custom slides with user-provided content
+  // Content data
   const slides = [
     {
       background: "bg-gray-900",
@@ -25,7 +29,6 @@ const SplitPageSignup = () => {
       messages: [
         { 
           id: 1, 
-          type: 'text', 
           username: 'JediMaster42',
           content: "Luke couldn't even resist a hologram of his sister lmao, Frodo carried that ring for MONTHS 💪", 
           position: 'left',
@@ -34,7 +37,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 2, 
-          type: 'text',
           username: 'Tolkien_Lore', 
           content: "The Ring corrupts power. Luke's stronger = faster fall", 
           position: 'right',
@@ -43,7 +45,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 3, 
-          type: 'text',
           username: 'ForceIsWithMe', 
           content: "Y'all forgetting Luke resisted Emperor's temptation…", 
           position: 'left',
@@ -52,7 +53,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 4, 
-          type: 'text',
           username: 'HobbitFeet99', 
           content: "Luke? No way. Read the book: The Ring isn't about willpower, it's about humility!", 
           position: 'right',
@@ -61,7 +61,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 5, 
-          type: 'text',
           username: 'DarthFrodo', 
           content: "Plot twist: Luke puts on the Ring and becomes invisible to the Force. Checkmate, Palpatine 🧠", 
           position: 'left',
@@ -70,7 +69,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 6, 
-          type: 'text',
           username: 'EagleEyes', 
           content: "Frodo literally failed at the end though?? Sam was the real MVP of that quest", 
           position: 'right',
@@ -79,7 +77,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 7, 
-          type: 'text',
           username: 'GondorCalling', 
           content: "The Force is basically just midichlorian mind control. The Ring would use that connection.", 
           position: 'left',
@@ -88,7 +85,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 8, 
-          type: 'text',
           username: 'MiddleEarthScience', 
           content: "Am I the only one wondering if lightsabers could cut the Ring?", 
           position: 'right',
@@ -108,7 +104,6 @@ const SplitPageSignup = () => {
       messages: [
         { 
           id: 1, 
-          type: 'text',
           username: 'BeatsMaker95', 
           content: "Sampling's just digital collage. Good artists copy, great artists steal", 
           position: 'left',
@@ -117,7 +112,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 2, 
-          type: 'text',
           username: 'OldSchoolDJ', 
           content: "Kids these days think pressing ctrl+c ctrl+v is 'producing' smh my head", 
           position: 'right',
@@ -126,7 +120,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 3, 
-          type: 'text',
           username: 'MusicTheory101', 
           content: "The problem isn't sampling, it's LAZY sampling. Add something new or don't bother!", 
           position: 'left',
@@ -135,7 +128,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 4, 
-          type: 'text',
           username: 'VinylOnly', 
           content: "There hasn't been an original thought in music since 1978.", 
           position: 'right',
@@ -144,7 +136,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 5, 
-          type: 'text',
           username: 'StreamingKing', 
           content: "Imagine if we told chefs they can't use ingredients others discovered.", 
           position: 'left',
@@ -153,7 +144,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 6, 
-          type: 'text',
           username: 'AutotunedOut', 
           content: "Sampling used to require skill and crate-digging tbh…", 
           position: 'right',
@@ -162,7 +152,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 7, 
-          type: 'text',
           username: 'DanceMixGirl', 
           content: "Without sampling we wouldn't have had Daft Punk, Chemical Brothers…", 
           position: 'left',
@@ -171,7 +160,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 8, 
-          type: 'text',
           username: 'MusicalPurist', 
           content: "There's a difference between being influenced by something and straight up theft💰", 
           position: 'right',
@@ -191,7 +179,6 @@ const SplitPageSignup = () => {
       messages: [
         { 
           id: 1, 
-          type: 'text',
           username: 'OldGamerDad', 
           content: "My 8yo downloads 5 new games daily, plays each for 3 mins between ads. Kid's casino", 
           position: 'left',
@@ -200,7 +187,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 2, 
-          type: 'text',
           username: 'DevLife24', 
           content: "As a small dev, those 'trash games' pay my bills. Not everyone has AAA studio resources 🤷‍♂️", 
           position: 'right',
@@ -209,7 +195,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 3, 
-          type: 'text',
           username: 'BrainRotGang', 
           content: "Kids' 1st gaming experience is watching ads to get in-game currency, sad…", 
           position: 'left',
@@ -218,7 +203,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 4, 
-          type: 'text',
           username: 'MobileCasual', 
           content: "The cream rises. Good mobile games still exist, you just gotta be willing to actually pay for them.", 
           position: 'right',
@@ -227,7 +211,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 5, 
-          type: 'text',
           username: 'GameDesign101', 
           content: "Hot take: bad games teach kids to recognize quality. I played plenty of trash NES games growing up too 🕹️", 
           position: 'left',
@@ -236,7 +219,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 6, 
-          type: 'text',
           username: 'TouchScreenHater', 
           content: "Remember when games were meant to be fun?", 
           position: 'right',
@@ -245,7 +227,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 7, 
-          type: 'text',
           username: 'AdBlockPlus', 
           content: "Parents are using phones as babysitters. The games are just filling market demand,.", 
           position: 'left',
@@ -254,7 +235,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 8, 
-          type: 'text',
           username: 'RetroRevival', 
           content: "Mobile gaming was a mistake. Return to gameboy. Reject modernity. Embrace cartridge. 🎮", 
           position: 'right',
@@ -274,7 +254,6 @@ const SplitPageSignup = () => {
       messages: [
         { 
           id: 1, 
-          type: 'text',
           username: 'GrassIsGreener', 
           content: "Loving Turf so far! Maybe add option to save custom map layouts?", 
           position: 'left',
@@ -283,7 +262,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 2, 
-          type: 'text',
           username: 'NewUser23', 
           content: "Interface is clean but took me a while to figure out how friends lists work 👍", 
           position: 'right',
@@ -292,7 +270,6 @@ const SplitPageSignup = () => {
         },
         { 
           id: 3, 
-          type: 'text',
           username: 'RegularJoe', 
           content: "The notification system needs work guys 📱", 
           position: 'left',
@@ -308,103 +285,122 @@ const SplitPageSignup = () => {
     },
   ];
 
-  // Handle mobile detection
+  // Clean up timers on component unmount
   useEffect(() => {
-    // Check if we're in a browser environment
-    if (typeof window !== 'undefined') {
-      // Initial check
+    return () => {
+      timersRef.current.forEach(timer => clearTimeout(timer));
+    };
+  }, []);
+
+  // Mobile detection
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
-      
-      // Add event listener
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      
-      window.addEventListener('resize', handleResize);
-      
-      // Cleanup
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Set up listener for window resize
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
+
+  // Start initialization after component mounts
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      startDesktopAnimation();
     }
   }, []);
 
-  // Desktop: Progressive message display
-  useEffect(() => {
-    // Only for desktop
+  // Start desktop message animations
+  const startDesktopAnimation = () => {
     if (isMobile) return;
     
-    // Reset messages when slide changes
+    // Clear any existing timers
+    timersRef.current.forEach(timer => clearTimeout(timer));
+    timersRef.current = [];
+    
+    // Reset visible messages
     setVisibleMessages([]);
     
-    // Clear any existing timers
-    const timers: NodeJS.Timeout[] = [];
-    
-    // Show each message progressively
+    // Show messages progressively
     slides[activeSlide].messages.forEach((message, index) => {
       const timer = setTimeout(() => {
         setVisibleMessages(prev => [...prev, message.id]);
       }, 1000 + (index * 800));
       
-      timers.push(timer);
+      timersRef.current.push(timer);
     });
     
-    // Auto-advance carousel after messages are shown
+    // Auto-advance carousel after delay
+    const slideChangeTime = 1000 + (slides[activeSlide].messages.length * 800) + 4000;
     const advanceTimer = setTimeout(() => {
       setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 1000 + (slides[activeSlide].messages.length * 800) + 5000); // Add 5s after last message
+    }, slideChangeTime);
     
-    timers.push(advanceTimer);
-    
-    // Cleanup
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [activeSlide, isMobile, slides]);
+    timersRef.current.push(advanceTimer);
+  };
 
-  // Mobile: Single message display
+  // Handle slide changes
   useEffect(() => {
-    // Only for mobile
+    if (isMobile) {
+      // For mobile, reset message index and start mobile animation
+      setMobileMessageIndex(0);
+      startMobileAnimation();
+    } else {
+      // For desktop, start desktop animation
+      startDesktopAnimation();
+    }
+  }, [activeSlide, isMobile]);
+
+  // Mobile message cycling
+  const startMobileAnimation = () => {
     if (!isMobile) return;
     
-    // Reset message index when slide changes
-    if (activeSlide !== slides.indexOf(slides[activeSlide])) {
-      setMobileMessageIndex(0);
-    }
+    // Clear existing timers
+    timersRef.current.forEach(timer => clearTimeout(timer));
+    timersRef.current = [];
     
-    const currentMessages = slides[activeSlide].messages;
-    if (currentMessages.length === 0) return;
+    const currentSlide = slides[activeSlide];
+    if (!currentSlide.messages.length) return;
     
-    // Clear any existing timers
-    const mobileTimers: NodeJS.Timeout[] = [];
-    
-    // Show next message after 3 seconds
-    const messageTimer = setTimeout(() => {
+    // Cycle to next message after delay
+    const timer = setTimeout(() => {
       setMobileMessageIndex(prev => {
-        // If at the last message, advance to next slide
-        if (prev + 1 >= currentMessages.length) {
-          // Schedule slide change
-          const slideTimer = setTimeout(() => {
+        const nextIndex = prev + 1;
+        
+        // If we've shown all messages, advance to next slide
+        if (nextIndex >= currentSlide.messages.length) {
+          const slideChangeTimer = setTimeout(() => {
             setActiveSlide(prevSlide => (prevSlide + 1) % slides.length);
-            setMobileMessageIndex(0); // Reset message index for new slide
           }, 1000);
           
-          mobileTimers.push(slideTimer);
+          timersRef.current.push(slideChangeTimer);
           return 0;
         }
-        return prev + 1;
+        
+        return nextIndex;
       });
     }, 3000);
     
-    mobileTimers.push(messageTimer);
-    
-    // Cleanup
-    return () => {
-      mobileTimers.forEach(clearTimeout);
-    };
-  }, [activeSlide, mobileMessageIndex, isMobile, slides]);
+    timersRef.current.push(timer);
+  };
+  
+  // Restart mobile animation when message index changes
+  useEffect(() => {
+    if (isMobile) {
+      startMobileAnimation();
+    }
+  }, [mobileMessageIndex, isMobile]);
 
-  // Handle sign in with email
+  // Authentication handlers
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -424,7 +420,6 @@ const SplitPageSignup = () => {
     }
   };
 
-  // Handle sign in with Google
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError(null);
@@ -444,7 +439,6 @@ const SplitPageSignup = () => {
     }
   };
 
-  // Handle sign in with Facebook
   const handleFacebookSignIn = async () => {
     setLoading(true);
     setError(null);
@@ -464,60 +458,14 @@ const SplitPageSignup = () => {
     }
   };
 
-  // Render a message for desktop
-  const renderDesktopMessage = (message: any) => {
-    const isVisible = visibleMessages.includes(message.id);
+  // Manual slide navigation
+  const goToSlide = (index: number) => {
+    setActiveSlide(index);
+    setVisibleMessages([]);
+    setMobileMessageIndex(0);
     
-    if (!isVisible) return null;
-    
-    const style = {
-      position: 'absolute',
-      zIndex: 20,
-      maxWidth: '300px',
-      ...(message.top && { top: message.top }),
-      ...(message.bottom && { bottom: message.bottom }),
-      ...(message.left && { left: message.left }),
-      ...(message.right && { right: message.right }),
-    } as React.CSSProperties;
-    
-    return (
-      <div 
-        key={`desktop-${message.id}`} 
-        className="animate-fadeIn" 
-        style={style}
-      >
-        <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
-          <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
-            <div className="text-sm font-semibold text-blue-400 mb-1">{message.username}</div>
-            <div className="text-white">{message.content}</div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  // Render current message for mobile
-  const renderMobileMessage = () => {
-    const currentMessages = slides[activeSlide].messages;
-    if (currentMessages.length === 0 || mobileMessageIndex >= currentMessages.length) {
-      return null;
-    }
-    
-    const message = currentMessages[mobileMessageIndex];
-    
-    return (
-      <div 
-        key={`mobile-${message.id}`} 
-        className="w-4/5 mx-auto animate-fadeIn"
-      >
-        <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
-          <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
-            <div className="text-sm font-semibold text-blue-400 mb-1">{message.username}</div>
-            <div className="text-white">{message.content}</div>
-          </div>
-        </div>
-      </div>
-    );
+    timersRef.current.forEach(timer => clearTimeout(timer));
+    timersRef.current = [];
   };
 
   return (
@@ -628,62 +576,174 @@ const SplitPageSignup = () => {
         </div>
       </div>
       
-      {/* Right side - Turf Debate Carousel */}
-      <div className="w-full md:w-1/2 relative overflow-hidden">
+      {/* Right side - Turf Debate Carousel (visible only on desktop) */}
+      <div className={`${isMobile ? 'hidden' : 'block'} w-1/2 relative overflow-hidden`}>
         {slides.map((slide, index) => (
           <div 
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${slide.background} ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            key={`desktop-slide-${index}`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+            style={{ backgroundColor: '#1a1a1a' }}
           >
             {/* Background image */}
-            <div className="relative w-full h-full">
-              <img 
-                src={slide.image} 
-                alt={`Slide ${index + 1}`} 
-                className="w-full h-full object-cover"
-              />
+            <img 
+              src={slide.image} 
+              alt={`Slide ${index + 1}`} 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            
+            {/* Dark overlay for readability */}
+            <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+            
+            {/* Desktop message bubbles */}
+            {slide.messages.map(message => {
+              const isVisible = visibleMessages.includes(message.id);
               
-              {/* Dark overlay for readability */}
-              <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+              if (!isVisible) return null;
               
-              {/* Messages - conditional rendering based on device */}
-              {isMobile ? (
-                // Mobile: Single message at a time
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {renderMobileMessage()}
+              return (
+                <div
+                  key={`desktop-message-${message.id}`}
+                  style={{
+                    position: 'absolute',
+                    zIndex: 20,
+                    maxWidth: '300px',
+                    ...(message.top && { top: message.top }),
+                    ...(message.bottom && { bottom: message.bottom }),
+                    ...(message.left && { left: message.left }),
+                    ...(message.right && { right: message.right }),
+                    transition: 'all 0.5s ease-out',
+                    opacity: 1,
+                    transform: 'translateY(0)'
+                  }}
+                  className="message-bubble"
+                >
+                  <div 
+                    className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}
+                  >
+                    <div 
+                      className={`rounded-xl px-3 py-2 shadow-lg ${
+                        message.position === 'left' 
+                          ? 'bg-gray-800 border-l-4 border-blue-500' 
+                          : 'bg-gray-800 border-r-4 border-green-500'
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-blue-400 mb-1">{message.username}</div>
+                      <div className="text-white">{message.content}</div>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                // Desktop: Multiple messages with positioning
-                <div className="absolute inset-0">
-                  {slide.messages.map(message => renderDesktopMessage(message))}
-                </div>
-              )}
-              
-              {/* Bottom bar with debate topic */}
+              );
+            })}
+            
+            {/* Bottom bar with topic */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center z-30"
+              style={{ backgroundColor: slide.bottomBar.backgroundColor }}
+            >
+              <h3 className="text-white text-lg md:text-xl font-medium">
+                {slide.bottomBar.text}
+              </h3>
+            </div>
+            
+            {/* Navigation dots */}
+            <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2 z-30">
+              {slides.map((_, i) => (
+                <button
+                  key={`desktop-dot-${i}`}
+                  onClick={() => goToSlide(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    i === activeSlide ? 'bg-white w-4' : 'bg-white/50'
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Mobile carousel (hidden on desktop) */}
+      <div className={`${isMobile ? 'block' : 'hidden'} w-full h-80`}>
+        {slides.map((slide, index) => (
+          <div 
+            key={`mobile-slide-${index}`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
+            style={{ backgroundColor: '#1a1a1a', height: '80vh' }}
+          >
+            {/* Background image */}
+            <img 
+              src={slide.image} 
+              alt={`Slide ${index + 1}`} 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+            
+            {/* Single message for mobile */}
+            {slide.messages[mobileMessageIndex] && (
               <div 
-                className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center"
-                style={{ backgroundColor: slide.bottomBar.backgroundColor }}
+                className="absolute inset-0 flex items-center justify-center p-4 z-20"
+                style={{ 
+                  animation: 'fadeIn 0.5s ease-out',
+                }}
               >
-                <h3 className="text-lg md:text-xl font-medium text-white">
-                  {slide.bottomBar.text}
-                </h3>
+                <div 
+                  className={`w-4/5 mx-auto`}
+                  style={{ 
+                    maxWidth: '300px',
+                  }}
+                >
+                  <div 
+                    className={`flex flex-col ${
+                      slide.messages[mobileMessageIndex].position === 'left' 
+                        ? 'items-start' 
+                        : 'items-end'
+                    }`}
+                  >
+                    <div 
+                      className={`rounded-xl px-3 py-2 shadow-lg ${
+                        slide.messages[mobileMessageIndex].position === 'left' 
+                          ? 'bg-gray-800 border-l-4 border-blue-500' 
+                          : 'bg-gray-800 border-r-4 border-green-500'
+                      }`}
+                    >
+                      <div className="text-sm font-semibold text-blue-400 mb-1">
+                        {slide.messages[mobileMessageIndex].username}
+                      </div>
+                      <div className="text-white">
+                        {slide.messages[mobileMessageIndex].content}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              {/* Dots navigation */}
-              <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2 z-30">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setActiveSlide(i);
-                      setMobileMessageIndex(0); 
-                      setVisibleMessages([]);
-                    }}
-                    aria-label={`Go to slide ${i + 1}`}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeSlide ? 'bg-white w-4' : 'bg-white/50'}`}
-                  />
-                ))}
-              </div>
+            )}
+            
+            {/* Bottom bar with topic */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center z-30"
+              style={{ backgroundColor: slide.bottomBar.backgroundColor }}
+            >
+              <h3 className="text-white text-lg font-medium">
+                {slide.bottomBar.text}
+              </h3>
+            </div>
+            
+            {/* Navigation dots */}
+            <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2 z-30">
+              {slides.map((_, i) => (
+                <button
+                  key={`mobile-dot-${i}`}
+                  onClick={() => goToSlide(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    i === activeSlide ? 'bg-white w-4' : 'bg-white/50'
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
             </div>
           </div>
         ))}
