@@ -56,7 +56,7 @@ interface ScreenSection {
 // Add utility function for avatar paths
 const getAvatarPath = (username: string): string => {
   const cleanUsername = username.replace(/\s+/g, '');
-  return `/user_avatars/${cleanUsername}.webp`;
+  return `/user_avatars/${cleanUsername}.png`;
 };
 
 // Add DebugAvatarImage component
@@ -78,9 +78,9 @@ const DebugAvatarImage = ({ src, alt }: { src: string; alt: string }) => {
       
       if (attempts < 1) {
         setAttempts(prev => prev + 1);
-        const newSrc = src.endsWith('.webp') 
-          ? src.replace('.webp', '.png') 
-          : src.replace('.png', '.webp');
+        const newSrc = src.endsWith('.png') 
+          ? src.replace('.png', '.webp') 
+          : src.replace('.webp', '.png');
         console.log(`Retrying with alternative format: ${newSrc}`);
       }
     };
