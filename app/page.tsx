@@ -1,5 +1,9 @@
 import SplitPageSignup from './components/SplitPageSignup';
 
 export default function Home() {
-  return <SplitPageSignup />;
+  return (
+    <div className="h-screen">
+      <SplitPageSignup />
+    </div>
+  );
 }

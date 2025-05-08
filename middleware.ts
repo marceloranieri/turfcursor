@@ -26,6 +26,7 @@ const publicRoutes = [
   '/auth/reset-password',
   '/auth/verify-email',
   '/auth/error',
+  '/auth/success',
   '/legal/terms',
   '/legal/privacy',
 ];
@@ -34,8 +35,15 @@ const publicRoutes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Allow public routes without authentication
-  if (publicRoutes.includes(pathname)) {
+  // Skip authentication check for static assets
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api/') ||
+    pathname.includes('.') ||
+    pathname.startsWith('/images/') ||
+    pathname.startsWith('/fonts/') ||
+    publicRoutes.includes(pathname)
+  ) {
     return NextResponse.next();
   }
   

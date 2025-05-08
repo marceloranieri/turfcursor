@@ -4,6 +4,30 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useRouter } from 'next/navigation';
+
+interface Message {
+  id: number;
+  type: 'text';
+  username: string;
+  content: string;
+  position: 'left' | 'right';
+  top?: string;
+  bottom?: string;
+  left?: string;
+  right?: string;
+}
+
+interface Slide {
+  background: string;
+  image: string;
+  messages: Message[];
+  bottomBar: {
+    backgroundColor: string;
+    text: string;
+    textColor: string;
+  };
+}
 
 const SplitPageSignup = () => {
   const [activeSlide, setActiveSlide] = useState(0);
@@ -14,175 +38,294 @@ const SplitPageSignup = () => {
   const [error, setError] = useState<string | null>(null);
   
   const supabase = createClientComponentClient();
+  const router = useRouter();
   
-  // Four different slides with their messages and positions
-  const slides = [
+  // Custom slides with user-provided content
+  const slides: Slide[] = [
     {
-      background: "bg-gray-100",
-      image: "/images/carousel-1.jpg", // Replace with your image path
+      background: "bg-gray-900",
+      image: "/star_rings_turf.webp",
       messages: [
         { 
           id: 1, 
           type: 'text', 
-          content: 'Bom dia, mãe 🤗 🧡', 
-          time: '11:54', 
-          position: 'right' as const,
-          top: '50%',
-          right: '10%'
-        },
-        { 
-          id: 2, 
-          type: 'heart', 
-          content: '❤️', 
-          position: 'right' as const,
-          top: '55%',
-          right: '15%'
-        },
-        { 
-          id: 3, 
-          type: 'voice', 
-          duration: '0:03', 
-          time: '11:57', 
-          position: 'right' as const,
-          top: '70%',
-          left: '20%'
-        },
-        { 
-          id: 4, 
-          type: 'image', 
-          content: '/images/message-image-1.jpg', // Replace with your image path
-          time: '11:57', 
-          position: 'right' as const,
-          bottom: '25%',
-          right: '5%'
-        },
-        { 
-          id: 5, 
-          type: 'text', 
-          content: 'Quero logo outra viagem de família!', 
-          time: '11:59', 
-          position: 'right' as const,
-          bottom: '15%',
-          left: '2%'
-        },
-      ],
-      bottomBar: {
-        backgroundColor: "#0095f6",
-        text: "Should violent movies be restricted to adult audiences only?",
-        textColor: "white"
-      }
-    },
-    {
-      background: "bg-gray-100",
-      image: "/images/carousel-2.jpg", // Replace with your image path
-      messages: [
-        { 
-          id: 1, 
-          type: 'text', 
-          content: 'What do you think about this topic?', 
-          time: '10:42', 
-          position: 'right' as const,
-          top: '30%',
-          right: '5%'
-        },
-        { 
-          id: 2, 
-          type: 'text', 
-          content: 'I have some strong opinions on this!', 
-          time: '10:43', 
-          position: 'left' as const,
-          top: '40%',
+          username: 'JediMaster42',
+          content: "Luke couldn't even resist a hologram of his sister lmao, Frodo carried that ring for MONTHS 💪", 
+          position: 'left',
+          top: '15%',
           left: '5%'
         },
         { 
-          id: 3, 
-          type: 'image', 
-          content: '/images/message-image-2.jpg', // Replace with your image path
-          time: '10:45', 
-          position: 'right' as const,
-          bottom: '30%',
-          right: '10%'
+          id: 2, 
+          type: 'text',
+          username: 'Tolkien_Lore', 
+          content: "The Ring corrupts power. Luke's stronger = faster fall", 
+          position: 'right',
+          top: '25%',
+          right: '5%'
         },
-      ],
-      bottomBar: {
-        backgroundColor: "#0095f6",
-        text: "Is social media making us more or less connected?",
-        textColor: "white"
-      }
-    },
-    {
-      background: "bg-gray-100",
-      image: "/images/carousel-3.jpg", // Replace with your image path
-      messages: [
         { 
-          id: 1, 
-          type: 'text', 
-          content: 'Have you seen the latest debate?', 
-          time: '14:22', 
-          position: 'left' as const,
+          id: 3, 
+          type: 'text',
+          username: 'ForceIsWithMe', 
+          content: "Y'all forgetting Luke resisted Emperor's temptation…", 
+          position: 'left',
           top: '35%',
           left: '10%'
         },
         { 
-          id: 2, 
-          type: 'voice', 
-          duration: '0:15', 
-          time: '14:24', 
-          position: 'right' as const,
-          top: '50%',
-          right: '15%'
+          id: 4, 
+          type: 'text',
+          username: 'HobbitFeet99', 
+          content: "Luke? No way. Read the book: The Ring isn't about willpower, it's about humility!", 
+          position: 'right',
+          top: '45%',
+          right: '8%'
         },
         { 
-          id: 3, 
-          type: 'text', 
-          content: 'Really interesting points!', 
-          time: '14:26', 
-          position: 'left' as const,
-          bottom: '25%',
-          left: '15%'
+          id: 5, 
+          type: 'text',
+          username: 'DarthFrodo', 
+          content: "Plot twist: Luke puts on the Ring and becomes invisible to the Force. Checkmate, Palpatine 🧠", 
+          position: 'left',
+          top: '55%',
+          left: '7%'
         },
-      ],
-      bottomBar: {
-        backgroundColor: "#0095f6",
-        text: "Should healthcare be free for everyone?",
-        textColor: "white"
-      }
-    },
-    {
-      background: "bg-gray-100",
-      image: "/images/carousel-4.jpg", // Replace with your image path
-      messages: [
         { 
-          id: 1, 
-          type: 'text', 
-          content: 'Join us for tonight\'s discussion!', 
-          time: '18:05', 
-          position: 'right' as const,
-          top: '30%',
+          id: 6, 
+          type: 'text',
+          username: 'EagleEyes', 
+          content: "Frodo literally failed at the end though?? Sam was the real MVP of that quest", 
+          position: 'right',
+          top: '65%',
           right: '10%'
         },
         { 
-          id: 2, 
-          type: 'text', 
-          content: 'What time does it start?', 
-          time: '18:06', 
-          position: 'left' as const,
-          top: '45%',
-          left: '5%'
+          id: 7, 
+          type: 'text',
+          username: 'GondorCalling', 
+          content: "The Force is basically just midichlorian mind control. The Ring would use that connection.", 
+          position: 'left',
+          bottom: '25%',
+          left: '6%'
         },
         { 
-          id: 3, 
-          type: 'text', 
-          content: '8PM sharp! Don\'t miss it 😉', 
-          time: '18:07', 
-          position: 'right' as const,
-          bottom: '30%',
+          id: 8, 
+          type: 'text',
+          username: 'MiddleEarthScience', 
+          content: "Am I the only one wondering if lightsabers could cut the Ring?", 
+          position: 'right',
+          bottom: '15%',
           right: '5%'
         },
       ],
       bottomBar: {
         backgroundColor: "#0095f6",
-        text: "Is technology improving or harming education?",
+        text: "Could Luke have resisted the One Ring better than Frodo? Or the Force just speeds up corruption?",
+        textColor: "white"
+      }
+    },
+    {
+      background: "bg-gray-900",
+      image: "/music_turf.webp",
+      messages: [
+        { 
+          id: 1, 
+          type: 'text',
+          username: 'BeatsMaker95', 
+          content: "Sampling's just digital collage. Good artists copy, great artists steal", 
+          position: 'left',
+          top: '15%',
+          left: '5%'
+        },
+        { 
+          id: 2, 
+          type: 'text',
+          username: 'OldSchoolDJ', 
+          content: "Kids these days think pressing ctrl+c ctrl+v is 'producing' smh my head", 
+          position: 'right',
+          top: '25%',
+          right: '8%'
+        },
+        { 
+          id: 3, 
+          type: 'text',
+          username: 'MusicTheory101', 
+          content: "The problem isn't sampling, it's LAZY sampling. Add something new or don't bother!", 
+          position: 'left',
+          top: '35%',
+          left: '7%'
+        },
+        { 
+          id: 4, 
+          type: 'text',
+          username: 'VinylOnly', 
+          content: "There hasn't been an original thought in music since 1978.", 
+          position: 'right',
+          top: '45%',
+          right: '5%'
+        },
+        { 
+          id: 5, 
+          type: 'text',
+          username: 'StreamingKing', 
+          content: "Imagine if we told chefs they can't use ingredients others discovered.", 
+          position: 'left',
+          top: '55%',
+          left: '10%'
+        },
+        { 
+          id: 6, 
+          type: 'text',
+          username: 'AutotunedOut', 
+          content: "Sampling used to require skill and crate-digging tbh…", 
+          position: 'right',
+          top: '65%',
+          right: '8%'
+        },
+        { 
+          id: 7, 
+          type: 'text',
+          username: 'DanceMixGirl', 
+          content: "Without sampling we wouldn't have had Daft Punk, Chemical Brothers…", 
+          position: 'left',
+          bottom: '22%',
+          left: '5%'
+        },
+        { 
+          id: 8, 
+          type: 'text',
+          username: 'MusicalPurist', 
+          content: "There's a difference between being influenced by something and straight up theft💰", 
+          position: 'right',
+          bottom: '12%',
+          right: '5%'
+        },
+      ],
+      bottomBar: {
+        backgroundColor: "#0095f6",
+        text: "Is sampling the death of creativity? The line between art and lazy theft's getting blurrier.",
+        textColor: "white"
+      }
+    },
+    {
+      background: "bg-gray-900",
+      image: "/gamer_turf.webp",
+      messages: [
+        { 
+          id: 1, 
+          type: 'text',
+          username: 'OldGamerDad', 
+          content: "My 8yo downloads 5 new games daily, plays each for 3 mins between ads. Kid's casino", 
+          position: 'left',
+          top: '15%',
+          left: '5%'
+        },
+        { 
+          id: 2, 
+          type: 'text',
+          username: 'DevLife24', 
+          content: "As a small dev, those 'trash games' pay my bills. Not everyone has AAA studio resources 🤷‍♂️", 
+          position: 'right',
+          top: '25%',
+          right: '8%'
+        },
+        { 
+          id: 3, 
+          type: 'text',
+          username: 'BrainRotGang', 
+          content: "Kids' 1st gaming experience is watching ads to get in-game currency, sad…", 
+          position: 'left',
+          top: '35%',
+          left: '8%'
+        },
+        { 
+          id: 4, 
+          type: 'text',
+          username: 'MobileCasual', 
+          content: "The cream rises. Good mobile games still exist, you just gotta be willing to actually pay for them.", 
+          position: 'right',
+          top: '45%',
+          right: '5%'
+        },
+        { 
+          id: 5, 
+          type: 'text',
+          username: 'GameDesign101', 
+          content: "Hot take: bad games teach kids to recognize quality. I played plenty of trash NES games growing up too 🕹️", 
+          position: 'left',
+          top: '55%',
+          left: '6%'
+        },
+        { 
+          id: 6, 
+          type: 'text',
+          username: 'TouchScreenHater', 
+          content: "Remember when games were meant to be fun?", 
+          position: 'right',
+          top: '65%',
+          right: '10%'
+        },
+        { 
+          id: 7, 
+          type: 'text',
+          username: 'AdBlockPlus', 
+          content: "Parents are using phones as babysitters. The games are just filling market demand,.", 
+          position: 'left',
+          bottom: '22%',
+          left: '8%'
+        },
+        { 
+          id: 8, 
+          type: 'text',
+          username: 'RetroRevival', 
+          content: "Mobile gaming was a mistake. Return to gameboy. Reject modernity. Embrace cartridge. 🎮", 
+          position: 'right',
+          bottom: '12%',
+          right: '6%'
+        },
+      ],
+      bottomBar: {
+        backgroundColor: "#0095f6",
+        text: "Quick dev, cheap games: app stores flooded with ad-soaked trash. Is the next gen of gamers growing up braindead?",
+        textColor: "white"
+      }
+    },
+    {
+      background: "bg-gray-900",
+      image: "/Turf_App.webp",
+      messages: [
+        { 
+          id: 1, 
+          type: 'text',
+          username: 'GrassIsGreener', 
+          content: "Loving Turf so far! Maybe add option to save custom map layouts?", 
+          position: 'left',
+          top: '30%',
+          left: '10%'
+        },
+        { 
+          id: 2, 
+          type: 'text',
+          username: 'NewUser23', 
+          content: "Interface is clean but took me a while to figure out how friends lists work 👍", 
+          position: 'right',
+          top: '50%',
+          right: '10%'
+        },
+        { 
+          id: 3, 
+          type: 'text',
+          username: 'RegularJoe', 
+          content: "The notification system needs work guys 📱", 
+          position: 'left',
+          bottom: '30%',
+          left: '10%'
+        },
+      ],
+      bottomBar: {
+        backgroundColor: "#0095f6",
+        text: "From Beta to mainstream. Help us make Turf better.",
         textColor: "white"
       }
     },
@@ -197,80 +340,58 @@ const SplitPageSignup = () => {
     currentMessages.forEach((message, index) => {
       setTimeout(() => {
         setVisibleMessages(prev => [...prev, message.id]);
-      }, 1000 + (index * 800)); // Show each message with a delay
+      }, 1000 + (index * 600)); // Showing messages faster for better UX
     });
     
     // Auto-advance the carousel
     const timer = setTimeout(() => {
       setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 8000); // Change slide every 8 seconds
+    }, 12000); // Show each slide longer since there are more messages
     
     return () => clearTimeout(timer);
   }, [activeSlide]);
 
-  // Handle sign in with email
-  const handleSignIn = async (e: React.FormEvent) => {
+  // Handle sign up
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
 
       if (error) throw error;
-      // Successful login will be handled by the middleware redirecting to /dashboard or /chat
+      router.push('/auth/verify-email');
     } catch (error: any) {
-      setError(error.message || 'Error signing in');
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle sign in with Google
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError(null);
-
+  // Handle social sign in
+  const handleSocialSignIn = async (provider: 'google' | 'facebook') => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       });
-
       if (error) throw error;
     } catch (error: any) {
-      setError(error.message || 'Error signing in with Google');
-      setLoading(false);
+      setError(error.message);
     }
   };
 
-  // Handle sign in with Facebook
-  const handleFacebookSignIn = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      setError(error.message || 'Error signing in with Facebook');
-      setLoading(false);
-    }
-  };
-
-  // Render a message bubble with precise positioning
-  const renderMessage = (message: any) => {
+  // Render a message bubble with precise positioning and username
+  const renderMessage = (message: Message) => {
     const isVisible = visibleMessages.includes(message.id);
     
     if (!isVisible) return null;
@@ -279,6 +400,7 @@ const SplitPageSignup = () => {
     const positionStyles = {
       position: 'absolute',
       zIndex: 20,
+      maxWidth: '300px',
       ...(message.top && { top: message.top }),
       ...(message.bottom && { bottom: message.bottom }),
       ...(message.left && { left: message.left }),
@@ -289,44 +411,9 @@ const SplitPageSignup = () => {
       <div key={message.id} className="animate-in fade-in duration-300 slide-in-from-bottom-3" style={positionStyles}>
         <div className={`flex flex-col ${message.position === 'left' ? 'items-start' : 'items-end'}`}>
           {message.type === 'text' && (
-            <div className={`rounded-2xl px-3 py-2 shadow-sm ${message.position === 'left' ? 'bg-white' : 'bg-green-100'} max-w-xs`}>
-              {message.content}
-              <div className="text-xs text-gray-400 text-right mt-1">{message.time}</div>
-            </div>
-          )}
-          
-          {message.type === 'heart' && (
-            <div className="text-2xl">
-              {message.content}
-            </div>
-          )}
-          
-          {message.type === 'image' && (
-            <div className={`rounded-lg overflow-hidden border ${message.position === 'left' ? 'border-gray-200' : 'border-green-200'} max-w-xs`}>
-              <img src={message.content} alt="Shared image" className="w-48 h-36 object-cover" />
-              <div className="text-xs text-gray-400 text-right p-1">{message.time}</div>
-            </div>
-          )}
-          
-          {message.type === 'voice' && (
-            <div className={`flex items-center gap-2 rounded-full px-3 py-2 ${message.position === 'left' ? 'bg-white' : 'bg-white'} shadow-sm`}>
-              <div className="text-gray-500">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" fill="#25D366" />
-                  <path d="M9 8L16 12L9 16V8Z" fill="white" />
-                </svg>
-              </div>
-              <div className="flex-1 h-6 w-32">
-                <div className="bg-gray-200 h-full rounded-full relative">
-                  <div className="absolute inset-0 flex items-center justify-between px-1">
-                    {[...Array(12)].map((_, i) => (
-                      <div key={i} className="w-0.5 bg-gray-400" style={{ height: `${20 + Math.random() * 80}%` }}></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="text-xs text-gray-500">{message.duration}</div>
-              <div className="text-xs text-gray-400 ml-1">{message.time}</div>
+            <div className={`rounded-xl px-3 py-2 shadow-lg ${message.position === 'left' ? 'bg-gray-800 border-l-4 border-blue-500' : 'bg-gray-800 border-r-4 border-green-500'}`}>
+              <div className="text-sm font-semibold text-blue-400 mb-1">{message.username}</div>
+              <div className="text-white">{message.content}</div>
             </div>
           )}
         </div>
@@ -361,7 +448,7 @@ const SplitPageSignup = () => {
             </div>
           )}
 
-          <form onSubmit={handleSignIn}>
+          <form onSubmit={handleSignUp}>
             <div className="mb-4">
               <label htmlFor="email" className="block text-gray-700 mb-2">Email</label>
               <input 
@@ -397,7 +484,7 @@ const SplitPageSignup = () => {
               disabled={loading}
               className="w-full bg-gray-800 text-white p-3 rounded font-medium mb-6 hover:bg-gray-700 disabled:opacity-70"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? 'Creating account...' : 'Sign up'}
             </button>
           </form>
           
@@ -408,7 +495,7 @@ const SplitPageSignup = () => {
           </div>
           
           <button 
-            onClick={handleGoogleSignIn}
+            onClick={() => handleSocialSignIn('google')}
             disabled={loading}
             className="w-full border border-gray-300 p-3 rounded font-medium flex items-center justify-center mb-4 hover:bg-gray-50 relative disabled:opacity-70"
           >
@@ -422,7 +509,7 @@ const SplitPageSignup = () => {
           </button>
           
           <button 
-            onClick={handleFacebookSignIn}
+            onClick={() => handleSocialSignIn('facebook')}
             disabled={loading}
             className="w-full border border-gray-300 p-3 rounded font-medium flex items-center justify-center mb-6 hover:bg-gray-50 relative disabled:opacity-70"
           >
@@ -434,7 +521,7 @@ const SplitPageSignup = () => {
           
           <div className="text-center">
             <p className="text-gray-600 mb-6">
-              Don't you have an account? <Link href="/auth/signup" className="text-blue-500 hover:underline">Sign up</Link>
+              Already have an account? <Link href="/auth/signin" className="text-blue-500 hover:underline">Sign in</Link>
             </p>
             
             <Link href="/legal/privacy" className="text-gray-500 text-sm hover:underline">Privacy Policy</Link>
@@ -442,7 +529,7 @@ const SplitPageSignup = () => {
         </div>
       </div>
       
-      {/* Right side - WhatsApp-style Carousel */}
+      {/* Right side - Turf Debate Carousel */}
       <div className="hidden md:block md:w-1/2 relative overflow-hidden">
         {slides.map((slide, index) => (
           <div 
@@ -457,6 +544,9 @@ const SplitPageSignup = () => {
                 className="w-full h-full object-cover"
               />
               
+              {/* Dark overlay for readability */}
+              <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+              
               {/* Message overlay - each message positioned absolutely on the image */}
               {slide.messages.map(message => renderMessage(message))}
               
@@ -469,7 +559,7 @@ const SplitPageSignup = () => {
                     color: slide.bottomBar.textColor
                   }}
                 >
-                  <h3 className="text-xl font-medium">{slide.bottomBar.text}</h3>
+                  <h3 className="text-lg md:text-xl font-medium">{slide.bottomBar.text}</h3>
                 </div>
               )}
               
@@ -479,6 +569,7 @@ const SplitPageSignup = () => {
                   <button
                     key={i}
                     onClick={() => setActiveSlide(i)}
+                    aria-label={`Go to slide ${i + 1}`}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeSlide ? 'bg-white w-4' : 'bg-white/50'}`}
                   />
                 ))}

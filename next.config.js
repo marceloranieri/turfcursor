@@ -117,6 +117,10 @@ const nextConfig = {
     PUBLIC_GITHUB_CLIENT_ID: process.env.PUBLIC_GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET
   },
+  // Make sure the homepage doesn't require authentication
+  experimental: {
+    instrumentationHook: true,
+  },
 };
 
 module.exports = nextConfig;
