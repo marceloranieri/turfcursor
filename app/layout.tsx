@@ -1,16 +1,44 @@
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import './styles/animations.css';
 import { AnimationProvider } from './contexts/AnimationContext';
 import ClientLayout from './(app)/client-layout';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 const { cspToString, cspConfig } = require('../csp-config');
+
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'Turf - Chatrooms with daily-curated debates',
+  description: 'Join engaging discussions on your favorite topics with like-minded people.',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+  themeColor: '#ffffff',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Turf',
+  },
+};
 
 export const dynamic = 'force-dynamic';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createServerComponentClient({ cookies });
+  const { data: { session } } = await supabase.auth.getSession();
+
+  // Redirect to welcome page if not logged in
+  if (!session) {
+    redirect('/welcome');
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -19,7 +47,7 @@ export default function RootLayout({
           content={cspToString(cspConfig)}
         />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className={inter.className}>
         <AnimationProvider>
           <ClientLayout>{children}</ClientLayout>
         </AnimationProvider>

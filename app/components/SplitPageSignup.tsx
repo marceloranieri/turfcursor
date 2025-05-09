@@ -1125,30 +1125,44 @@ const SplitPageSignup = () => {
                     <div 
                       className="absolute inset-0 flex items-center justify-center p-4 z-50"
                     >
-                      <div className="w-4/5 mx-auto flex animate-fadeIn" style={{ maxWidth: '300px' }}>
+                      <div className="w-full max-w-sm mx-auto flex flex-col animate-fadeIn">
                         {/* User Avatar for Mobile */}
-                        <div className="flex-shrink-0 mr-2">
-                          <DebugAvatarImage 
-                            src={getAvatarPath(slide.messages[mobileMessageIndex].username)}
-                            alt={slide.messages[mobileMessageIndex].username}
-                          />
+                        <div className="flex items-center mb-3">
+                          <div className="flex-shrink-0 mr-3">
+                            <DebugAvatarImage 
+                              src={getAvatarPath(slide.messages[mobileMessageIndex].username)}
+                              alt={slide.messages[mobileMessageIndex].username}
+                            />
+                          </div>
+                          <div className="text-lg font-semibold text-white drop-shadow-md">
+                            {slide.messages[mobileMessageIndex].username}
+                          </div>
                         </div>
                         
                         {/* Message content for Mobile */}
-                        <div className="flex flex-col flex-grow">
-                          <div className="text-sm font-semibold text-white mb-1 drop-shadow-md">
-                            {slide.messages[mobileMessageIndex].username}
-                          </div>
-                          <div className="rounded-xl px-3 py-2 bg-gray-100 text-gray-800 shadow-md relative">
+                        <div className="bg-white bg-opacity-95 rounded-2xl p-4 shadow-xl relative">
+                          <p className="text-gray-800 text-lg leading-relaxed">
                             {slide.messages[mobileMessageIndex].content}
-                            
-                            {/* Reaction for Mobile */}
-                            {slide.messages[mobileMessageIndex].reaction && (
-                              <div className="absolute -bottom-2 right-0 bg-white rounded-full px-1 py-1 shadow-md text-sm">
-                                {slide.messages[mobileMessageIndex].reaction}
-                              </div>
-                            )}
-                          </div>
+                          </p>
+                          
+                          {/* Reaction for Mobile */}
+                          {slide.messages[mobileMessageIndex].reaction && (
+                            <div className="absolute -bottom-3 -right-3 bg-white rounded-full px-3 py-2 shadow-lg text-lg border border-gray-200">
+                              {slide.messages[mobileMessageIndex].reaction}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Progress indicator */}
+                        <div className="flex justify-center mt-6 gap-2">
+                          {slide.messages.map((_, idx) => (
+                            <div 
+                              key={idx}
+                              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                idx === mobileMessageIndex ? 'bg-white scale-125' : 'bg-white bg-opacity-50'
+                              }`}
+                            />
+                          ))}
                         </div>
                       </div>
                     </div>
