@@ -84,7 +84,7 @@ const DebugAvatarImage = ({ src, alt }: { src: string; alt: string }) => {
         src={status === 'error' ? '/default-avatar.svg' : src}
         alt={alt}
         className={`w-8 h-8 rounded-full object-cover border-2 ${
-          status === 'loaded' ? 'border-green-500' : 'border-gray-200'
+          status === 'loaded' ? 'border-white' : 'border-gray-200'
         }`}
       />
       {status === 'error' && (
