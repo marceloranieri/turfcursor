@@ -6,7 +6,6 @@ import { AnimationProvider } from './contexts/AnimationContext';
 import ClientLayout from './(app)/client-layout';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 const { cspToString, cspConfig } = require('../csp-config');
 
 const inter = Inter({ subsets: ['latin'] });
@@ -33,11 +32,6 @@ export default async function RootLayout({
 }) {
   const supabase = createServerComponentClient({ cookies });
   const { data: { session } } = await supabase.auth.getSession();
-
-  // Redirect to welcome page if not logged in
-  if (!session) {
-    redirect('/welcome');
-  }
 
   return (
     <html lang="en" suppressHydrationWarning>

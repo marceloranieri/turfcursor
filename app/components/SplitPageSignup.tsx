@@ -105,7 +105,7 @@ const ChatBubble = ({ message, position }: { message: Message; position: 'left' 
         <img 
           src={avatar} 
           alt={username} 
-          className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+          className="w-8 h-8 rounded-full object-cover border-2 border-white"
         />
       </div>
       
