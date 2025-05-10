@@ -7,6 +7,24 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('AuthCallback');
 
+// Helper function to sanitize profile data
+const sanitizeProfile = (profile: any) => {
+  try {
+    // First stringify to remove any non-JSON-serializable values
+    const stringified = JSON.stringify(profile);
+    // Then parse back to ensure it's valid JSON
+    return JSON.parse(stringified);
+  } catch (error) {
+    logger.error('Error sanitizing profile:', error);
+    // Return a safe default if sanitization fails
+    return {
+      email: profile?.email || '',
+      name: profile?.name || '',
+      avatar_url: profile?.avatar_url || ''
+    };
+  }
+};
+
 export default function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -32,6 +50,28 @@ export default function AuthCallback() {
       if (event === 'SIGNED_IN' && session) {
         try {
           logger.info('User signed in successfully');
+          
+          // Log raw session data for debugging
+          logger.info('Raw session data:', {
+            user: session.user,
+            app_metadata: session.user.app_metadata,
+            user_metadata: session.user.user_metadata
+          });
+
+          // Sanitize user metadata before any database operations
+          if (session.user.user_metadata) {
+            const sanitizedMetadata = sanitizeProfile(session.user.user_metadata);
+            logger.info('Sanitized user metadata:', sanitizedMetadata);
+            
+            // Update user with sanitized metadata
+            const { error: updateError } = await supabase.auth.updateUser({
+              data: sanitizedMetadata
+            });
+            
+            if (updateError) {
+              logger.error('Error updating user metadata:', updateError);
+            }
+          }
           
           // Check if this is a new signup that needs verification
           if (!session.user.email_confirmed_at && session.user.email) {
