@@ -12,14 +12,26 @@ export default function AuthCallback() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Handle the auth callback
+    // Add this line to handle URL hash parameters
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    
+    if (accessToken) {
+      // If we have a token in the URL, manually set it
+      logger.info('Found access token in URL, setting session');
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: '' });
+    }
+
+    // Regular auth listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       logger.info('Auth state changed:', { event, session: !!session });
 
       if (event === 'SIGNED_IN' && session) {
         try {
+          logger.info('User signed in successfully');
+          
           // Check if this is a new signup that needs verification
-          if (!session.user.email_confirmed_at) {
+          if (!session.user.email_confirmed_at && session.user.email) {
             localStorage.setItem('pendingVerification', 'true');
             router.push('/auth/verify-email');
             return;
@@ -32,9 +44,9 @@ export default function AuthCallback() {
           const redirectTo = searchParams.get('next') || '/dashboard';
           logger.info('Redirecting to:', redirectTo);
           router.push(redirectTo);
-        } catch (error: any) {
+        } catch (error) {
           logger.error('Error handling sign in:', error);
-          router.push('/auth/signin');
+          router.push('/auth/signin?error=' + encodeURIComponent(String(error)));
         }
       } else if (event === 'SIGNED_OUT') {
         logger.info('User signed out');
