@@ -12,6 +12,9 @@ export default function AuthCallback() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Add this line to log the URL with error parameters
+    logger.info('Auth callback URL:', window.location.href);
+    
     // Add this line to handle URL hash parameters
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
