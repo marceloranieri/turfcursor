@@ -47,8 +47,28 @@ export default function AuthCallback() {
           const redirectTo = searchParams.get('next') || '/dashboard';
           logger.info('Redirecting to:', redirectTo);
           router.push(redirectTo);
-        } catch (error) {
+        } catch (error: any) {
           logger.error('Error handling sign in:', error);
+
+          // When Google authentication returns, check for existing user
+          if (error.message?.includes('Database error saving new user')) {
+            logger.info('Attempting to link existing account...');
+            try {
+              // Try to sign in with existing email instead
+              const { data, error: signInError } = await supabase.auth.signInWithOtp({
+                email: session?.user?.email || '',
+              });
+              
+              if (!signInError) {
+                logger.info('Successfully initiated OTP sign in for existing account');
+                router.push('/dashboard');
+                return;
+              }
+            } catch (linkError) {
+              logger.error('Account linking failed:', linkError);
+            }
+          }
+
           router.push('/auth/signin?error=' + encodeURIComponent(String(error)));
         }
       } else if (event === 'SIGNED_OUT') {
