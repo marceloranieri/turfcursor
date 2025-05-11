@@ -1,3 +1,4 @@
+// TEST CHANGE: $(date) - Verifying deployment pipeline
 "use client";
 
 import React, { useState, useEffect } from 'react';
