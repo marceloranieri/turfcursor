@@ -7,6 +7,14 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('AuthCallback');
 
+// Helper function to extract only essential user metadata
+const extractUserMetadata = (profile: any) => ({
+  name: profile.name || '',
+  avatarUrl: profile.avatar_url || profile.picture || '',
+  email: profile.email || '',
+  // Add only the fields you need
+});
+
 // Helper function to sanitize profile data
 const sanitizeProfile = (profile: any) => {
   try {
@@ -97,11 +105,13 @@ export default function AuthCallback() {
           if (session.user.user_metadata) {
             const provider = session.user.app_metadata?.provider || 'unknown';
             const sanitizedMetadata = sanitizeByProvider(provider, session.user.user_metadata);
-            logger.info('Sanitized user metadata:', sanitizedMetadata);
+            // Extract only essential metadata
+            const essentialMetadata = extractUserMetadata(sanitizedMetadata);
+            logger.info('Essential user metadata:', essentialMetadata);
             
-            // Update user with sanitized metadata
+            // Update user with essential metadata
             const { error: updateError } = await supabase.auth.updateUser({
-              data: sanitizedMetadata
+              data: essentialMetadata
             });
             
             if (updateError) {
