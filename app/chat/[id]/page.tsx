@@ -42,18 +42,20 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const supabase = createClientComponentClient();
+  
   useEffect(() => {
     const checkAuth = async () => {
       // Check if Supabase keys are available
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         setError('Authentication configuration is missing. Please check your environment variables.');
+        setIsLoading(false);
         return;
       }
 
       try {
-        const supabase = createClientComponentClient();
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
@@ -65,15 +67,16 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           return;
         }
 
-        // Continue with chat initialization...
+        setIsLoading(false);
       } catch (err: any) {
-        console.error('Auth check failed:', err);
+        logger.error('Auth check failed:', err);
         setError('Failed to authenticate. Please try again later.');
+        setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, supabase]);
 
   if (error) {
     return (
@@ -92,13 +95,13 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Chat UI will be rendered here */}
-      <div className="max-w-4xl mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Chat Room: {params.id}</h1>
-        {/* Add your chat components here */}
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <ChatPageClient id={params.id} />;
 }
