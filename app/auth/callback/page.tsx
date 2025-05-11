@@ -25,6 +25,41 @@ const sanitizeProfile = (profile: any) => {
   }
 };
 
+// Provider-specific sanitization
+const sanitizeByProvider = (provider: string, profile: any) => {
+  logger.info(`Sanitizing profile for provider: ${provider}`);
+  
+  if (provider === 'google') {
+    // Google-specific sanitization
+    const sanitized = { ...profile };
+    // Remove any problematic fields
+    delete sanitized.verified_email;
+    delete sanitized.hd;
+    delete sanitized.locale;
+    // Normalize name fields
+    if (sanitized.given_name || sanitized.family_name) {
+      sanitized.name = `${sanitized.given_name || ''} ${sanitized.family_name || ''}`.trim();
+    }
+    return sanitizeProfile(sanitized);
+  }
+  
+  if (provider === 'github') {
+    // GitHub-specific sanitization
+    const sanitized = { ...profile };
+    // Remove any problematic fields
+    delete sanitized.node_id;
+    delete sanitized.updated_at;
+    // Normalize avatar URL
+    if (sanitized.avatar_url) {
+      sanitized.avatar_url = sanitized.avatar_url.replace('&s=96', '&s=256');
+    }
+    return sanitizeProfile(sanitized);
+  }
+  
+  // Default sanitization for other providers
+  return sanitizeProfile(profile);
+};
+
 export default function AuthCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -60,7 +95,8 @@ export default function AuthCallback() {
 
           // Sanitize user metadata before any database operations
           if (session.user.user_metadata) {
-            const sanitizedMetadata = sanitizeProfile(session.user.user_metadata);
+            const provider = session.user.app_metadata?.provider || 'unknown';
+            const sanitizedMetadata = sanitizeByProvider(provider, session.user.user_metadata);
             logger.info('Sanitized user metadata:', sanitizedMetadata);
             
             // Update user with sanitized metadata
