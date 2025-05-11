@@ -30,7 +30,9 @@ export default function AuthLayout({
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
         <div className="container mx-auto px-4 py-8">
-          {children}
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </div>
       </main>
 
