@@ -1,15 +1,19 @@
 'use client';
 
+import React from 'react';
+
 interface ErrorMessageProps {
-  message: string;
+  message: string | null;
 }
 
-export default function ErrorMessage({ message }: ErrorMessageProps) {
+export const ErrorMessage: React.FC<ErrorMessageProps> = ({ message }) => {
   if (!message) return null;
   
   return (
-    <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-500">
+    <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
       {message}
     </div>
   );
-} 
+};
+
+export default ErrorMessage; 

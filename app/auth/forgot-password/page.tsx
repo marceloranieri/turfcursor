@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthLayout 
       title="Reset Your Password"
-      description="Enter your email address and we'll send you a link to reset your password."
+      description="Enter your email address and we&apos;ll send you a link to reset your password."
       rightSideContent={{
         title: "Secure Your Account",
         description: "We take your security seriously. Our password reset process is secure and straightforward."

@@ -247,8 +247,11 @@ export default function LoginPage(): JSX.Element {
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600">
-            Don't Have An Account? <Link href="/auth/signup" className="text-blue-600 hover:underline">Register Now</Link>
+          <p className="text-sm text-text-secondary">
+            Don&apos;t have an account?{' '}
+            <Link href="/auth/signup" className="text-accent-primary hover:text-accent-primary/90">
+              Sign up
+            </Link>
           </p>
         </div>
       </div>

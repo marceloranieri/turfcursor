@@ -126,6 +126,10 @@ export default function VerifyEmailPage() {
                 </p>
               )}
 
+              <p className="text-sm text-text-secondary">
+                We&apos;ve sent you a verification email. Please check your inbox.
+              </p>
+
               <p className="text-sm text-center text-text-secondary">
                 Need help?{' '}
                 <Link href="/support" className="text-accent-primary hover:text-accent-primary-dark">
