@@ -104,4 +104,31 @@ export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
+};
+
+export function middleware(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  
+  // Check if the request is coming from the typo domain
+  if (url.hostname === 'app.turfeah.com') {
+    // Redirect to the correct domain
+    url.hostname = 'app.turfyeah.com';
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
+  return NextResponse.next();
+}
+
+// Configure which paths the middleware should run on
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }; 

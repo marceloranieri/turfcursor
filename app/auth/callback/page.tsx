@@ -143,6 +143,9 @@ export default function AuthCallback() {
               // Try to sign in with existing email instead
               const { data, error: signInError } = await supabase.auth.signInWithOtp({
                 email: session?.user?.email || '',
+                options: {
+                  redirectTo: 'https://app.turfyeah.com/auth/callback'
+                }
               });
               
               if (!signInError) {
