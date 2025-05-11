@@ -1,3 +1,4 @@
+// TEST DEPLOYMENT: $(date) - Verifying environment variables
 'use client';
 
 import { useEffect, useState } from 'react';
