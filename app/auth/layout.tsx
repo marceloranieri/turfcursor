@@ -31,7 +31,19 @@ export default function AuthLayout({
       <main className="pt-16 min-h-screen">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-7xl mx-auto">
-            {children}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              {/* Left Column - Auth Form */}
+              <div className="w-full">
+                {children}
+              </div>
+
+              {/* Right Column - Carousel/Info */}
+              <div className="hidden lg:block">
+                <div className="relative h-[600px] rounded-2xl overflow-hidden bg-gradient-to-br from-accent-primary/10 to-accent-secondary/10">
+                  {/* Carousel content will be rendered by the page component */}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>

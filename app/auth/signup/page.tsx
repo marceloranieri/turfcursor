@@ -2,8 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Icons } from '@/components/ui/icons';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('SignUpPage');
 
 const SignUpPage = () => {
   const router = useRouter();
@@ -276,16 +284,11 @@ const SignUpPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError('Please enter both email and password');
-      return;
-    }
-    
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      setError(null);
-      
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -293,215 +296,131 @@ const SignUpPage = () => {
         },
       });
 
-      if (signUpError) {
-        throw signUpError;
-      }
+      if (error) throw error;
 
-      if (data?.user) {
-        // Redirect to verification page or show success message
-        router.push('/auth/verify-email');
-      }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during sign up');
+      router.push('/auth/verify-email');
+    } catch (error: any) {
+      logger.error('Sign up error:', error);
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSocialSignUp = async (provider: 'google' | 'facebook') => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      setError(null);
-      
-      const { data, error: signUpError } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: provider === 'google' ? {
-            access_type: 'offline',
-            prompt: 'consent',
-          } : provider === 'facebook' ? {
-            auth_type: 'reauthenticate'
-          } : undefined,
         },
       });
 
-      if (signUpError) {
-        throw signUpError;
-      }
-
-      // No need to handle redirect here as Supabase will handle it
-    } catch (err: any) {
-      setError(`${provider} sign up failed. Please try again.`);
+      if (error) throw error;
+    } catch (error: any) {
+      logger.error(`${provider} sign up error:`, error);
+      setError(error.message);
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
-      {/* Left side - Sign up form */}
-      <div className="w-full md:w-1/2 p-6 flex flex-col justify-center bg-white">
-        <div className="max-w-md w-full mx-auto">
-          <div className="mb-6">
-            <Image 
-              src="/turf-logo.svg" 
-              alt="Turf Logo" 
-              width={45}
-              height={45}
-              priority 
-            />
+    <div className="flex flex-col space-y-6">
+      <div className="flex flex-col space-y-2 text-center">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Welcome to Turf 👋
+        </h1>
+        <p className="text-sm text-text-secondary">
+          Chatrooms with daily-curated debates on your favorite topics.
+          Fresh ideas, your kind of people.
+        </p>
+      </div>
+
+      <form onSubmit={handleSignUp} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="name@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {error && (
+          <div className="text-sm text-red-500">
+            {error}
           </div>
-          
-          <h1 className="text-[34px] leading-tight font-normal font-['SF_Compact_Rounded',_-apple-system,_Roboto,_Helvetica,_sans-serif] text-[#0C1421] mb-7">
-            Welcome to Turf 👋
-          </h1>
-          
-          <p className="text-[20px] leading-8 tracking-[0.2px] font-['SF_Pro_Display',_-apple-system,_Roboto,_Helvetica,_sans-serif] text-[#0C1421] mb-12">
-            Chatrooms with daily-curated debates on your favorite topics.
-            <br />Fresh ideas, your kind of people.
-          </p>
-          
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
-              {error}
-            </div>
+        )}
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading && (
+            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
           )}
-          
-          <form onSubmit={handleSignUp} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[#0C1421] mb-1.5">Email</label>
-              <div className="mt-2 rounded-[12px] text-[#8897AD]">
-                <div className="flex flex-col items-start justify-center p-[17px] rounded-[12px] border border-[#D4D7E3] bg-[#F7FBFF]">
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Example@email.com"
-                    className="w-full bg-transparent outline-none text-[#0C1421]"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#0C1421] mb-1.5">Password</label>
-              <div className="mt-2 rounded-[12px] text-[#8897AD]">
-                <div className="flex flex-col items-start justify-center p-[17px] rounded-[12px] border border-[#D4D7E3] bg-[#F7FBFF]">
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 8 characters"
-                    className="w-full bg-transparent outline-none text-[#0C1421]"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-4 px-4 border border-transparent rounded-[12px] text-[20px] font-medium text-white bg-[#162D3A] hover:bg-[#162D3A]/90 focus:outline-none disabled:opacity-75 tracking-[0.2px]"
-            >
-              {isLoading ? 'Creating account...' : 'Sign up'}
-            </button>
-          </form>
-          
-          <div className="mt-12 mb-6 flex items-center py-[10px] gap-4 text-[#294957] text-center">
-            <div className="flex-grow h-[1px] bg-[#CFDFE2]"></div>
-            <span>Or</span>
-            <div className="flex-grow h-[1px] bg-[#CFDFE2]"></div>
-          </div>
-          
-          <div className="space-y-4">
-            <button
-              type="button"
-              onClick={() => handleSocialSignUp('google')}
-              className="w-full flex items-center justify-center gap-4 py-3 px-[9px] rounded-[12px] bg-[#F3F9FA] text-[#313957]"
-            >
-              <svg className="w-7 h-7" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
-                />
-              </svg>
-              <span className="w-[159px]">Sign up with Google</span>
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => handleSocialSignUp('facebook')}
-              className="w-full flex items-center justify-center gap-4 py-3 px-[9px] rounded-[12px] bg-[#F3F9FA] text-[#313957]"
-            >
-              <svg className="w-7 h-7" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"
-                />
-              </svg>
-              <span className="w-[159px]">Sign up with Facebook</span>
-            </button>
-          </div>
-          
-          <p className="mt-12 text-center text-[18px] leading-[1.6] tracking-[0.18px] text-[#313957]">
-            Already have an account? <a href="/auth/signin" className="text-[#1E4AE9]">Sign in</a>
-          </p>
-          
-          <p className="mt-12 text-center text-[14px] leading-[1.6] tracking-[0.14px] text-[#AEAEB2]">
-            <a href="/privacy-policy">Privacy Policy</a>
-          </p>
+          Sign up
+        </Button>
+      </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background-primary px-2 text-text-secondary">
+            Or
+          </span>
         </div>
       </div>
-      
-      {/* Right side - WhatsApp-style Carousel */}
-      <div className="hidden md:block md:w-1/2 relative overflow-hidden">
-        {slides.map((slide, index) => (
-          <div 
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${slide.background} ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
-          >
-            {/* Background image */}
-            <div className="relative w-full h-full">
-              <img 
-                src={slide.image} 
-                alt={`Slide ${index + 1}`} 
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Message overlay - each message positioned absolutely on the image */}
-              {slide.messages.map(message => renderMessage(message))}
-              
-              {/* Bottom bar with debate topic */}
-              {slide.bottomBar && (
-                <div 
-                  className="absolute bottom-0 left-0 right-0 py-4 px-6 text-center"
-                  style={{ 
-                    backgroundColor: slide.bottomBar.backgroundColor,
-                    color: slide.bottomBar.textColor
-                  }}
-                >
-                  <h3 className="text-xl font-medium">{slide.bottomBar.text}</h3>
-                </div>
-              )}
-              
-              {/* Dots navigation */}
-              <div className="absolute bottom-20 left-0 right-0 flex justify-center space-x-2 z-30">
-                {slides.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveSlide(i)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeSlide ? 'bg-white w-4' : 'bg-white/50'}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
+
+      <div className="grid grid-cols-2 gap-4">
+        <Button
+          variant="outline"
+          onClick={() => handleSocialSignUp('google')}
+          disabled={isLoading}
+        >
+          <Icons.google className="mr-2 h-4 w-4" />
+          Google
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => handleSocialSignUp('facebook')}
+          disabled={isLoading}
+        >
+          <Icons.facebook className="mr-2 h-4 w-4" />
+          Facebook
+        </Button>
       </div>
+
+      <p className="text-center text-sm text-text-secondary">
+        Already have an account?{' '}
+        <Link
+          href="/auth/signin"
+          className="text-accent-primary hover:text-accent-primary/90"
+        >
+          Sign in
+        </Link>
+      </p>
     </div>
   );
 };
