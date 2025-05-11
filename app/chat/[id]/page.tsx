@@ -10,8 +10,9 @@ import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@/lib/supabase/client';
 import ChatPageClient from './ChatPageClient';
 import { createLogger } from '@/lib/logger';
+import ChatPage from './ChatPage';
 
-const logger = createLogger('ChatPage');
+const logger = createLogger('ChatPageServer');
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -40,68 +41,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default function ChatPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
-  
-  useEffect(() => {
-    const checkAuth = async () => {
-      // Check if Supabase keys are available
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        setError('Authentication configuration is missing. Please check your environment variables.');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          throw sessionError;
-        }
-
-        if (!session) {
-          router.push('/auth/login');
-          return;
-        }
-
-        setIsLoading(false);
-      } catch (err: any) {
-        logger.error('Auth check failed:', err);
-        setError('Failed to authenticate. Please try again later.');
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [router, supabase]);
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Authentication Error</h2>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={() => router.push('/auth/login')}
-            className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  return <ChatPageClient id={params.id} />;
+export default function ChatPageServer(props: { params: { id: string } }) {
+  return <ChatPage {...props} />;
 }
