@@ -1,16 +1,11 @@
 // TEST DEPLOYMENT: $(date) - Verifying environment variables
-'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@/lib/supabase/client';
-import ChatPageClient from './ChatPageClient';
-import { createLogger } from '@/lib/logger';
 import ChatPage from './ChatPage';
+import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('ChatPageServer');
 
@@ -41,6 +36,20 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default function ChatPageServer(props: { params: { id: string } }) {
-  return <ChatPage {...props} />;
+export default async function Page({ params }: { params: { id: string } }) {
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient(cookieStore);
+  
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return notFound();
+    }
+    
+    return <ChatPage params={params} />;
+  } catch (error) {
+    logger.error('Error in page component:', error);
+    return notFound();
+  }
 }
