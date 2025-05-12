@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import MobileLayout from './components/MobileLayout';
+import MobileLayout from '@/components/MobileLayout';
 
 // Paths that should not show the mobile navigation
 const NO_NAV_PATHS = [
