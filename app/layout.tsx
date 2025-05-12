@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import './styles/animations.css';
 import { AnimationProvider } from './contexts/AnimationContext';
-import ClientLayout from './(app)/client-layout';
+import ClientLayout from './client-layout';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 const { cspToString, cspConfig } = require('../csp-config');

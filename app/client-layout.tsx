@@ -1,22 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { SkipToContent } from '@/components/layout/SkipToContent';
-import { motion } from 'framer-motion';
+import MobileLayout from '../components/MobileLayout';
 
-// Define paths that should not show navigation
+// Paths that should not show the mobile navigation
 const NO_NAV_PATHS = [
   '/welcome',
-  '/auth/signin',
-  '/auth/signup',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-  '/auth/verify-email',
-  '/auth/callback',
-  '/auth/error',
-  '/auth/success',
+  '/auth'  // Using just /auth will match all auth routes with startsWith
 ];
 
 export default function ClientLayout({
@@ -24,44 +15,13 @@ export default function ClientLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
-
-  // Check if current path should show navigation
+  // Use startsWith instead of includes
   const showNav = !NO_NAV_PATHS.some(path => pathname.startsWith(path));
 
   return (
-    <>
-      <SkipToContent />
-      
-      <div className="flex h-screen bg-background-primary">
-        {showNav && (
-          <Sidebar
-            isOpen={isSidebarOpen}
-            onClose={() => setIsSidebarOpen(false)}
-          />
-        )}
-        
-        <motion.main
-          id="main-content"
-          role="main"
-          className={`flex-1 ${showNav ? 'md:ml-64' : ''} relative`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="h-full">
-            {children}
-          </div>
-        </motion.main>
-      </div>
-
-      {/* Toast container for screen readers */}
-      <div
-        role="status"
-        aria-live="polite"
-        className="sr-only"
-      />
-    </>
+    <MobileLayout showNav={showNav}>
+      {children}
+    </MobileLayout>
   );
 } 
