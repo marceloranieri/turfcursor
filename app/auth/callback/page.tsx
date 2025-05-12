@@ -7,65 +7,40 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('AuthCallback');
 
-// Helper function to extract only essential user metadata
+// Simplified profile extraction - only take what we need
 const extractUserMetadata = (profile: any) => ({
-  name: profile.name || '',
-  avatarUrl: profile.avatar_url || profile.picture || '',
-  email: profile.email || '',
-  // Add only the fields you need
+  name: profile?.name || '',
+  avatarUrl: profile?.avatar_url || profile?.picture || '',
+  email: profile?.email || '',
 });
 
-// Helper function to sanitize profile data
+// More robust profile sanitization
 const sanitizeProfile = (profile: any) => {
+  if (!profile) return {};
+  
   try {
-    // First stringify to remove any non-JSON-serializable values
-    const stringified = JSON.stringify(profile);
-    // Then parse back to ensure it's valid JSON
-    return JSON.parse(stringified);
+    // Create a new object with only the properties we want
+    const safeProfile = {
+      email: profile.email || '',
+      name: profile.name || '',
+      avatar_url: profile.avatar_url || profile.picture || ''
+    };
+    
+    // Handle provider-specific normalization
+    if (profile.given_name || profile.family_name) {
+      safeProfile.name = `${profile.given_name || ''} ${profile.family_name || ''}`.trim();
+    }
+    
+    // GitHub avatar normalization
+    if (safeProfile.avatar_url && safeProfile.avatar_url.includes('github') && safeProfile.avatar_url.includes('s=')) {
+      safeProfile.avatar_url = safeProfile.avatar_url.replace(/&s=\d+/, '&s=256');
+    }
+    
+    return safeProfile;
   } catch (error) {
     logger.error('Error sanitizing profile:', error);
-    // Return a safe default if sanitization fails
-    return {
-      email: profile?.email || '',
-      name: profile?.name || '',
-      avatar_url: profile?.avatar_url || ''
-    };
+    return { email: profile?.email || '' };
   }
-};
-
-// Provider-specific sanitization
-const sanitizeByProvider = (provider: string, profile: any) => {
-  logger.info(`Sanitizing profile for provider: ${provider}`);
-  
-  if (provider === 'google') {
-    // Google-specific sanitization
-    const sanitized = { ...profile };
-    // Remove any problematic fields
-    delete sanitized.verified_email;
-    delete sanitized.hd;
-    delete sanitized.locale;
-    // Normalize name fields
-    if (sanitized.given_name || sanitized.family_name) {
-      sanitized.name = `${sanitized.given_name || ''} ${sanitized.family_name || ''}`.trim();
-    }
-    return sanitizeProfile(sanitized);
-  }
-  
-  if (provider === 'github') {
-    // GitHub-specific sanitization
-    const sanitized = { ...profile };
-    // Remove any problematic fields
-    delete sanitized.node_id;
-    delete sanitized.updated_at;
-    // Normalize avatar URL
-    if (sanitized.avatar_url) {
-      sanitized.avatar_url = sanitized.avatar_url.replace('&s=96', '&s=256');
-    }
-    return sanitizeProfile(sanitized);
-  }
-  
-  // Default sanitization for other providers
-  return sanitizeProfile(profile);
 };
 
 export default function AuthCallback() {
@@ -73,20 +48,10 @@ export default function AuthCallback() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Add this line to log the URL with error parameters
+    // Log the current URL for debugging
     logger.info('Auth callback URL:', window.location.href);
     
-    // Add this line to handle URL hash parameters
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    
-    if (accessToken) {
-      // If we have a token in the URL, manually set it
-      logger.info('Found access token in URL, setting session');
-      supabase.auth.setSession({ access_token: accessToken, refresh_token: '' });
-    }
-
-    // Regular auth listener
+    // Handle auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       logger.info('Auth state changed:', { event, session: !!session });
 
@@ -94,79 +59,52 @@ export default function AuthCallback() {
         try {
           logger.info('User signed in successfully');
           
-          // Log raw session data for debugging
-          logger.info('Raw session data:', {
-            user: session.user,
-            app_metadata: session.user.app_metadata,
-            user_metadata: session.user.user_metadata
-          });
-
-          // Sanitize user metadata before any database operations
-          if (session.user.user_metadata) {
-            const provider = session.user.app_metadata?.provider || 'unknown';
-            const sanitizedMetadata = sanitizeByProvider(provider, session.user.user_metadata);
-            // Extract only essential metadata
+          // Sanitize and update user metadata
+          if (session.user?.user_metadata) {
+            const sanitizedMetadata = sanitizeProfile(session.user.user_metadata);
             const essentialMetadata = extractUserMetadata(sanitizedMetadata);
-            logger.info('Essential user metadata:', essentialMetadata);
             
-            // Update user with essential metadata
-            const { error: updateError } = await supabase.auth.updateUser({
+            // Update user with sanitized metadata
+            await supabase.auth.updateUser({
               data: essentialMetadata
             });
-            
-            if (updateError) {
-              logger.error('Error updating user metadata:', updateError);
-            }
           }
           
-          // Check if this is a new signup that needs verification
+          // Handle email verification flow
           if (!session.user.email_confirmed_at && session.user.email) {
             localStorage.setItem('pendingVerification', 'true');
             router.push('/auth/verify-email');
             return;
           }
 
-          // Clear any pending verification flags
+          // Clear verification flags
           localStorage.removeItem('pendingVerification');
           
-          // Get the redirect URL from the URL parameters or default to dashboard
+          // Get redirect URL or default to dashboard
           const redirectTo = searchParams.get('next') || '/dashboard';
-          logger.info('Redirecting to:', redirectTo);
           router.push(redirectTo);
         } catch (error: any) {
           logger.error('Error handling sign in:', error);
-
-          // When Google authentication returns, check for existing user
-          if (error.message?.includes('Database error saving new user')) {
-            logger.info('Attempting to link existing account...');
-            try {
-              // Try to sign in with existing email instead
-              const { data, error: signInError } = await supabase.auth.signInWithOtp({
-                email: session?.user?.email || '',
-                options: {
-                  redirectTo: 'https://app.turfyeah.com/auth/callback'
-                }
-              });
-              
-              if (!signInError) {
-                logger.info('Successfully initiated OTP sign in for existing account');
-                router.push('/dashboard');
-                return;
-              }
-            } catch (linkError) {
-              logger.error('Account linking failed:', linkError);
-            }
-          }
-
           router.push('/auth/signin?error=' + encodeURIComponent(String(error)));
         }
       } else if (event === 'SIGNED_OUT') {
         logger.info('User signed out');
         router.push('/auth/signin');
-      } else if (event === 'USER_UPDATED') {
-        logger.info('User updated:', { userId: session?.user.id });
       }
     });
+
+    // Access token from URL hash for SPA redirects
+    // This is a fallback mechanism for certain OAuth flows
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    
+    if (accessToken) {
+      logger.info('Found access token in URL hash, setting session');
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: '' })
+        .catch((error: any) => {
+          logger.error('Error setting session from token:', error);
+        });
+    }
 
     // Cleanup subscription on unmount
     return () => {

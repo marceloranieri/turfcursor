@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Icons } from '@/components/ui/icons';
 import { createLogger } from '@/lib/logger';
+import { supabase } from '@/lib/supabase/client';  // Use a consistent import
 
 const logger = createLogger('SignUpPage');
 
@@ -289,7 +290,7 @@ const SignUpPage = () => {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -298,11 +299,21 @@ const SignUpPage = () => {
       });
 
       if (error) throw error;
-
-      router.push('/auth/verify-email');
+      
+      // Check if a verification email is required
+      const needsEmailVerification = !data.session && data.user;
+      
+      if (needsEmailVerification) {
+        // Set a flag for verification page
+        localStorage.setItem('pendingVerification', 'true');
+        router.push('/auth/verify-email');
+      } else if (data.session) {
+        // User was auto-signed in, go to dashboard
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       logger.error('Sign up error:', error);
-      setError(error.message);
+      setError(error.message || 'An error occurred during sign up');
     } finally {
       setIsLoading(false);
     }
@@ -321,10 +332,11 @@ const SignUpPage = () => {
       });
 
       if (error) throw error;
+      
+      // The redirect will happen automatically by Supabase
     } catch (error: any) {
       logger.error(`${provider} sign up error:`, error);
-      setError(error.message);
-    } finally {
+      setError(error.message || `An error occurred during ${provider} sign up`);
       setIsLoading(false);
     }
   };
@@ -359,9 +371,11 @@ const SignUpPage = () => {
           <Input
             id="password"
             type="password"
+            placeholder="At least 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={8}
           />
         </div>
 

@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Authentication - Turf',
-  description: 'Processing your authentication',
+  title: 'Authentication Callback - Turf',
+  description: 'Completing your authentication process...',
   robots: {
     index: false,
     follow: false,
