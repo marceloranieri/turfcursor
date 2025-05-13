@@ -26,6 +26,9 @@
   min-height: 100vh;
   font-family: var(--font-family);
   color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Header */
@@ -69,10 +72,13 @@
 
 /* Auth card */
 .authCard {
-  background-color: white;
+  width: 100%;
+  max-width: 448px;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.85);
   border-radius: var(--card-radius);
-  padding: var(--spacing-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 32px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
   margin-bottom: var(--spacing-md);
 }
 

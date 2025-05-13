@@ -92,14 +92,21 @@
   width: 100%;
   max-width: 1000px;
   padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 
 .authCard {
-  display: flex;
-  background-color: white;
+  width: 100%;
+  max-width: 448px;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 32px;
 }
 
 .logoSection {
