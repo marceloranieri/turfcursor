@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('SupabaseClient');
@@ -14,30 +14,7 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.turfyeah.com';
 
 // Initialize the Supabase client with session persistence settings
-export const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  {
-    auth: {
-      persistSession: true,
-      storageKey: 'supabase-auth',
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce',
-      debug: process.env.NODE_ENV === 'development',
-      cookieOptions: {
-        domain: new URL(appUrl).hostname,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      }
-    },
-    global: {
-      headers: {
-        'X-App-URL': appUrl
-      }
-    }
-  }
-);
+export const supabase = createClientComponentClient();
 
 // Check authentication status
 export async function checkAuthStatus() {
