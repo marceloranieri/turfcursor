@@ -1,30 +1,14 @@
+"use client";
+
 import React from 'react';
+import styles from './loading.module.css';
 
 export default function AuthLoadingPage() {
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      flexDirection: 'column',
-      backgroundColor: '#F5F7FA'
-    }}>
-      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>TURF</div>
-      <div style={{ 
-        width: '40px', 
-        height: '40px', 
-        border: '4px solid #eee',
-        borderTopColor: '#0066FF',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite'
-      }}></div>
-      <style jsx>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-      <p style={{ marginTop: '1rem' }}>Completing your sign-in...</p>
+    <div className={styles.container}>
+      <div className={styles.logo}>TURF</div>
+      <div className={styles.spinner}></div>
+      <p className={styles.message}>Completing your sign-in...</p>
     </div>
   );
 } 

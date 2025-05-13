@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import styles from './MobileAuthPage.module.css';
 import { FaGoogle, FaFacebook } from 'react-icons/fa';
