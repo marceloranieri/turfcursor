@@ -30,6 +30,21 @@
     --text-primary: 222.2 84% 4.9%;
     --text-secondary: 215.4 16.3% 46.9%;
     --text-muted: 215.4 16.3% 46.9%;
+    --primary-color: #0066FF;
+    --dark-color: #222832;
+    --light-color: #F5F7FA;
+    --border-color: #E1E4E8;
+    --text-color: #333;
+    --error-color: #FF3B30;
+    --success-color: #34C759;
+    --card-radius: 12px;
+    --btn-radius: 8px;
+    --input-radius: 8px;
+    --spacing-xs: 8px;
+    --spacing-sm: 16px;
+    --spacing-md: 24px;
+    --spacing-lg: 32px;
+    --font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   .dark {
@@ -766,4 +781,9 @@ body {
 /* Override any z-index issues with the bottom bar */
 .absolute.bottom-0 {
   z-index: 40 !important; /* High but below speech bubbles */
+}
+
+/* Loading spinner animation for buttons */
+@keyframes spinner {
+  to {transform: rotate(360deg);}
 }

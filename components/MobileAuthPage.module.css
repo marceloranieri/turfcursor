@@ -447,11 +447,7 @@
   }
 }
 
-/* Loading spinner animation for buttons */
-@keyframes spinner {
-  to {transform: rotate(360deg);}
-}
- 
+/* Loading spinner styles (using the global animation) */
 .signInBtn[aria-busy="true"]::before {
   content: "";
   box-sizing: border-box;
