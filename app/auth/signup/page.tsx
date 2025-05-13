@@ -1,18 +1,11 @@
-// TEST CHANGE: $(date) - Verifying deployment pipeline
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Icons } from '@/components/ui/icons';
-import { createLogger } from '@/lib/logger';
-import { supabase } from '@/lib/supabase/client';  // Use a consistent import
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('SignUpPage');
 
@@ -21,7 +14,7 @@ const SignUpPage = () => {
   const supabase = createClientComponentClient();
   
   const [activeSlide, setActiveSlide] = useState(0);
-  const [visibleMessages, setVisibleMessages] = useState([]);
+  const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -222,7 +215,7 @@ const SignUpPage = () => {
   }, [activeSlide]);
 
   // Render a message bubble with precise positioning
-  const renderMessage = (message) => {
+  const renderMessage = (message: any) => {
     const isVisible = visibleMessages.includes(message.id);
     
     if (!isVisible) return null;
@@ -351,13 +344,20 @@ const SignUpPage = () => {
   return (
     <div className="flex flex-row w-full min-h-screen">
       {/* Left side - Auth Form */}
-      <div className="w-1/2 p-8 flex flex-col justify-center">
+      <div className="w-full md:w-1/2 p-8 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Welcome to Turf 👋</h1>
-          <p className="mb-8 text-gray-600">
-            Chatrooms with daily-curated debates on your favorite topics. 
-            Fresh ideas, your kind of people.
-          </p>
+          <div className="mb-8">
+            <img 
+              src="/turf-logo.svg" 
+              alt="Turf Logo" 
+              className="h-8 mb-10" 
+            />
+            <h1 className="text-3xl font-bold mb-2">Welcome to Turf 👋</h1>
+            <p className="text-gray-600">
+              Chatrooms with daily-curated debates on your favorite topics.
+              Fresh ideas, your kind of people.
+            </p>
+          </div>
           
           {error && (
             <div className="mb-4 p-3 rounded-md bg-red-50 text-red-500 text-sm">
@@ -372,8 +372,8 @@ const SignUpPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                placeholder="Example@email.com"
+                className="w-full p-3 border bg-gray-100 border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
@@ -385,8 +385,8 @@ const SignUpPage = () => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password"
-                  className="w-full p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white pr-10"
+                  placeholder="At least 8 characters"
+                  className="w-full p-3 border bg-gray-100 border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
                   required
                 />
                 <button
@@ -401,25 +401,38 @@ const SignUpPage = () => {
                   )}
                 </button>
               </div>
+              <div className="flex justify-end mt-1">
+                <Link href="/auth/forgot-password" className="text-sm text-blue-500 hover:text-blue-700">
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70"
+              className="w-full bg-gray-800 text-white py-3 rounded-md hover:bg-gray-900 transition-colors focus:outline-none disabled:opacity-70"
             >
               {isLoading ? 'Creating account...' : 'Sign Up'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 mb-3">OR CONTINUE WITH</p>
-            <div className="flex justify-center space-x-4">
-              <button
-                type="button"
-                onClick={() => handleSocialSignUp('google')}
-                className="flex items-center justify-center w-32 py-2.5 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+          {/* Social login divider */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or sign in with</span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button 
+                onClick={() => handleSocialSignUp('google')} 
                 disabled={isLoading}
+                className="flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path
@@ -429,11 +442,11 @@ const SignUpPage = () => {
                 </svg>
                 <span className="text-sm">Google</span>
               </button>
-              <button
-                type="button"
-                onClick={() => handleSocialSignUp('facebook')}
-                className="flex items-center justify-center w-32 py-2.5 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+              
+              <button 
+                onClick={() => handleSocialSignUp('facebook')} 
                 disabled={isLoading}
+                className="flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path
@@ -446,19 +459,17 @@ const SignUpPage = () => {
             </div>
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-text-secondary">
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
               Already have an account?{' '}
-              <Link href="/auth/signin" className="text-accent-primary hover:text-accent-primary/90">
+              <Link href="/auth/signin" className="text-blue-500 hover:text-blue-700">
                 Sign in
               </Link>
             </p>
           </div>
           
-          <div className="mt-8 text-center">
-            <div className="p-4 rounded-lg bg-blue-500 text-white">
-              <p>Is social media making us more or less connected?</p>
-            </div>
+          <div className="mt-10 text-center text-xs text-gray-500">
+            © {new Date().getFullYear()} ALL RIGHTS RESERVED
           </div>
         </div>
       </div>
