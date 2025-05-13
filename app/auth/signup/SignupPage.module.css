@@ -1,0 +1,39 @@
+.signupContainer {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.backgroundImageContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/turf_bg_social_signup.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.9; /* Adjust opacity as needed */
+  z-index: -1;
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 500px;
+  z-index: 1;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 640px) {
+  .signupContainer {
+    padding: 1rem;
+  }
+  
+  .formContainer {
+    max-width: 100%;
+  }
+} 

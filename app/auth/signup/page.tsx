@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { EyeIcon } from '@heroicons/react/24/outline';
-import styles from './signup.module.css';
+import styles from './SignupPage.module.css';
 
-export default function SignUpPage() {
+export default function SignupPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   
@@ -161,16 +161,19 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className={styles.pageContainer}>
-      <div className={styles.backgroundImage} />
-      <div className={styles.contentContainer}>
+    <div className={styles.signupContainer}>
+      <div className={styles.backgroundImageContainer}>
+        {/* Background image will be applied via CSS */}
+      </div>
+      
+      <div className={styles.formContainer}>
         <div className="bg-white rounded-lg shadow-xl overflow-hidden">
           <div className="p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-1">Create an account</h2>
             <p className="text-gray-500 mb-6">Join daily-curated debates on your favorite topics</p>
             {error && (
-              <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-md">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <p className="text-red-500">{error}</p>
               </div>
             )}
             <form onSubmit={handleSignUp} className="space-y-4">
