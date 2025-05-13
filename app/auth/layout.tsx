@@ -11,10 +11,10 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Full-screen background image */}
+      {/* Full-screen background image - UPDATED PATH */}
       <div 
         className="fixed inset-0 bg-cover bg-center z-0"
-        style={{ backgroundImage: 'url("/turf_app_social_signup.webp")' }}
+        style={{ backgroundImage: 'url("/turf-app-bg.webp")' }}
       />
       
       {/* Semi-transparent overlay */}
