@@ -29,9 +29,9 @@ export default function AuthLayout({
               <Image
                 src="/turf-logo.svg"
                 alt="Turf Logo"
-                width={40}
-                height={40}
-                className="w-10 h-10"
+                width={54}
+                height={54}
+                className="w-[54px] h-[54px]"
               />
             </Link>
           </div>
