@@ -26,16 +26,13 @@ export default function AuthLayout({
           {/* Logo */}
           <div className="text-center mb-6">
             <Link href="/" className="inline-block">
-              <div className="flex items-center justify-center">
-                <Image
-                  src="/turf-logo.svg"
-                  alt="Turf Logo"
-                  width={40}
-                  height={40}
-                  className="w-10 h-10"
-                />
-                <span className="ml-3 text-3xl font-bold text-white">Turf</span>
-              </div>
+              <Image
+                src="/turf-logo.svg"
+                alt="Turf Logo"
+                width={40}
+                height={40}
+                className="w-10 h-10"
+              />
             </Link>
           </div>
           
