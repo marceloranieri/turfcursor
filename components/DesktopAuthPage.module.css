@@ -68,6 +68,9 @@
   position: relative;
   min-height: 100vh;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .backgroundImage {
@@ -86,27 +89,181 @@
 .authContainer {
   position: relative;
   z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
+  width: 100%;
+  max-width: 1000px;
   padding: 2rem;
-  background-color: rgba(255, 255, 255, 0.85);
 }
 
 .authCard {
+  display: flex;
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
-  width: 100%;
-  max-width: 480px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.logoSection {
+  flex: 1;
+  background-color: #f5f7fa;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #222832;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.logo::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: -10px;
+  width: 10px;
+  height: 10px;
+  background-color: #FF3B30;
+  border-radius: 50%;
+}
+
+.formSection {
+  flex: 1;
+  padding: 3rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #222832;
 }
 
 .subtitle {
-  font-size: 1.1rem;
   color: #666;
   margin-bottom: 2rem;
+}
+
+.loginForm {
+  width: 100%;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.passwordOptions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.rememberMe {
+  display: flex;
+  align-items: center;
+}
+
+.rememberMe input {
+  margin-right: 0.375rem;
+}
+
+.forgotPassword {
+  color: #0066FF;
+  text-decoration: none;
+}
+
+.signInBtn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #222832;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.orDivider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.orDivider::before,
+.orDivider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.orDivider span {
+  padding: 0 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.socialButtons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.googleBtn,
+.facebookBtn {
+  flex: 1;
+  padding: 0.875rem;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  background-color: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.signupPrompt {
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.signupPrompt a {
+  color: #0066FF;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Media query for tablets and smaller screens */
+@media (max-width: 992px) {
+  .authCard {
+    flex-direction: column;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .logoSection, 
+  .formSection {
+    padding: 2rem;
+  }
 }
 
 /* Responsive adjustments */

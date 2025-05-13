@@ -2,8 +2,11 @@
 
 import React from 'react';
 import styles from './DesktopAuthPage.module.css';
+// Add any other imports you need (Supabase, router, etc.)
 
 export default function DesktopAuthPage() {
+  // Your state and handlers here
+  
   return (
     <div className={styles.pageWrapper}>
       {/* Background image container */}
@@ -11,30 +14,64 @@ export default function DesktopAuthPage() {
       
       {/* Main content */}
       <div className={styles.authContainer}>
+        {/* Your existing desktop auth content */}
         <div className={styles.authCard}>
-          <h1 className={styles.title}>Welcome to Turf</h1>
-          <p className={styles.subtitle}>Join daily-curated debates on your favorite topics</p>
+          <div className={styles.logoSection}>
+            <div className={styles.logo}>TURF</div>
+          </div>
           
-          {/* Add your desktop-specific auth form here */}
-        </div>
-    <div className={styles.container}>
-      <div className={styles.content}>
-        <h1 className={styles.title}>Welcome to TURF</h1>
-        <p className={styles.description}>
-          Join the conversation and share your thoughts with the community.
-        </p>
-        <div className={styles.features}>
-          <div className={styles.feature}>
-            <h3>Real-time Discussions</h3>
-            <p>Engage in live conversations with other members</p>
-          </div>
-          <div className={styles.feature}>
-            <h3>Community Driven</h3>
-            <p>Be part of a growing community of thinkers</p>
-          </div>
-          <div className={styles.feature}>
-            <h3>Secure Platform</h3>
-            <p>Your data and privacy are our top priority</p>
+          <div className={styles.formSection}>
+            <h1 className={styles.title}>Welcome back</h1>
+            <p className={styles.subtitle}>Join the conversation on your favorite topics</p>
+            
+            {/* Form elements would go here */}
+            <form className={styles.loginForm}>
+              {/* Email field */}
+              <div className={styles.formGroup}>
+                <label htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  placeholder="Example@email.com"
+                  className={styles.inputField}
+                />
+              </div>
+              
+              {/* Password field */}
+              <div className={styles.formGroup}>
+                <label htmlFor="password">Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="At least 8 characters"
+                  className={styles.inputField}
+                />
+                <div className={styles.passwordOptions}>
+                  <div className={styles.rememberMe}>
+                    <input type="checkbox" id="rememberMe" />
+                    <label htmlFor="rememberMe">Remember me</label>
+                  </div>
+                  <a href="#" className={styles.forgotPassword}>Forgot Password?</a>
+                </div>
+              </div>
+              
+              <button type="submit" className={styles.signInBtn}>
+                Sign in
+              </button>
+              
+              <div className={styles.orDivider}>
+                <span>Or continue with</span>
+              </div>
+              
+              <div className={styles.socialButtons}>
+                <button className={styles.googleBtn}>Google</button>
+                <button className={styles.facebookBtn}>Facebook</button>
+              </div>
+              
+              <div className={styles.signupPrompt}>
+                Don't have an account? <a href="/auth/signup">Sign up</a>
+              </div>
+            </form>
           </div>
         </div>
       </div>
