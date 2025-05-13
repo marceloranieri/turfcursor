@@ -4,75 +4,130 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon } from '@heroicons/react/24/outline';
 
 export default function SignUpPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [emailError, setEmailError] = useState(null);
-  const [passwordError, setPasswordError] = useState(null);
+  const [username, setUsername] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [birthdate, setBirthdate] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [birthdateError, setBirthdateError] = useState<string | null>(null);
 
-  const validateEmail = (email) => {
+  const validateUsername = (username: string): string | null => {
+    if (!username) return "Username is required";
+    if (username.length < 3) return "Username must be at least 3 characters";
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) return "Username can only contain letters, numbers, and underscores";
+    return null;
+  };
+
+  const validateEmail = (email: string): string | null => {
     if (!email) return "Email is required";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return "Please enter a valid email address";
     return null;
   };
 
-  const validatePassword = (password) => {
+  const validatePassword = (password: string): string | null => {
     if (!password) return "Password is required";
     if (password.length < 8) return "Password must be at least 8 characters long";
     return null;
   };
 
-  const handleSignUp = async (e) => {
+  const validateBirthdate = (birthdate: string): string | null => {
+    if (!birthdate) return "Birth date is required";
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age < 16) return "You must be at least 16 years old to register";
+    if (age > 100) return "Please enter a valid birth date";
+    return null;
+  };
+
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    // Clear previous errors
     setError(null);
+    setUsernameError(null);
     setEmailError(null);
     setPasswordError(null);
-    
-    // Validate inputs
+    setBirthdateError(null);
+    const usernameValidationError = validateUsername(username);
     const emailValidationError = validateEmail(email);
     const passwordValidationError = validatePassword(password);
-    
+    const birthdateValidationError = validateBirthdate(birthdate);
+    if (usernameValidationError) {
+      setUsernameError(usernameValidationError);
+      return;
+    }
     if (emailValidationError) {
       setEmailError(emailValidationError);
       return;
     }
-    
     if (passwordValidationError) {
       setPasswordError(passwordValidationError);
       return;
     }
-    
+    if (birthdateValidationError) {
+      setBirthdateError(birthdateValidationError);
+      return;
+    }
     try {
       setIsLoading(true);
-      
+      // Check if username is already taken
+      const { data: existingUsers, error: usernameCheckError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .limit(1);
+      if (usernameCheckError) throw usernameCheckError;
+      if (existingUsers && existingUsers.length > 0) {
+        setUsernameError('This username is already taken');
+        setIsLoading(false);
+        return;
+      }
+      // Sign up the user with Supabase
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          data: {
+            username,
+            birthdate,
+          },
           emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         }
       });
-
       if (signUpError) {
         throw signUpError;
       }
-
       if (data?.user) {
-        // Redirect to verification page
+        // Create a profile entry with the username
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              username,
+              birthdate,
+              created_at: new Date().toISOString(),
+            }
+          ]);
+        if (profileError) throw profileError;
         router.push('/auth/verify-email');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup failed:', error);
       setError(error.message || 'Failed to sign up. Please try again.');
     } finally {
@@ -80,11 +135,10 @@ export default function SignUpPage() {
     }
   };
 
-  const handleSocialSignUp = async (provider) => {
+  const handleSocialSignUp = async (provider: 'google' | 'facebook') => {
     try {
       setIsLoading(true);
       setError(null);
-
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -95,12 +149,10 @@ export default function SignUpPage() {
           } : undefined,
         },
       });
-
       if (signInError) {
         throw signInError;
       }
-      // Redirect is handled by Supabase
-    } catch (error) {
+    } catch (error: any) {
       console.error(`${provider} signup failed:`, error);
       setError(`Failed to sign up with ${provider}. Please try again.`);
       setIsLoading(false);
@@ -112,14 +164,28 @@ export default function SignUpPage() {
       <div className="p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-1">Create an account</h2>
         <p className="text-gray-500 mb-6">Join daily-curated debates on your favorite topics</p>
-        
         {error && (
           <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-md">
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
-        
         <form onSubmit={handleSignUp} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className={`w-full px-3 py-2.5 bg-gray-50 border ${
+                usernameError ? 'border-red-500' : 'border-gray-200'
+              } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+              placeholder="cooluser123"
+            />
+            {usernameError && <p className="mt-1 text-sm text-red-600">{usernameError}</p>}
+          </div>
           <div>
             <label htmlFor="email" className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
               Email
@@ -136,7 +202,6 @@ export default function SignUpPage() {
             />
             {emailError && <p className="mt-1 text-sm text-red-600">{emailError}</p>}
           </div>
-          
           <div>
             <label htmlFor="password" className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
               Password
@@ -157,16 +222,27 @@ export default function SignUpPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
               >
-                {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
+                <EyeIcon className="h-5 w-5" />
               </button>
             </div>
             {passwordError && <p className="mt-1 text-sm text-red-600">{passwordError}</p>}
           </div>
-          
+          <div>
+            <label htmlFor="birthdate" className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
+              Birth Date
+            </label>
+            <input
+              id="birthdate"
+              type="date"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+              className={`w-full px-3 py-2.5 bg-gray-50 border ${
+                birthdateError ? 'border-red-500' : 'border-gray-200'
+              } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
+              max={new Date().toISOString().split('T')[0]}
+            />
+            {birthdateError && <p className="mt-1 text-sm text-red-600">{birthdateError}</p>}
+          </div>
           <button
             type="submit"
             disabled={isLoading}
@@ -175,7 +251,6 @@ export default function SignUpPage() {
             {isLoading ? 'Creating account...' : 'Continue'}
           </button>
         </form>
-        
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -185,7 +260,6 @@ export default function SignUpPage() {
               <span className="px-2 bg-white text-sm text-gray-500">or</span>
             </div>
           </div>
-          
           <div className="mt-4 space-y-3">
             <button
               type="button"
@@ -201,7 +275,6 @@ export default function SignUpPage() {
               </svg>
               Continue with Google
             </button>
-            
             <button
               type="button"
               onClick={() => handleSocialSignUp('facebook')}
@@ -218,7 +291,6 @@ export default function SignUpPage() {
             </button>
           </div>
         </div>
-        
         <div className="mt-6 text-center text-sm">
           <p className="text-gray-600">
             Already have an account?{' '}
@@ -231,7 +303,6 @@ export default function SignUpPage() {
           </p>
         </div>
       </div>
-      
       <div className="px-8 py-4 bg-gray-50 border-t border-gray-100">
         <p className="text-xs text-center text-gray-500">
           By registering, you agree to Turf's{' '}
