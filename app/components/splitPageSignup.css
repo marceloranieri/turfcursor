@@ -1,0 +1,39 @@
+/* Mobile animation styles */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.5s ease-out forwards;
+}
+
+/* Force white text in bottom bar */
+.topic-text {
+  color: white !important;
+}
+
+/* Mobile specific styles */
+@media (max-width: 767px) {
+  .mobile-message-container {
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .mobile-message {
+    max-width: 80%;
+    transition: all 0.5s ease;
+  }
+} 

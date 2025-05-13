@@ -1,0 +1,44 @@
+name: Prevent Console Logs on Pull Requests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  check-console-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        
+      # Add this step to fix ESLint package conflicts
+      - name: Fix ESLint package versions
+        run: |
+          npm uninstall eslint
+          npm install eslint@^8.57.0 --save-dev
+
+      - name: Search for console logs
+        run: |
+          # Exclude test files, scripts, and public directory from check
+          if grep -r "console\." \
+            --exclude-dir={node_modules,.next,.git,scripts,public} \
+            --exclude="*.test.*" \
+            --exclude="*.spec.*" \
+            ./src ./app ./components ./lib; then
+            echo "::error::Console log found! Please remove console.log before merging."
+            echo "Note: console logs should be replaced with logger.info/warn/error"
+            exit 1
+          else
+            echo "No console logs found. Good to go! 🎉"
+          fi 

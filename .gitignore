@@ -1,0 +1,78 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Build
+.next
+out
+dist
+build
+
+# Node
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.yarn/install-state.gz
+.pnp
+.pnp.js
+
+# Environment
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+logs
+*.log
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+coverage
+
+# Cache
+.cache
+.eslintcache
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Husky
+.husky/
+.lintstagedrc.js
+
+# Vercel
+.vercel
+
+.env.backup
+.env.local.enc
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.backup
+*.enc
+bfg.jar

@@ -1,0 +1,62 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual runs
+    inputs:
+      url:
+        description: 'URL to test (optional)'
+        required: false
+        default: ''
+
+jobs:
+  lighthouse-ci:
+    runs-on: ubuntu-latest
+    env:
+      LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || 'undefined' }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        
+      # Add this step to fix ESLint package conflicts
+      - name: Fix ESLint package versions
+        run: |
+          npm uninstall eslint
+          npm install eslint@^8.57.0 --save-dev
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.13.x
+
+      - name: Get Vercel Preview URL
+        id: get-preview-url
+        if: github.event_name == 'pull_request'
+        run: |
+          # Wait for Vercel deployment to be ready (max 10 minutes)
+          timeout=600  # 10 minutes (instead of 300)
+          for i in {1..60}; do
+            PREVIEW_URL=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?projectId=turf&teamId=team_123&state=READY&target=preview&gitSource.commitSha=${{ github.sha }}" \
+              | jq -r '.deployments[0].url')
+            
+            if [ ! -z "$PREVIEW_URL" ] && [ "$PREVIEW_URL" != "null" ]; then
+              echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+              break
+            fi
+            
+            echo "Waiting for Vercel preview URL... (attempt $i/60)"
+            sleep 10
+          done
+
+      # - name: Run Lighthouse CI
+      #   run: npm run lhci 

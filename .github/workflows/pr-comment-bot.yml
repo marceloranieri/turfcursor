@@ -1,0 +1,151 @@
+name: PR Comment Bot
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  pr-comment:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install -g @lhci/cli@0.13.x
+          npm install -g @playwright/test
+          npx playwright install chromium
+          
+      # Add this step to fix ESLint package conflicts
+      - name: Fix ESLint package versions
+        run: |
+          npm uninstall eslint
+          npm install eslint@^8.57.0 --save-dev
+
+      - name: Get Vercel Preview URL
+        id: get-preview-url
+        run: |
+          # Wait for Vercel deployment to be ready (max 5 minutes)
+          for i in {1..30}; do
+            PREVIEW_URL=$(curl -s -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?projectId=turf&teamId=team_123&state=READY&target=preview&gitSource.commitSha=${{ github.sha }}" \
+              | jq -r '.deployments[0].url')
+            
+            if [ ! -z "$PREVIEW_URL" ] && [ "$PREVIEW_URL" != "null" ]; then
+              echo "url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+              break
+            fi
+            
+            echo "Waiting for Vercel preview URL... (attempt $i/30)"
+            sleep 10
+          done
+
+      - name: Run Lighthouse Audit
+        id: lighthouse
+        run: |
+          if [ -z "${{ steps.get-preview-url.outputs.url }}" ]; then
+            echo "Failed to get Vercel preview URL after 5 minutes"
+            exit 1
+          fi
+          
+          # Run Lighthouse and save results to a JSON file
+          lhci autorun \
+            --collect.url=${{ steps.get-preview-url.outputs.url }} \
+            --collect.numberOfRuns=1 \
+            --collect.settings.preset=desktop \
+            --output.json=./lighthouse-results.json \
+            --output.html=./lighthouse-report.html
+          
+          # Extract scores and accessibility issues
+          PERFORMANCE_SCORE=$(jq -r '.categories.performance.score * 100' ./lighthouse-results.json)
+          ACCESSIBILITY_SCORE=$(jq -r '.categories.accessibility.score * 100' ./lighthouse-results.json)
+          ACCESSIBILITY_ISSUES=$(jq -r '.categories.accessibility.auditRefs | length' ./lighthouse-results.json)
+          
+          echo "performance_score=$PERFORMANCE_SCORE" >> $GITHUB_OUTPUT
+          echo "accessibility_score=$ACCESSIBILITY_SCORE" >> $GITHUB_OUTPUT
+          echo "accessibility_issues=$ACCESSIBILITY_ISSUES" >> $GITHUB_OUTPUT
+
+      - name: Check Console Errors
+        id: console-check
+        run: |
+          # Create a Playwright script to check console errors
+          cat > check-console.js << 'EOL'
+          const { chromium } = require('@playwright/test');
+          
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            const errors = [];
+            
+            page.on('console', msg => {
+              if (msg.type() === 'error') {
+                errors.push(msg.text());
+              }
+            });
+            
+            await page.goto('${{ steps.get-preview-url.outputs.url }}');
+            await page.waitForLoadState('networkidle');
+            await browser.close();
+            
+            console.log(JSON.stringify(errors));
+          })();
+          EOL
+          
+          # Run the script and capture console errors
+          CONSOLE_ERRORS=$(node check-console.js)
+          echo "console_errors<<EOF" >> $GITHUB_OUTPUT
+          echo "$CONSOLE_ERRORS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Add Labels
+        uses: actions-ecosystem/action-add-labels@v1
+        if: |
+          steps.lighthouse.outputs.performance_score != '' && 
+          steps.console-check.outputs.console_errors != ''
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ github.event.pull_request.number }}
+          labels: |
+            ${{ steps.lighthouse.outputs.performance_score < 85 && 'needs-optimization' || '' }}
+            ${{ steps.lighthouse.outputs.performance_score >= 90 && steps.console-check.outputs.console_errors == '[]' && 'ready-for-review' || '' }}
+
+      - name: Create PR Comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## 🚀 Preflight Report for PR #${{ github.event.pull_request.number }}
+            
+            ### 🔗 Preview Deployment
+            [${{ steps.get-preview-url.outputs.url }}](${{ steps.get-preview-url.outputs.url }})
+            
+            ### 📊 Lighthouse Scores
+            - Performance: ${{ steps.lighthouse.outputs.performance_score }}% ${{ steps.lighthouse.outputs.performance_score < 85 && '⚠️' || '✅' }}
+            - Accessibility: ${{ steps.lighthouse.outputs.accessibility_score }}% ${{ steps.lighthouse.outputs.accessibility_issues > 5 && '🔴' || '✅' }}
+            - Accessibility Issues: ${{ steps.lighthouse.outputs.accessibility_issues }}
+            
+            ### ⚠️ Console Errors
+            ${{ steps.console-check.outputs.console_errors != '[]' && 'Found console errors:' || 'No console errors found ✅' }}
+            ${{ steps.console-check.outputs.console_errors != '[]' && steps.console-check.outputs.console_errors || '' }}
+            
+            ### 🏷️ Labels
+            ${{ steps.lighthouse.outputs.performance_score < 85 && '⚠️ Added `needs-optimization` label due to performance score below 85%' || '' }}
+            ${{ steps.lighthouse.outputs.performance_score >= 90 && steps.console-check.outputs.console_errors == '[]' && '✅ Added `ready-for-review` label - high performance and no console errors' || '' }}
+            
+            ### 📝 Summary
+            ${{ steps.lighthouse.outputs.performance_score >= 85 && steps.lighthouse.outputs.accessibility_issues <= 5 && '✅ All checks passed!' || '⚠️ Some checks need attention' }}
+            
+            ---
+            *Report generated automatically by PR Comment Bot*
+          comment-id: pr-comment-bot
+          edit-mode: replace 

@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install --legacy-peer-deps",
+  "outputDirectory": ".next",
+  "regions": ["iad1"],
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "github": {
+    "silent": true
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  }
+} 

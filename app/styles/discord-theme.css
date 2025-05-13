@@ -1,0 +1,181 @@
+/* Discord Theme Variables */
+:root {
+    --primary-blue: #5865F2;
+    --accent-gold: #FFD700;
+    --accent-primary: 88, 101, 242;  /* RGB values for #5865F2 */
+    --accent-secondary: 255, 215, 0;  /* RGB values for #FFD700 */
+    --dark-background: #36393F;
+    --sidebar-bg: #2F3136;
+    --server-bar-bg: #202225;
+    --channel-bg: #2F3136;
+    --text-normal: #DCDDDE;
+    --text-muted: #9CA0A4;
+    --text-heading: #FFFFFF;
+    --interactive-normal: #B9BBBE;
+    --interactive-hover: #DCDDDE;
+    --interactive-active: #FFFFFF;
+    --mention-background: rgba(114, 137, 218, 0.1);
+    --mention-foreground: #7289DA;
+    --channel-text: #8E9297;
+    --divider: #40444B;
+    --input-bg: #40444B;
+    --scrollbar-thin-thumb: #202225;
+    --scrollbar-thin-track: transparent;
+    --scrollbar-auto-thumb: #202225;
+    --scrollbar-auto-track: #2E3338;
+    --header-primary: #FFFFFF;
+    --header-secondary: #B9BBBE;
+    --bg-overlay: rgba(0, 0, 0, 0.6);
+    --green: #43b581;
+    --red: #f04747;
+}
+
+/* Base Styles */
+.discord-theme {
+    background-color: var(--dark-background);
+    color: var(--text-normal);
+    font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Layout */
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Server Sidebar */
+.server-sidebar {
+    width: 72px;
+    background-color: var(--server-bar-bg);
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Channels Sidebar */
+.channels-sidebar {
+    width: 240px;
+    background-color: var(--channel-bg);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* Chat Container */
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--dark-background);
+}
+
+/* Members List */
+.members-list {
+    width: 240px;
+    background-color: var(--channel-bg);
+    padding: 20px 8px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1080px) {
+    .members-list {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .server-sidebar,
+    .channels-sidebar {
+        display: none;
+    }
+}
+
+/* Custom Scrollbar */
+.discord-theme ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.discord-theme ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thin-thumb);
+    border-radius: 4px;
+}
+
+.discord-theme ::-webkit-scrollbar-track {
+    background-color: var(--scrollbar-thin-track);
+    border-radius: 4px;
+}
+
+/* Message Styles */
+.message-group {
+    padding: 2px 16px 10px;
+    display: flex;
+    margin-bottom: 17px;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 16px;
+    flex-shrink: 0;
+    background-color: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.message-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Input Area */
+.input-container {
+    background-color: var(--input-bg);
+    border-radius: 8px;
+    margin: 0 16px 24px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+}
+
+.input-field {
+    flex: 1;
+    background-color: transparent;
+    border: none;
+    color: var(--text-normal);
+    padding: 14px 0;
+    font-size: 15px;
+    outline: none;
+}
+
+/* Buttons and Interactive Elements */
+.btn {
+    padding: 8px 16px;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: var(--input-bg);
+    color: white;
+} 

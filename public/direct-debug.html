@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turf App Interaction Debugger</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid #eaeaea;
+      border-radius: 8px;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    .log-container {
+      background-color: #f7f7f7;
+      padding: 15px;
+      border-radius: 5px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+    }
+    .log-entry {
+      margin: 5px 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+    .error {
+      color: #e53e3e;
+    }
+    .success {
+      color: #38a169;
+    }
+    button {
+      background-color: #4299e1;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #3182ce;
+    }
+  </style>
+</head>
+<body>
+  <h1>Turf App Interaction Debugger</h1>
+  
+  <div class="section">
+    <h2>System Information</h2>
+    <div id="system-info"></div>
+  </div>
+
+  <div class="section">
+    <h2>Interaction Test</h2>
+    <p>Click the buttons below to test basic interactions:</p>
+    <button id="click-test">Test Click</button>
+    <button id="navigation-test">Test Navigation</button>
+    <button id="storage-test">Test Local Storage</button>
+  </div>
+
+  <div class="section">
+    <h2>Debug Log</h2>
+    <div class="log-container" id="log-output"></div>
+  </div>
+
+  <div class="section">
+    <h2>Fix Script Status</h2>
+    <div id="fix-status">Not loaded</div>
+    <button id="load-fix">Load Fix Script</button>
+  </div>
+
+  <script>
+    // Log function
+    function log(message, type = 'info') {
+      const logContainer = document.getElementById('log-output');
+      const entry = document.createElement('div');
+      entry.classList.add('log-entry');
+      if (type === 'error') entry.classList.add('error');
+      if (type === 'success') entry.classList.add('success');
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // System info
+    function displaySystemInfo() {
+      const info = document.getElementById('system-info');
+      info.innerHTML = `
+        <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+        <p><strong>Screen Size:</strong> ${window.innerWidth}x${window.innerHeight}</p>
+        <p><strong>Touch Support:</strong> ${('ontouchstart' in window) ? 'Yes' : 'No'}</p>
+      `;
+      log('System information collected', 'info');
+    }
+
+    // Test functionality
+    document.getElementById('click-test').addEventListener('click', function() {
+      log('Click test successful', 'success');
+    });
+
+    document.getElementById('navigation-test').addEventListener('click', function() {
+      try {
+        history.pushState({}, '', window.location.pathname + '?test=true');
+        log('Navigation test successful', 'success');
+        setTimeout(() => {
+          history.back();
+        }, 1000);
+      } catch (e) {
+        log('Navigation test failed: ' + e.message, 'error');
+      }
+    });
+
+    document.getElementById('storage-test').addEventListener('click', function() {
+      try {
+        localStorage.setItem('debug-test', Date.now().toString());
+        const value = localStorage.getItem('debug-test');
+        log(`Storage test successful, value: ${value}`, 'success');
+      } catch (e) {
+        log('Storage test failed: ' + e.message, 'error');
+      }
+    });
+    
+    // Load fix script
+    document.getElementById('load-fix').addEventListener('click', function() {
+      const script = document.createElement('script');
+      script.src = '/direct-fix.js';
+      script.onload = function() {
+        document.getElementById('fix-status').textContent = 'Loaded successfully';
+        log('Fix script loaded', 'success');
+      };
+      script.onerror = function() {
+        document.getElementById('fix-status').textContent = 'Failed to load';
+        log('Failed to load fix script', 'error');
+      };
+      document.head.appendChild(script);
+    });
+
+    // Initialize
+    window.addEventListener('load', function() {
+      displaySystemInfo();
+      log('Debug page loaded', 'info');
+    });
+  </script>
+</body>
+</html> 
