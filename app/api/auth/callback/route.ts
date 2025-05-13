@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/error?reason=no_code', request.url));
     }
     
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data, error: supabaseError } = await supabase.auth.exchangeCodeForSession(code);
     
     if (supabaseError) {
