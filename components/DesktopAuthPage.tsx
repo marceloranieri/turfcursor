@@ -2,19 +2,15 @@
 
 import React from 'react';
 import styles from './DesktopAuthPage.module.css';
+import AuthBackground from './AuthBackground';
 // Add any other imports you need (Supabase, router, etc.)
 
 export default function DesktopAuthPage() {
   // Your state and handlers here
   
   return (
-    <div className={styles.pageWrapper}>
-      {/* Background image container */}
-      <div className={styles.backgroundImage}></div>
-      
-      {/* Main content */}
+    <AuthBackground>
       <div className={styles.authContainer}>
-        {/* Your existing desktop auth content */}
         <div className={styles.authCard}>
           <div className={styles.logoSection}>
             <div className={styles.logo}>TURF</div>
@@ -75,6 +71,6 @@ export default function DesktopAuthPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AuthBackground>
   );
 } 

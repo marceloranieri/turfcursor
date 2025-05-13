@@ -7,6 +7,7 @@ import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/auth-helpers-nextjs';
+import AuthBackground from './AuthBackground';
 
 interface FormValues {
   email: string;
@@ -227,11 +228,7 @@ export default function MobileAuthPage() {
   };
 
   return (
-    <div className={styles.pageWrapper}>
-      {/* Background image container */}
-      <div className={styles.backgroundImage}></div>
-      
-      {/* Main content */}
+    <AuthBackground>
       <div className={styles.turfContainer}>
         {/* Header section */}
         <header className={styles.turfHeader}>
@@ -401,6 +398,6 @@ export default function MobileAuthPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AuthBackground>
   );
 } 
