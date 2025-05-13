@@ -589,7 +589,7 @@ const SplitPageSignup = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/api/auth/callback`,
         },
       });
 
@@ -608,7 +608,7 @@ const SplitPageSignup = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/api/auth/callback`,
         },
       });
 
@@ -811,9 +811,8 @@ const SplitPageSignup = () => {
           </div>
           
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome to Turf 👋</h1>
-          <p className="text-gray-600 mb-6">
-            Chatrooms with daily-curated debates on your favorite topics.
-            <br />Fresh ideas, your kind of people.
+          <p className="text-gray-600 mb-6 whitespace-nowrap">
+            Chatrooms with daily-curated debates on your favorite topics. Fresh ideas, your kind of people.
           </p>
           
           {error && (
@@ -1009,9 +1008,8 @@ const SplitPageSignup = () => {
             </div>
             
             <h1 className="text-2xl font-bold mb-2">Welcome to Turf 👋</h1>
-            <p className="text-gray-600 mb-6">
-              Chatrooms with daily-curated debates on your favorite topics.
-              <br />Fresh ideas, your kind of people.
+            <p className="text-gray-600 mb-6 whitespace-nowrap">
+              Chatrooms with daily-curated debates on your favorite topics. Fresh ideas, your kind of people.
             </p>
             
             {error && (

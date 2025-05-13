@@ -85,7 +85,7 @@ export default function LoginPage(): JSX.Element {
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/api/auth/callback`,
           queryParams: provider === 'google' ? {
             access_type: 'offline',
             prompt: 'consent',

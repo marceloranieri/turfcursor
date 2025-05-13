@@ -22,7 +22,7 @@ const publicRoutes = [
   '/auth/signin',
   '/auth/signup',
   '/auth/forgot-password',
-  '/auth/callback',
+  '/api/auth/callback',
   '/auth/reset-password',
   '/auth/verify-email',
   '/auth/error',

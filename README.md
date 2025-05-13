@@ -35,7 +35,7 @@ If this file is deleted, authentication will break because:
 2. Update the values in `.env.local` with your actual configuration:
    - `NEXT_PUBLIC_SITE_URL`: Must be `https://app.turfyeah.com`
    - `NEXT_PUBLIC_APP_URL`: Must be `https://app.turfyeah.com`
-   - `AUTH_REDIRECT_URL`: Must be `https://app.turfyeah.com/auth/callback`
+   - `AUTH_REDIRECT_URL`: Must be `https://app.turfyeah.com/api/auth/callback`
 
 ### Domain Configuration
 

@@ -82,7 +82,7 @@ export async function signUpWithEmail(email: string, password: string, metadata:
       password,
       options: {
         data: metadata,
-        emailRedirectTo: `${appUrl}/auth/callback`,
+        emailRedirectTo: `${appUrl}/api/auth/callback`,
       },
     });
 
@@ -173,7 +173,7 @@ export async function signInWithProvider(provider: 'google' | 'facebook' | 'gith
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${appUrl}/auth/callback`,
+        redirectTo: `${appUrl}/api/auth/callback`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',

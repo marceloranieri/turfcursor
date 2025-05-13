@@ -294,7 +294,7 @@ const SignUpPage = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         }
       });
 
@@ -322,7 +322,7 @@ const SignUpPage = () => {
       const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/api/auth/callback`,
           queryParams: provider === 'google' ? {
             access_type: 'offline',
             prompt: 'consent',
@@ -354,8 +354,7 @@ const SignUpPage = () => {
             />
             <h1 className="text-3xl font-bold mb-2">Welcome to Turf 👋</h1>
             <p className="text-gray-600">
-              Chatrooms with daily-curated debates on your favorite topics.
-              Fresh ideas, your kind of people.
+              Chatrooms with daily-curated debates on your favorite topics. Fresh ideas, your kind of people.
             </p>
           </div>
           

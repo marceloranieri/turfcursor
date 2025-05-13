@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import './styles/animations.css';
@@ -10,11 +10,17 @@ const { cspToString, cspConfig } = require('../csp-config');
 
 const inter = Inter({ subsets: ['latin'] });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#ffffff',
+};
+
 export const metadata: Metadata = {
   title: 'Turf - Chatrooms with daily-curated debates',
   description: 'Join engaging discussions on your favorite topics with like-minded people.',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
-  themeColor: '#ffffff',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
