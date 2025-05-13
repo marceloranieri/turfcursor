@@ -806,13 +806,13 @@ const SplitPageSignup = () => {
             <img 
               src="/turf-logo.svg" 
               alt="Turf Logo" 
-              className="h-10 w-auto"
+              className="h-9 w-auto"
             />
           </div>
           
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome to Turf 👋</h1>
+          <h1 className="text-xl font-bold mb-2">Welcome to Turf 👋</h1>
           <p className="text-gray-600 mb-6 whitespace-nowrap">
-            Chatrooms with daily-curated debates on your favorite topics. Fresh ideas, your kind of people.
+            Chatrooms with daily-curated debates on your favorite topics.
           </p>
           
           {error && (
@@ -1003,13 +1003,13 @@ const SplitPageSignup = () => {
               <img 
                 src="/turf-logo.svg" 
                 alt="Turf Logo" 
-                className="h-10 w-auto"
+                className="h-9 w-auto"
               />
             </div>
             
-            <h1 className="text-2xl font-bold mb-2">Welcome to Turf 👋</h1>
+            <h1 className="text-xl font-bold mb-2">Welcome to Turf 👋</h1>
             <p className="text-gray-600 mb-6 whitespace-nowrap">
-              Chatrooms with daily-curated debates on your favorite topics. Fresh ideas, your kind of people.
+              Chatrooms with daily-curated debates on your favorite topics.
             </p>
             
             {error && (
