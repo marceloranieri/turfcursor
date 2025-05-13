@@ -25,11 +25,34 @@ export default function AuthLayout() {
     }
   }, []);
 
-  // Server-side rendering fallback (desktop first)
+  // Common background elements
+  const backgroundElements = (
+    <>
+      <div className="fixed inset-0 bg-cover bg-center z-0" 
+           style={{ backgroundImage: "url('/turf_bg_social_signup.webp')" }}></div>
+      <div className="fixed inset-0 bg-black opacity-30 z-10"></div>
+    </>
+  );
+
+  // Server-side rendering fallback
   if (typeof window === 'undefined') {
-    return <DesktopAuthPage />;
+    return (
+      <>
+        {backgroundElements}
+        <div className="relative z-20">
+          <DesktopAuthPage />
+        </div>
+      </>
+    );
   }
   
   // Client-side rendering with responsive layout
-  return isMobile ? <MobileAuthPage /> : <DesktopAuthPage />;
+  return (
+    <>
+      {backgroundElements}
+      <div className="relative z-20">
+        {isMobile ? <MobileAuthPage /> : <DesktopAuthPage />}
+      </div>
+    </>
+  );
 } 
