@@ -62,4 +62,67 @@
   .description {
     font-size: 1.1rem;
   }
+}
+
+.pageWrapper {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.backgroundImage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/turf_bg_social_signup.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
+
+.authContainer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+.authCard {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .backgroundImage {
+    background-position: center top;
+  }
+  
+  .authContainer {
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+}
+
+@media (min-width: 1440px) {
+  .backgroundImage {
+    background-size: 100% auto;
+  }
 } 

@@ -5,6 +5,18 @@ import styles from './DesktopAuthPage.module.css';
 
 export default function DesktopAuthPage() {
   return (
+    <div className={styles.pageWrapper}>
+      {/* Background image container */}
+      <div className={styles.backgroundImage}></div>
+      
+      {/* Main content */}
+      <div className={styles.authContainer}>
+        <div className={styles.authCard}>
+          <h1 className={styles.title}>Welcome to Turf</h1>
+          <p className={styles.subtitle}>Join daily-curated debates on your favorite topics</p>
+          
+          {/* Add your desktop-specific auth form here */}
+        </div>
     <div className={styles.container}>
       <div className={styles.content}>
         <h1 className={styles.title}>Welcome to TURF</h1>

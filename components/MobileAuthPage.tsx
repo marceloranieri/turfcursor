@@ -227,171 +227,177 @@ export default function MobileAuthPage() {
   };
 
   return (
-    <div className={styles.turfContainer}>
-      {/* Header section */}
-      <header className={styles.turfHeader}>
-        <div className={styles.turfLogo}>TURF</div>
-        <h1 className={styles.turfWelcome}>Welcome to Turf <span role="img" aria-label="wave">👋</span></h1>
-        <p className={styles.turfDescription}>
-          Chatrooms with daily-curated debates on your favorite topics.
-        </p>
-      </header>
+    <div className={styles.pageWrapper}>
+      {/* Background image container */}
+      <div className={styles.backgroundImage}></div>
+      
+      {/* Main content */}
+      <div className={styles.turfContainer}>
+        {/* Header section */}
+        <header className={styles.turfHeader}>
+          <div className={styles.turfLogo}>TURF</div>
+          <h1 className={styles.turfWelcome}>Welcome to Turf <span role="img" aria-label="wave">👋</span></h1>
+          <p className={styles.turfDescription}>
+            Chatrooms with daily-curated debates on your favorite topics.
+          </p>
+        </header>
 
-      {/* Authentication card */}
-      <div className={styles.authCard}>
-        <form className={styles.loginForm} onSubmit={handleSubmit}>
-          {/* General error message */}
-          {formErrors.general && (
-            <div className={styles.generalError} role="alert">
-              {formErrors.general}
+        {/* Authentication card */}
+        <div className={styles.authCard}>
+          <form className={styles.loginForm} onSubmit={handleSubmit}>
+            {/* General error message */}
+            {formErrors.general && (
+              <div className={styles.generalError} role="alert">
+                {formErrors.general}
+              </div>
+            )}
+            
+            {/* Email field */}
+            <div className={`${styles.formGroup} ${formErrors.email ? styles.hasError : ''}`}>
+              <label htmlFor="email" className={styles.formLabel}>Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formValues.email}
+                onChange={handleChange}
+                placeholder="Example@email.com"
+                className={styles.formControl}
+                aria-invalid={!!formErrors.email}
+                aria-describedby={formErrors.email ? "email-error" : undefined}
+                disabled={isSubmitting}
+              />
+              {formErrors.email && (
+                <div className={styles.errorMessage} id="email-error" role="alert">
+                  {formErrors.email}
+                </div>
+              )}
             </div>
-          )}
-          
-          {/* Email field */}
-          <div className={`${styles.formGroup} ${formErrors.email ? styles.hasError : ''}`}>
-            <label htmlFor="email" className={styles.formLabel}>Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formValues.email}
-              onChange={handleChange}
-              placeholder="Example@email.com"
-              className={styles.formControl}
-              aria-invalid={!!formErrors.email}
-              aria-describedby={formErrors.email ? "email-error" : undefined}
-              disabled={isSubmitting}
-            />
-            {formErrors.email && (
-              <div className={styles.errorMessage} id="email-error" role="alert">
-                {formErrors.email}
+            
+            {/* Password field */}
+            <div className={`${styles.formGroup} ${formErrors.password ? styles.hasError : ''}`}>
+              <label htmlFor="password" className={styles.formLabel}>Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formValues.password}
+                onChange={handleChange}
+                placeholder="At least 8 characters"
+                className={styles.formControl}
+                aria-invalid={!!formErrors.password}
+                aria-describedby={formErrors.password ? "password-error" : undefined}
+                disabled={isSubmitting}
+              />
+              {formErrors.password && (
+                <div className={styles.errorMessage} id="password-error" role="alert">
+                  {formErrors.password}
+                </div>
+              )}
+              <div className={styles.formOptions}>
+                <div className={styles.rememberMe}>
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    name="rememberMe"
+                    checked={formValues.rememberMe}
+                    onChange={handleChange}
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="rememberMe">Remember me</label>
+                </div>
+                <a href="/forgot-password" className={styles.forgotPassword}>Forgot Password?</a>
               </div>
-            )}
-          </div>
-          
-          {/* Password field */}
-          <div className={`${styles.formGroup} ${formErrors.password ? styles.hasError : ''}`}>
-            <label htmlFor="password" className={styles.formLabel}>Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formValues.password}
-              onChange={handleChange}
-              placeholder="At least 8 characters"
-              className={styles.formControl}
-              aria-invalid={!!formErrors.password}
-              aria-describedby={formErrors.password ? "password-error" : undefined}
+            </div>
+            
+            {/* Sign in button */}
+            <button 
+              type="submit" 
+              className={styles.signInBtn}
               disabled={isSubmitting}
-            />
-            {formErrors.password && (
-              <div className={styles.errorMessage} id="password-error" role="alert">
-                {formErrors.password}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
+            </button>
+            
+            {/* Alternative login options */}
+            <div className={styles.altLogin}>
+              <div className={styles.divider}>
+                <span>Or sign in with</span>
               </div>
-            )}
-            <div className={styles.formOptions}>
-              <div className={styles.rememberMe}>
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  name="rememberMe"
-                  checked={formValues.rememberMe}
-                  onChange={handleChange}
+              <div className={styles.socialButtons}>
+                <button
+                  type="button"
+                  className={styles.googleBtn}
+                  onClick={handleGoogleSignIn}
                   disabled={isSubmitting}
-                />
-                <label htmlFor="rememberMe">Remember me</label>
+                  aria-label="Sign in with Google"
+                >
+                  <FaGoogle /> Google
+                </button>
+                <button
+                  type="button"
+                  className={styles.facebookBtn}
+                  onClick={handleFacebookSignIn}
+                  disabled={isSubmitting}
+                  aria-label="Sign in with Facebook"
+                >
+                  <FaFacebook /> Facebook
+                </button>
               </div>
-              <a href="/forgot-password" className={styles.forgotPassword}>Forgot Password?</a>
             </div>
-          </div>
-          
-          {/* Sign in button */}
-          <button 
-            type="submit" 
-            className={styles.signInBtn}
+            
+            {/* Sign up prompt */}
+            <div className={styles.signupPrompt}>
+              Don't you have an account? <a href="/signup">Sign up</a>
+            </div>
+          </form>
+        </div>
+        
+        {/* Preview section */}
+        <div className={styles.previewSection}>
+          <button
+            type="button"
+            className={`${styles.previewToggle} ${isPreviewOpen ? styles.expanded : ''}`}
+            onClick={togglePreview}
+            aria-expanded={isPreviewOpen}
+            aria-controls="previewContent"
             disabled={isSubmitting}
-            aria-busy={isSubmitting}
           >
-            {isSubmitting ? 'Signing in...' : 'Sign in'}
+            {isPreviewOpen ? 'Hide discussions' : 'Preview discussions'}
+            {isPreviewOpen ? <RiArrowUpSLine /> : <RiArrowDownSLine />}
           </button>
           
-          {/* Alternative login options */}
-          <div className={styles.altLogin}>
-            <div className={styles.divider}>
-              <span>Or sign in with</span>
+          <div
+            id="previewContent"
+            className={`${styles.previewContent} ${isPreviewOpen ? styles.open : ''}`}
+            aria-hidden={!isPreviewOpen}
+          >
+            <div className={styles.debateQuestion}>
+              <h3>Could Luke have resisted the One Ring better than Frodo?</h3>
             </div>
-            <div className={styles.socialButtons}>
-              <button
-                type="button"
-                className={styles.googleBtn}
-                onClick={handleGoogleSignIn}
-                disabled={isSubmitting}
-                aria-label="Sign in with Google"
-              >
-                <FaGoogle /> Google
-              </button>
-              <button
-                type="button"
-                className={styles.facebookBtn}
-                onClick={handleFacebookSignIn}
-                disabled={isSubmitting}
-                aria-label="Sign in with Facebook"
-              >
-                <FaFacebook /> Facebook
-              </button>
-            </div>
-          </div>
-          
-          {/* Sign up prompt */}
-          <div className={styles.signupPrompt}>
-            Don't you have an account? <a href="/signup">Sign up</a>
-          </div>
-        </form>
-      </div>
-      
-      {/* Preview section */}
-      <div className={styles.previewSection}>
-        <button
-          type="button"
-          className={`${styles.previewToggle} ${isPreviewOpen ? styles.expanded : ''}`}
-          onClick={togglePreview}
-          aria-expanded={isPreviewOpen}
-          aria-controls="previewContent"
-          disabled={isSubmitting}
-        >
-          {isPreviewOpen ? 'Hide discussions' : 'Preview discussions'}
-          {isPreviewOpen ? <RiArrowUpSLine /> : <RiArrowDownSLine />}
-        </button>
-        
-        <div
-          id="previewContent"
-          className={`${styles.previewContent} ${isPreviewOpen ? styles.open : ''}`}
-          aria-hidden={!isPreviewOpen}
-        >
-          <div className={styles.debateQuestion}>
-            <h3>Could Luke have resisted the One Ring better than Frodo?</h3>
-          </div>
-          
-          <div className={styles.messagesPreview}>
-            {previewMessages.map((message, index) => (
-              <div key={index} className={styles.messageCard}>
-                <div className={styles.userAvatar}>
-                  <div className={styles.avatarPlaceholder}>
-                    {message.username.charAt(0)}
+            
+            <div className={styles.messagesPreview}>
+              {previewMessages.map((message, index) => (
+                <div key={index} className={styles.messageCard}>
+                  <div className={styles.userAvatar}>
+                    <div className={styles.avatarPlaceholder}>
+                      {message.username.charAt(0)}
+                    </div>
+                  </div>
+                  <div className={styles.messageContent}>
+                    <div className={styles.username}>{message.username}</div>
+                    <p>{message.message}</p>
                   </div>
                 </div>
-                <div className={styles.messageContent}>
-                  <div className={styles.username}>{message.username}</div>
-                  <p>{message.message}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className={styles.joinDebate}>
-            <a href="/signup" className={styles.joinBtn}>
-              Join the debate
-            </a>
+              ))}
+            </div>
+            
+            <div className={styles.joinDebate}>
+              <a href="/signup" className={styles.joinBtn}>
+                Join the debate
+              </a>
+            </div>
           </div>
         </div>
       </div>
