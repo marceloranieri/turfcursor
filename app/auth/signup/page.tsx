@@ -229,7 +229,7 @@ export default function SignUpPage() {
           </div>
           <div>
             <label htmlFor="birthdate" className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
-              Birth Date
+              BIRTH DATE
             </label>
             <input
               id="birthdate"
@@ -240,6 +240,7 @@ export default function SignUpPage() {
                 birthdateError ? 'border-red-500' : 'border-gray-200'
               } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 focus:outline-none`}
               max={new Date().toISOString().split('T')[0]}
+              placeholder="MM/DD/YYYY"
             />
             {birthdateError && <p className="mt-1 text-sm text-red-600">{birthdateError}</p>}
           </div>
