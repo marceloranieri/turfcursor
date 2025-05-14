@@ -1,41 +1,44 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import DesktopAuthPage from '@/components/auth/DesktopAuthPage'; 
-
-// Dynamically import the MobileAuthPage component to avoid SSR issues
-const MobileAuthPage = dynamic(() => import('@/components/auth/mobile/MobileAuthPage'), {
-  ssr: false,
-});
+import DesktopAuthPage from '@/components/auth/DesktopAuthPage';
+import MobileAuthPage from '@/components/auth/mobile/MobileAuthPage'; 
 
 export default function AuthPage() {
   const [isMobile, setIsMobile] = useState(false);
-  const [isPortrait, setIsPortrait] = useState(true);
   
   useEffect(() => {
-    const checkDevice = () => {
-      setIsMobile(window.innerWidth < 768);
-      setIsPortrait(window.innerHeight > window.innerWidth);
-    };
-    
-    // Initial check
-    checkDevice();
-    
-    // Listen for resize events
-    window.addEventListener('resize', checkDevice);
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', checkDevice);
+    // Check if we're on the client-side
+    if (typeof window !== 'undefined') {
+      // Initial check
+      setIsMobile(window.innerWidth < 1024);
+      
+      // Setup listener for resize events
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 1024);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      
+      // Cleanup
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
   }, []);
   
-  // Show mobile UI for mobile devices or tablets in portrait mode
-  const showMobileUI = isMobile || (window.innerWidth < 1024 && isPortrait);
-  
-  // Use DesktopAuthPage as a fallback for SSR
+  // Show a loading state until we've determined which view to use
   if (typeof window === 'undefined') {
-    return <DesktopAuthPage />;
+    return null;
   }
   
-  return showMobileUI ? <MobileAuthPage /> : <DesktopAuthPage />;
+  return (
+    <>
+      {isMobile ? (
+        <MobileAuthPage />
+      ) : (
+        <DesktopAuthPage mode="login" />
+      )}
+    </>
+  );
 } 
