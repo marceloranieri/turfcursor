@@ -32,12 +32,17 @@ const publicRoutes = [
   '/auth/loading',
   '/legal/terms',
   '/legal/privacy',
+  '/legal/accept-terms',
+  '/legal/terms-update',
 ];
 
 // This middleware function will run for all routes
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const url = request.nextUrl.clone();
+  
+  // Debug log to track middleware executions
+  logger.debug(`Middleware running for: ${pathname}`);
   
   // Check if the request is coming from the typo domain
   if (url.hostname === 'app.turfeah.com') {
@@ -59,9 +64,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Debug log to track middleware executions
-  logger.debug(`Middleware running for: ${pathname}`);
-  
   // Continue with your existing middleware logic for protected routes
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req: request, res });
@@ -79,24 +81,49 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
     
-    // Check terms acceptance
+    // Skip terms check for auth callback and legal pages
+    if (pathname.startsWith('/auth/callback') || pathname.startsWith('/legal/')) {
+      // Set user headers but don't redirect
+      res.headers.set('x-user-id', session.user.id);
+      res.headers.set('x-user-email', session.user.email || '');
+      res.headers.set('x-user-role', session.user.role || 'user');
+      return res;
+    }
+    
+    // Check terms acceptance for non-legal pages
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('terms_accepted, terms_version')
       .eq('id', session.user.id)
       .single();
       
-    if (profileError || !profile?.terms_accepted) {
-      // User hasn't accepted terms, redirect to terms acceptance page
+    if (profileError) {
+      logger.error('Error fetching profile:', profileError);
+      // Don't redirect on error, just continue
+      return res;
+    }
+    
+    // Only redirect to terms pages if we successfully fetched the profile and confirmed terms not accepted
+    if (profile && !profile.terms_accepted) {
+      logger.debug(`Terms not accepted, redirecting to terms page from: ${pathname}`);
       const returnUrl = encodeURIComponent(pathname);
-      return NextResponse.redirect(new URL(`/legal/accept-terms?returnUrl=${returnUrl}`, request.url));
+      // Use absolute URL to prevent redirect loops
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                      (request.url.includes('localhost') ? 'http://localhost:3000' : new URL(request.url).origin);
+      
+      // Avoid redirect loops by checking current path
+      if (!pathname.startsWith('/legal/accept-terms')) {
+        return NextResponse.redirect(`${baseUrl}/legal/accept-terms?returnUrl=${returnUrl}`);
+      }
     }
 
     // Check if terms version is current
-    if (profile.terms_version !== '1.0') {
-      // User needs to accept the latest terms
+    if (profile && profile.terms_version !== '1.0' && !pathname.startsWith('/legal/terms-update')) {
+      logger.debug(`Terms version outdated, redirecting to terms update from: ${pathname}`);
       const returnUrl = encodeURIComponent(pathname);
-      return NextResponse.redirect(new URL(`/legal/terms-update?returnUrl=${returnUrl}`, request.url));
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                      (request.url.includes('localhost') ? 'http://localhost:3000' : new URL(request.url).origin);
+      return NextResponse.redirect(`${baseUrl}/legal/terms-update?returnUrl=${returnUrl}`);
     }
 
     // Add user context to headers for server components
