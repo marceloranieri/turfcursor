@@ -18,15 +18,18 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
 // Add routes that don't require authentication
 const publicRoutes = [
   '/',
+  '/auth',
   '/auth/login',
   '/auth/signin',
   '/auth/signup',
   '/auth/forgot-password',
   '/api/auth/callback',
+  '/auth/callback',
   '/auth/reset-password',
   '/auth/verify-email',
   '/auth/error',
   '/auth/success',
+  '/auth/loading',
   '/legal/terms',
   '/legal/privacy',
 ];
@@ -43,57 +46,69 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
   
-  // Skip authentication check for static assets
+  // Skip authentication check for static assets and public routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/') ||
     pathname.includes('.') ||
     pathname.startsWith('/images/') ||
     pathname.startsWith('/fonts/') ||
-    publicRoutes.includes(pathname)
+    pathname.startsWith('/public/') ||
+    publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))
   ) {
     return NextResponse.next();
   }
+  
+  // Debug log to track middleware executions
+  logger.debug(`Middleware running for: ${pathname}`);
   
   // Continue with your existing middleware logic for protected routes
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req: request, res });
   
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  
-  // If no session and not a public route, redirect to signin
-  if (!session) {
-    const redirectUrl = new URL('/auth/signin', request.url);
-    redirectUrl.searchParams.set('returnUrl', pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-  
-  // Check terms acceptance
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('terms_accepted, terms_version')
-    .eq('id', session.user.id)
-    .single();
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     
-  if (profileError || !profile?.terms_accepted) {
-    // User hasn't accepted terms, redirect to terms acceptance page
-    const returnUrl = encodeURIComponent(pathname);
-    return NextResponse.redirect(new URL(`/legal/accept-terms?returnUrl=${returnUrl}`, request.url));
-  }
+    // If no session and not a public route, redirect to signin
+    if (!session) {
+      logger.debug(`No session, redirecting to signin from: ${pathname}`);
+      const redirectUrl = new URL('/auth/signin', request.url);
+      redirectUrl.searchParams.set('returnUrl', pathname);
+      return NextResponse.redirect(redirectUrl);
+    }
+    
+    // Check terms acceptance
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('terms_accepted, terms_version')
+      .eq('id', session.user.id)
+      .single();
+      
+    if (profileError || !profile?.terms_accepted) {
+      // User hasn't accepted terms, redirect to terms acceptance page
+      const returnUrl = encodeURIComponent(pathname);
+      return NextResponse.redirect(new URL(`/legal/accept-terms?returnUrl=${returnUrl}`, request.url));
+    }
 
-  // Check if terms version is current
-  if (profile.terms_version !== '1.0') {
-    // User needs to accept the latest terms
-    const returnUrl = encodeURIComponent(pathname);
-    return NextResponse.redirect(new URL(`/legal/terms-update?returnUrl=${returnUrl}`, request.url));
-  }
+    // Check if terms version is current
+    if (profile.terms_version !== '1.0') {
+      // User needs to accept the latest terms
+      const returnUrl = encodeURIComponent(pathname);
+      return NextResponse.redirect(new URL(`/legal/terms-update?returnUrl=${returnUrl}`, request.url));
+    }
 
-  // Add user context to headers for server components
-  res.headers.set('x-user-id', session.user.id);
-  res.headers.set('x-user-email', session.user.email || '');
-  res.headers.set('x-user-role', session.user.role || 'user');
+    // Add user context to headers for server components
+    res.headers.set('x-user-id', session.user.id);
+    res.headers.set('x-user-email', session.user.email || '');
+    res.headers.set('x-user-role', session.user.role || 'user');
+  } catch (error) {
+    logger.error('Middleware error:', error);
+    // In case of error, allow the request to continue
+    // This prevents endless loops if there's an issue with auth
+    return res;
+  }
 
   // Add CSP header
   res.headers.set('Content-Security-Policy', cspToString(cspConfig));
