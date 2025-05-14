@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './MobileAuthPage.module.css';
+import { supabase } from '@/lib/supabase';
 
 export default function MobileAuthPage() {
   const [activeTab, setActiveTab] = useState('login');
@@ -11,6 +12,8 @@ export default function MobileAuthPage() {
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const handleTabChange = (tab: string) => setActiveTab(tab);
   
@@ -18,6 +21,39 @@ export default function MobileAuthPage() {
     e.preventDefault();
     console.log('Submitting:', { email, password, rememberMe });
     // Add your authentication logic here
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Starting Google sign-in...');
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('Supabase OAuth error:', error);
+        throw error;
+      }
+      
+      console.log('Sign-in successful, redirecting...');
+      // The redirect will happen automatically
+    } catch (err) {
+      console.error('Error signing in with Google:', err);
+      setError(err.message || 'Failed to sign in with Google');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -136,7 +172,7 @@ export default function MobileAuthPage() {
           </div>
           
           <div className={styles.socialButtons}>
-            <button type="button" className={styles.googleButton}>
+            <button type="button" className={styles.googleButton} onClick={handleGoogleSignIn}>
               <span className={styles.googleIcon}>G</span>
               Continue with Google
             </button>
