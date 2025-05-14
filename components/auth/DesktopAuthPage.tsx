@@ -3,16 +3,35 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import styles from './DesktopAuthPage.module.css';
 
-export default function DesktopAuthPage() {
-  const [activeTab, setActiveTab] = useState('login');
+interface DesktopAuthPageProps {
+  children?: React.ReactNode;
+  mode?: 'login' | 'signup' | 'forgot-password';
+  title?: string;
+}
+
+export default function DesktopAuthPage({ 
+  children, 
+  mode = 'login',
+  title = mode === 'login' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'
+}: DesktopAuthPageProps) {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState(mode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
-  const handleTabChange = (tab: string) => setActiveTab(tab);
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'login') {
+      router.push('/auth/login');
+    } else if (tab === 'signup') {
+      router.push('/auth/signup');
+    }
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +52,15 @@ export default function DesktopAuthPage() {
           {/* Left side - Branding */}
           <div className={styles.brandingSection}>
             <div className={styles.logoContainer}>
-              <Image
-                src="/turf-logo.svg"
-                alt="Turf Logo"
-                width={99}
-                height={18}
-                className={styles.logo}
-              />
+              <Link href="/">
+                <Image
+                  src="/turf-logo.svg"
+                  alt="Turf Logo"
+                  width={99}
+                  height={18}
+                  className={styles.logo}
+                />
+              </Link>
             </div>
             
             <div className={styles.headerText}>
@@ -114,7 +135,7 @@ export default function DesktopAuthPage() {
                     />
                     <label htmlFor="rememberMe" className={styles.checkboxLabel}>Remember me</label>
                   </div>
-                  <Link href="/forgot-password" className={styles.forgotPassword}>
+                  <Link href="/auth/forgot-password" className={styles.forgotPassword}>
                     Forgot Password?
                   </Link>
                 </div>

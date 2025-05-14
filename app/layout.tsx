@@ -46,6 +46,7 @@ export default async function RootLayout({
           httpEquiv="Content-Security-Policy"
           content={cspToString(cspConfig)}
         />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body suppressHydrationWarning className={inter.className}>
         <AnimationProvider>
