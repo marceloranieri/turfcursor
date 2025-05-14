@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { EyeIcon } from '@heroicons/react/24/outline';
+import { createLogger } from '@/lib/logger';
 import styles from './SignupPage.module.css';
+
+const logger = createLogger('SignupPage');
 
 export default function SignupPage() {
   const router = useRouter();
@@ -125,7 +128,12 @@ export default function SignupPage() {
               created_at: new Date().toISOString(),
             }
           ]);
-        if (profileError) throw profileError;
+        if (profileError) {
+          logger.error('Error creating profile:', profileError);
+          setError('Failed to create profile. Please try again.');
+          setIsLoading(false);
+          return;
+        }
         router.push('/auth/verify-email');
       }
     } catch (error: any) {
